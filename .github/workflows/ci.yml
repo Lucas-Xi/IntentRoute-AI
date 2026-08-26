@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore locked dependencies
+        shell: pwsh
+        run: dotnet restore ProxyManager.Tests/ProxyManager.Tests.csproj --locked-mode
+
+      - name: Run tests
+        shell: pwsh
+        run: dotnet test ProxyManager.Tests/ProxyManager.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=tests.trx"
+
+      - name: Publish Windows x64
+        shell: pwsh
+        run: ./scripts/build.ps1 -OutputDirectory "$env:RUNNER_TEMP/ProxyManager-win-x64"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: warn
+
+      - name: Upload preview build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProxyManager-win-x64
+          path: ${{ runner.temp }}/ProxyManager-win-x64/
+          if-no-files-found: error

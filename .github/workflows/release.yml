@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        shell: pwsh
+        run: ./scripts/test.ps1
+
+      - name: Publish
+        shell: pwsh
+        run: ./scripts/build.ps1 -OutputDirectory "$env:RUNNER_TEMP/package"
+
+      - name: Package and checksum
+        shell: pwsh
+        run: |
+          Copy-Item README.md, LICENSE, THIRD_PARTY_NOTICES.md "$env:RUNNER_TEMP/package"
+          @'
+          ProxyManager does not include sing-box or a proxy service.
+          Install sing-box v1.13+ separately from https://github.com/SagerNet/sing-box/releases
+          Then place sing-box.exe beside ProxyManager.exe and run ProxyManager as administrator.
+          '@ | Set-Content "$env:RUNNER_TEMP/package/README_RELEASE.txt" -Encoding utf8
+          $archive = "ProxyManager-$env:GITHUB_REF_NAME-win-x64.zip"
+          Compress-Archive -Path "$env:RUNNER_TEMP/package/*" -DestinationPath $archive -CompressionLevel Optimal
+          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          "$hash  $archive" | Set-Content "$archive.sha256" -Encoding ascii
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $archive = (Get-Item ProxyManager-*.zip).FullName
+          $checksum = (Get-Item ProxyManager-*.sha256).FullName
+          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --title "ProxyManager $env:GITHUB_REF_NAME"
