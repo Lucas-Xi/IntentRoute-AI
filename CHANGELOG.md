@@ -34,7 +34,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Treat saved, migrated, and imported sing-box paths as unapproved on every elevated launch; only a file reselected in the current session may run `version`, `check`, or `run`.
 - Validate rule imports against the complete candidate configuration before atomically replacing the current config; unsupported semantics no longer persist before runtime rejection.
 - Treat null entries inside rules, proxy servers, or proxy chains as an unusable configuration instead of allowing a startup `NullReferenceException` outside the recovery path.
-- Cancel and drain first-load/model-provider work before disposing providers during window shutdown, preventing a managed crash when the published app is closed immediately after launch.
+- Cancel and drain first-load/model-provider work before disposing providers, then queue the final WPF `Close` after the current closing frame, preventing managed crashes when the published app is closed immediately after launch.
 
 ### Tests
 

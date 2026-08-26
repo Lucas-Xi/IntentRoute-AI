@@ -990,7 +990,7 @@ public partial class MainWindow : Window
             _aiProviderGate.Dispose();
             _shutdownComplete = true;
             _shutdownStarted = false;
-            Close();
+            _ = Dispatcher.BeginInvoke(new Action(Close));
         }
     }
 
