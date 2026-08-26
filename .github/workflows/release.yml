@@ -20,7 +20,7 @@ jobs:
       - name: Set up .NET 8
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 8.0.424
 
       - name: Verify tag matches project version
         shell: pwsh

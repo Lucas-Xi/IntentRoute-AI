@@ -36,6 +36,29 @@ public sealed class AiRuleAssistantTests
     }
 
     [Fact]
+    public void StrictParser_RejectsInvalidJson()
+    {
+        var error = Assert.Throws<AiProviderException>(() =>
+            AiRuleContract.ParseSuggestion("{not-json"));
+
+        Assert.Equal(AiProviderErrorKind.InvalidResponse, error.Kind);
+    }
+
+    [Theory]
+    [InlineData("protocol", "ICMP")]
+    [InlineData("action", "Execute")]
+    public void StrictParser_RejectsUnsupportedEnumValues(string property, string value)
+    {
+        var root = JObject.Parse(ValidSuggestionJson());
+        ((JObject)root["rules"]![0]!)[property] = value;
+
+        var error = Assert.Throws<AiProviderException>(() =>
+            AiRuleContract.ParseSuggestion(root.ToString()));
+
+        Assert.Equal(AiProviderErrorKind.InvalidResponse, error.Kind);
+    }
+
+    [Fact]
     public async Task OpenAiProvider_UsesStoreFalseStrictSchemaAndFindsOutputTextAnywhere()
     {
         string? requestBody = null;
@@ -94,11 +117,35 @@ public sealed class AiRuleAssistantTests
         Assert.DoesNotContain("secret-test-key", error.ToString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task OpenAiProvider_MapsRateLimitWithoutReturningRemoteBody()
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+        {
+            Content = new StringContent("remote-sensitive-detail")
+        };
+        var handler = new RecordingHandler(_ => Task.FromResult(response));
+        using var client = new HttpClient(handler);
+        using var provider = new OpenAiRuleProvider(client, () => "test-key");
+
+        var error = await Assert.ThrowsAsync<AiProviderException>(() => provider.GenerateDraftAsync(
+            new AiRuleRequest("Route Chrome to GitHub", OpenAiRuleProvider.DefaultModel)));
+
+        Assert.Equal(AiProviderErrorKind.RateLimited, error.Kind);
+        Assert.DoesNotContain("remote-sensitive-detail", error.ToString(), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("https://127.0.0.1:11434/")]
+    [InlineData("http://127.0.0.2:11434/")]
+    [InlineData("http://127.1.2.3:11434/")]
+    [InlineData("http://127.255.255.254:11434/")]
+    [InlineData("http://[::ffff:127.0.0.1]:11434/")]
     [InlineData("http://192.168.1.10:11434/")]
     [InlineData("http://example.com:11434/")]
     [InlineData("http://user:password@127.0.0.1:11434/")]
+    [InlineData("http://127.0.0.1:11434/?model=qwen")]
+    [InlineData("http://127.0.0.1:11434/#fragment")]
     public void OllamaProvider_RejectsNonLoopbackOrCredentialedEndpoints(string endpoint)
     {
         Assert.Throws<ArgumentException>(() =>
@@ -132,6 +179,18 @@ public sealed class AiRuleAssistantTests
         var models = await provider.ListModelsAsync();
 
         Assert.Equal(["gpt-oss:20b", "qwen3:8b"], models);
+    }
+
+    [Fact]
+    public async Task OllamaProvider_ReturnsEmptyListWhenNoModelsAreInstalled()
+    {
+        var handler = new RecordingHandler(_ => Task.FromResult(JsonResponse("""{"models":[]}""")));
+        using var client = new HttpClient(handler);
+        using var provider = new OllamaRuleProvider(client, new Uri("http://127.0.0.1:11434/"));
+
+        var models = await provider.ListModelsAsync();
+
+        Assert.Empty(models);
     }
 
     [Fact]
@@ -185,6 +244,50 @@ public sealed class AiRuleAssistantTests
 
         Assert.False(result.Success);
         Assert.Contains(result.Errors, error => error.Contains("进程名无效", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("targetHosts", "bad..example.com")]
+    [InlineData("targetIps", "999.1.1.1/99")]
+    [InlineData("targetPorts", "0-70000")]
+    public void Validator_RejectsInvalidNetworkFilters(string property, string value)
+    {
+        var root = JObject.Parse(ValidSuggestionJson());
+        ((JObject)root["rules"]![0]!)[property] = value;
+        var suggestion = AiRuleContract.ParseSuggestion(root.ToString());
+
+        var result = AiRuleDraftValidator.Validate(suggestion, ConfigWithEnabledProxy());
+
+        Assert.False(result.Success);
+    }
+
+    [Fact]
+    public void Validator_RejectsDuplicateRulesWithinSuggestion()
+    {
+        var root = JObject.Parse(ValidSuggestionJson());
+        var rules = (JArray)root["rules"]!;
+        rules.Add(rules[0]!.DeepClone());
+        var suggestion = AiRuleContract.ParseSuggestion(root.ToString());
+
+        var result = AiRuleDraftValidator.Validate(suggestion, ConfigWithEnabledProxy());
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Errors, error => error.Contains("本次草案", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validator_RejectsExcessiveRuleCount()
+    {
+        var root = JObject.Parse(ValidSuggestionJson());
+        var rules = (JArray)root["rules"]!;
+        while (rules.Count <= AiRuleContract.MaxRules)
+            rules.Add(rules[0]!.DeepClone());
+        var suggestion = AiRuleContract.ParseSuggestion(root.ToString());
+
+        var result = AiRuleDraftValidator.Validate(suggestion, ConfigWithEnabledProxy());
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Errors, error => error.Contains("1–", StringComparison.Ordinal));
     }
 
     [Fact]

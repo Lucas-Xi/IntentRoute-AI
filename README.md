@@ -23,9 +23,9 @@ The application does not capture packets itself. It generates a validated [sing-
 2. Enter an intent such as: “Route Chrome and Cursor traffic for GitHub and OpenAI through the proxy; keep everything else direct.”
 3. The provider returns a strict structured draft containing process, host/IP, port, protocol, action, rationale, confidence, and warnings.
 4. IntentRoute AI treats the result as untrusted input and validates field limits, executable names, domains, CIDRs, ports, protocols, actions, duplicates, and proxy availability.
-5. A temporary enabled candidate is passed through `SingBoxConfigBuilder` so disabled-rule filtering cannot make validation a no-op.
+5. A temporary enabled candidate is passed through `SingBoxConfigBuilder` so disabled-rule filtering cannot make validation a no-op. This preview dry-run is deterministic in-process config construction; it intentionally does not execute an external program.
 6. The user reviews the preview and may add the whole draft as **disabled rules**.
-7. Enabling remains a separate user action and still requires `sing-box check` before the managed runtime is replaced.
+7. Enabling remains a separate user action. That state-changing path writes a candidate file and executes `sing-box check -c` before the managed runtime is replaced.
 
 AI never directly enables rules, invokes commands, selects files, installs models, downloads sing-box, or applies an unreviewed configuration.
 
@@ -51,7 +51,7 @@ Install [Ollama](https://ollama.com/), start its local service, and install a mo
 ollama pull qwen3:8b
 ```
 
-IntentRoute AI queries only `http://127.0.0.1:11434`. v0.2.0 rejects non-loopback, credentialed, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
+IntentRoute AI queries only literal HTTP `127.0.0.1` (the default) or `::1`. v0.2.0 rejects hostnames, other loopback addresses, credentialed endpoints, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
 
 ## AI data boundary
 
@@ -97,7 +97,7 @@ The self-contained release targets Windows x64 and does not require a separate .
 
 ## Configuration and upgrade migration
 
-Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
+Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. Copying holds a per-directory exclusive migration lock and uses an in-progress marker plus atomic per-file moves, so an interrupted migration retries only missing known files on the next launch and never overwrites a completed copy. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
 
 Proxy passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\IntentRouteAI\sing-box.generated.json` necessarily contains any configured credential in plaintext while sing-box is running. The application removes it on stop, clean exit, and unexpected child exit; the next launch performs bounded orphan recovery and stale-artifact cleanup. Cleanup remains best effort under disk, ACL, administrator, or abrupt-crash interference.
 
@@ -106,7 +106,7 @@ Proxy passwords are protected at rest with DPAPI `CurrentUser`. The generated `%
 Requirements for source builds:
 
 - Windows 10/11 x64
-- .NET 8 SDK
+- .NET 8.0.424 SDK (pinned by `global.json`)
 - PowerShell 7 recommended
 
 ```powershell
@@ -140,7 +140,7 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 
 IntentRoute AI 是一个 Windows 开源 AI 分流控制工具。你可以用中文描述“哪个程序的哪些域名应该代理、直连或阻止”，再由 OpenAI 或本机 Ollama 生成结构化草案。软件会在本地执行严格校验，草案写入后默认禁用，必须由你再次确认启用。
 
-OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只连接 `127.0.0.1:11434`。两种模式都不会发送代理密码、现有规则、运行日志或完整进程列表。没有配置 AI 时，所有手工分流功能仍可正常使用。
+OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只允许字面量 `127.0.0.1` 或 `::1`（默认连接 `127.0.0.1:11434`）。两种模式都不会发送代理密码、现有规则、运行日志或完整进程列表。没有配置 AI 时，所有手工分流功能仍可正常使用。
 
 ## License
 

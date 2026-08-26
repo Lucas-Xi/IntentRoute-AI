@@ -104,7 +104,7 @@ The application never writes the OpenAI API key to its configuration, logs, diag
 
 ### Ollama adapter
 
-The adapter defaults to `http://localhost:11434` and permits only HTTP loopback endpoints in v0.2.0. Hostnames and resolved addresses outside loopback are rejected to prevent accidental disclosure to LAN or public endpoints.
+The adapter defaults to `http://127.0.0.1:11434` and permits only the literal HTTP addresses `127.0.0.1` and `::1` in v0.2.0. Hostnames, other loopback addresses, and LAN/public addresses are rejected to prevent accidental disclosure beyond the documented local endpoint boundary.
 
 Model discovery uses `GET /api/tags`. Generation uses non-streaming `POST /api/chat` with:
 
@@ -130,7 +130,7 @@ The adapter reports Ollama-not-running, no-local-model, model-not-found, timeout
 - Duplicate rules within the suggestion and conflicts with current rules.
 - Proxy actions only when an enabled local proxy target exists.
 
-The validator maps accepted drafts into ordinary `ProxyRule` objects and runs a candidate configuration through the existing `SingBoxConfigBuilder`. AI validation cannot bypass or weaken existing runtime validation.
+The validator maps accepted drafts into ordinary `ProxyRule` objects and runs a candidate configuration through the existing `SingBoxConfigBuilder`. This preview dry-run is deterministic in-process construction and does not execute an external program. AI validation cannot bypass or weaken existing runtime validation; the separate enable/apply path performs `sing-box check -c` before replacing the managed runtime.
 
 ## State-change boundary
 
@@ -148,7 +148,7 @@ Existing data under `%APPDATA%\ProxyManager` is preserved. On first v0.2.0 launc
 2. Otherwise detect the legacy ProxyManager directory.
 3. Copy/migrate only known application-owned files into the new directory.
 4. Keep the legacy directory as a recoverable fallback; do not delete it automatically.
-5. Record a credential-free migration marker.
+5. Record credential-free in-progress and completion markers so interrupted copies retry only missing known files.
 
 Migration must preserve DPAPI `CurrentUser` ciphertext on the same Windows user account and must not log decrypted credentials.
 
@@ -172,7 +172,7 @@ Raw provider response bodies are not shown by default. Errors are bounded and re
 - AI is optional and off by default.
 - API keys are not accepted in the intent editor or persisted by the application.
 - OpenAI requests set `store=false` and contain only the user intent plus the static rule schema/instructions.
-- Ollama v0.2.0 is loopback-only.
+- Ollama v0.2.0 accepts only literal `127.0.0.1` or `::1` HTTP endpoints.
 - No provider receives proxy credentials, server addresses, existing rules, logs, process inventory, filesystem paths, or generated sing-box JSON.
 - Model output is untrusted data and receives strict schema parsing plus local semantic validation.
 - AI output cannot execute commands, access tools, select files, or directly mutate runtime state.
@@ -186,13 +186,13 @@ Provider tests use mocked HTTP handlers and do not require paid OpenAI calls or 
 - OpenAI payload includes `store=false`, strict schema, and no sensitive application state.
 - Response parsing finds text content without assuming output-array ordering.
 - API keys are absent from exceptions and logs.
-- Ollama accepts loopback and rejects LAN/public endpoints.
+- Ollama accepts literal `127.0.0.1`/`::1` and rejects hostnames, other loopback addresses, and LAN/public endpoints.
 - Ollama model discovery and no-model behavior.
-- Timeout, cancellation, authentication failure, rate limit, invalid JSON, unexpected properties, excessive rules, and excessive field lengths.
-- Prompt-injection-like text remains data and cannot alter validation rules.
-- Invalid executables, hosts, CIDRs, ports, protocols, actions, duplicates, and missing proxy targets are rejected.
+- Authentication failure and rate-limit mapping without exposing remote bodies.
+- Invalid JSON, unexpected properties, missing/null fields, and illegal protocol/action enum values are rejected at the parser boundary.
+- Excessive rule counts plus invalid executables, hosts, CIDRs, ports, duplicates, and missing proxy targets are rejected by local validation.
 - Accepted rules are persisted disabled in one save operation.
-- Legacy configuration migration is non-destructive and repeatable.
+- Legacy configuration migration is non-destructive, retryable after interruption, and serialized across concurrent starts.
 - All existing configuration-builder, config-store, and runtime-lifecycle tests continue to pass.
 
 ## Documentation and release

@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private string _searchFilter = "";
     private bool _isMaximized = false;
     private CancellationTokenSource? _aiGenerationCts;
+    private int _aiModelRefreshVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
 
@@ -129,15 +130,19 @@ public partial class MainWindow : Window
 
     private async void AiProvider_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (!IsLoaded) return;
+        if (!IsLoaded || _aiGenerationCts != null) return;
         await RefreshAiModelsAsync();
     }
 
-    private async void RefreshAiModels_Click(object sender, RoutedEventArgs e) =>
+    private async void RefreshAiModels_Click(object sender, RoutedEventArgs e)
+    {
+        if (_aiGenerationCts != null) return;
         await RefreshAiModelsAsync();
+    }
 
     private async Task RefreshAiModelsAsync()
     {
+        var refreshVersion = ++_aiModelRefreshVersion;
         var provider = GetSelectedAiProvider();
         AiModelCombo.ItemsSource = null;
         AiModelCombo.IsEnabled = false;
@@ -147,11 +152,13 @@ public partial class MainWindow : Window
 
         AiPrivacyText.Text = provider.Kind == AiProviderKind.OpenAI
             ? "OpenAI 模式只发送你输入的意图和静态规则格式；请求设置 store=false。不会发送代理凭据、现有规则、日志或进程列表。"
-            : "Ollama 模式只连接本机 127.0.0.1；不会自动下载模型、启动服务或回退到云端。";
+            : "Ollama 模式默认连接本机 127.0.0.1，且只允许字面量 127.0.0.1 或 ::1；不会自动下载模型、启动服务或回退到云端。";
 
         try
         {
             var models = await provider.ListModelsAsync();
+            if (refreshVersion != _aiModelRefreshVersion || !ReferenceEquals(provider, GetSelectedAiProvider()))
+                return;
             AiModelCombo.ItemsSource = models;
             if (models.Count > 0)
             {
@@ -168,11 +175,13 @@ public partial class MainWindow : Window
         }
         catch (AiProviderException ex)
         {
-            AiStatusText.Text = ex.Message;
+            if (refreshVersion == _aiModelRefreshVersion)
+                AiStatusText.Text = ex.Message;
         }
         finally
         {
-            AiModelCombo.IsEnabled = true;
+            if (refreshVersion == _aiModelRefreshVersion)
+                AiModelCombo.IsEnabled = true;
         }
     }
 
@@ -190,6 +199,9 @@ public partial class MainWindow : Window
         ResetAiDraft();
         var cts = new CancellationTokenSource();
         _aiGenerationCts = cts;
+        AiProviderCombo.IsEnabled = false;
+        AiModelCombo.IsEnabled = false;
+        AiIntentBox.IsEnabled = false;
         AiGenerateButton.IsEnabled = false;
         AiCancelButton.IsEnabled = true;
         AiStatusText.Text = "正在生成结构化草案；结果返回后会立即执行本地确定性校验…";
@@ -239,6 +251,9 @@ public partial class MainWindow : Window
                 _aiGenerationCts = null;
                 cts.Dispose();
             }
+            AiProviderCombo.IsEnabled = true;
+            AiModelCombo.IsEnabled = true;
+            AiIntentBox.IsEnabled = true;
             AiCancelButton.IsEnabled = false;
             AiGenerateButton.IsEnabled = AiModelCombo.SelectedItem is string;
         }

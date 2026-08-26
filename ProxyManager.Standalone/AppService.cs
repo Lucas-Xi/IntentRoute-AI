@@ -231,7 +231,7 @@ public class AppService : IDisposable
         return rule;
     }
 
-    public void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
+    internal void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
     {
         // Disabled AI drafts do not change the active routing graph. Persist once without
         // queueing a needless sing-box replacement; enabling remains a separate user action.

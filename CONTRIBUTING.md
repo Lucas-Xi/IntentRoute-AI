@@ -11,7 +11,7 @@ Thank you for helping make Windows application routing more transparent and reli
 
 ## Local development
 
-Requirements: Windows 10/11, .NET 8 SDK, and optionally sing-box v1.13+ for schema validation.
+Requirements: Windows 10/11, the .NET 8.0.424 SDK pinned by `global.json`, and optionally sing-box v1.13+ for runtime schema validation.
 
 ```powershell
 ./scripts/test.ps1

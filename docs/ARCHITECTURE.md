@@ -15,12 +15,12 @@
 ## AI authoring path
 
 1. The AI page creates an `AiRuleRequest` containing only the user-entered intent and selected model.
-2. `OpenAiRuleProvider` uses the Responses API with strict JSON Schema and `store=false`, or `OllamaRuleProvider` uses a non-streaming loopback-only `/api/chat` request with the same schema.
+2. `OpenAiRuleProvider` uses the Responses API with strict JSON Schema and `store=false`, or `OllamaRuleProvider` uses a non-streaming literal-`127.0.0.1`/`::1` `/api/chat` request with the same schema.
 3. Provider-specific JSON is converted to the shared `AiRuleSuggestion` model with unknown properties rejected.
 4. `AiRuleDraftValidator` enforces local size, process, host, IP/CIDR, port, protocol, action, duplicate, and proxy-availability rules.
-5. New rules are temporarily enabled only in a cloned candidate and passed through `SingBoxConfigBuilder`; this prevents disabled-rule filtering from turning validation into a no-op.
+5. New rules are temporarily enabled only in a cloned candidate and passed through `SingBoxConfigBuilder`; this prevents disabled-rule filtering from turning validation into a no-op. This AI-preview dry-run is in-process construction, not execution of the external `sing-box` binary.
 6. After explicit user confirmation, `AiRuleAcceptance` saves the whole draft atomically as disabled rules without replacing the running sing-box process.
-7. Enabling remains a separate manual action through the supported path above.
+7. Enabling remains a separate manual action through the supported path above, where a candidate file is checked by `sing-box check -c` before process replacement.
 
 ## Trust boundaries
 
@@ -32,9 +32,10 @@
 | sing-box output to UI | Redact common password, secret, token, and credential patterns |
 | Profile export | Remove passwords rather than exporting DPAPI ciphertext |
 | Runtime ownership | Hold an exclusive per-config-directory lock and record the child PID, start time, and executable path without credentials |
+| Legacy data to current directory | Hold an exclusive migration lock, copy only missing known files atomically, retain the source, and resume only when an in-progress marker proves ownership |
 | User intent to AI provider | Send only intent plus static schema/instructions; never include proxy settings, existing rules, logs, paths, or process inventory |
 | AI output to domain model | Reject oversized, malformed, missing, or additional fields; treat all model text as untrusted data |
-| Ollama client to local service | Permit HTTP loopback only; disable proxy use and redirects; never pull models or launch a process |
+| Ollama client to local service | Permit only literal HTTP `127.0.0.1` or `::1`; disable proxy use and redirects; never pull models or launch a process |
 | Accepted AI draft to config | Validate all-or-nothing, dry-run enabled clones, persist disabled rules once, and require a second action to enable |
 
 ## Failure behavior
@@ -43,7 +44,7 @@ Invalid replacement configuration does not intentionally terminate a healthy man
 
 On stop, normal shutdown, or an unexpected managed-child exit, IntentRoute AI removes the generated configuration. On the next launch after an application or OS crash, it verifies a recorded orphan by PID and start time, checks the executable path when Windows permits it, terminates that process tree, and removes stale configs/candidates. Recovery and deletion remain best effort under administrator interference, filesystem failure, or corrupted state.
 
-Provider failure, cancellation, rate limiting, missing local models, malformed output, or local validation failure leaves configuration unchanged. Raw provider error bodies are not surfaced.
+Provider failure, cancellation, rate limiting, missing local models, malformed output, or local validation failure leaves configuration unchanged. Raw provider error bodies are not surfaced. Provider/model controls remain locked while a generation request is in flight so a response cannot be attributed to a newly selected provider.
 
 ## Dependency boundary
 

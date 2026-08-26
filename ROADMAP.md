@@ -17,10 +17,10 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 - [x] IntentRoute AI product/repository branding
 - [x] OpenAI Responses API strict structured output with `store=false`
-- [x] Loopback-only local Ollama provider and installed-model discovery
+- [x] Literal `127.0.0.1`/`::1` local Ollama provider and installed-model discovery
 - [x] Shared untrusted-output validator and enabled-clone dry-run
 - [x] Human preview plus disabled, atomic rule acceptance
-- [x] Non-destructive migration from the v0.1 data directory
+- [x] Non-destructive, interruption-safe migration from the v0.1 data directory
 - [x] Mocked provider, validation, persistence, and migration tests
 
 ## Candidate next work
@@ -30,9 +30,10 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [ ] Automated CI integration tests against a pinned real sing-box release
 - [ ] Accessible keyboard navigation and high-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
-- [ ] Signed release artifacts when sustainable signing infrastructure exists
 - [ ] Editable AI draft fields before acceptance, with revalidation after every edit
 - [ ] Provider health diagnostics that remain credential-free
+- [ ] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
+- [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 
 ## Explicitly not promised
 

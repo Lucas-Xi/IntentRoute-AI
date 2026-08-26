@@ -198,6 +198,11 @@ internal static class AiRuleContract
             {
                 throw new System.Text.Json.JsonException("Null fields are not allowed.");
             }
+            if (result.Rules.Any(rule => rule.Protocol is not ("TCP" or "UDP" or "Both") ||
+                rule.Action is not ("Proxy" or "Direct" or "Block")))
+            {
+                throw new System.Text.Json.JsonException("Unsupported protocol or action enum value.");
+            }
             return result;
         }
         catch (System.Text.Json.JsonException ex)
@@ -485,13 +490,14 @@ public sealed class OllamaRuleProvider : IAiRuleProvider, IDisposable
     {
         ArgumentNullException.ThrowIfNull(uri);
         if (!uri.IsAbsoluteUri || !string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("Ollama endpoint must use HTTP loopback.", nameof(uri));
+            throw new ArgumentException("Ollama endpoint must use HTTP with literal 127.0.0.1 or ::1.", nameof(uri));
         if (!string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
             throw new ArgumentException("Ollama endpoint must not contain credentials, query, or fragment.", nameof(uri));
 
-        var isLoopback = IPAddress.TryParse(uri.DnsSafeHost, out var address) && IPAddress.IsLoopback(address);
-        if (!isLoopback)
-            throw new ArgumentException("Ollama endpoint must resolve to loopback.", nameof(uri));
+        var isSupportedLoopback = IPAddress.TryParse(uri.DnsSafeHost, out var address) &&
+            (address.Equals(IPAddress.Loopback) || address.Equals(IPAddress.IPv6Loopback));
+        if (!isSupportedLoopback)
+            throw new ArgumentException("Ollama endpoint must use literal 127.0.0.1 or ::1.", nameof(uri));
 
         return new UriBuilder(uri) { Path = "/", Query = string.Empty, Fragment = string.Empty }.Uri;
     }

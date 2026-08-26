@@ -7,22 +7,24 @@ All notable changes are documented here. The project follows semantic versioning
 ### Added
 
 - Rebranded the product and release artifacts as IntentRoute AI.
-- Added a provider-neutral AI rule assistant with OpenAI Responses API and loopback-only local Ollama support.
+- Added a provider-neutral AI rule assistant with OpenAI Responses API and literal `127.0.0.1`/`::1` local Ollama support.
 - Added strict structured-output parsing, bounded responses, provider error categories, and mocked HTTP test seams.
 - Added deterministic AI draft validation for executable names, domains, CIDRs, ports, protocols, actions, duplicates, limits, and enabled proxy availability.
 - Added an all-or-nothing preview and explicit acceptance flow that persists generated rules disabled without restarting sing-box.
 - Added non-destructive migration of known configuration/profile files from `%APPDATA%\ProxyManager` to `%APPDATA%\IntentRouteAI`.
+- Added an exclusive migration lock and interrupted-migration marker so concurrent or partial legacy copies safely retry without overwriting files already copied.
 
 ### Security
 
 - OpenAI requests use `store=false`, no tools, a strict schema, and an API key read only from `OPENAI_API_KEY` at request time.
-- Ollama requests reject non-loopback and credentialed endpoints and disable system proxy use and redirects.
+- Ollama requests accept only literal `127.0.0.1` or `::1`, reject credentialed endpoints, and disable system proxy use and redirects.
 - Neither provider receives proxy credentials, proxy endpoints, existing rules, logs, filesystem paths, or the full process inventory.
 - AI rules are temporarily enabled only in a cloned dry-run so the existing builder validates their actual semantics before disabled persistence.
+- Unsupported protocol/action values are rejected at the strict parser boundary, and all projects compile with warnings treated as errors under the pinned .NET 8.0.424 SDK.
 
 ### Tests
 
-- Expanded the suite from 15 to 34 tests, including provider contracts, secret redaction, malformed/unexpected output, loopback enforcement, validation, migration, and disabled-rule persistence.
+- Expanded the suite beyond its original 15 cases with provider contracts, secret redaction, malformed/unexpected output, exact loopback enforcement, parser enum rejection, network-filter validation, interrupted/concurrent migration recovery, and disabled-rule persistence.
 
 ## [0.1.1] - 2026-08-25
 

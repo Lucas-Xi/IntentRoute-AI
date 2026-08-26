@@ -25,13 +25,19 @@ IntentRoute AI constructs JSON through typed objects and invokes sing-box with `
 
 ### Malicious or incorrect AI output
 
-Model output is untrusted. Provider responses are size-bounded, parsed against a closed schema that rejects unknown properties, and independently checked for executable names, domains, CIDRs, ports, protocols, actions, duplicates, rule counts, and proxy availability. Candidate rules are enabled only in a cloned dry-run so `SingBoxConfigBuilder` actually parses them. Accepted rules are saved disabled and require a second explicit action to enable. Model text is displayed only as plain WPF text and cannot invoke commands or tools.
+Model output is untrusted. Provider responses are size-bounded, parsed against a closed schema that rejects unknown properties, and independently checked for executable names, domains, CIDRs, ports, protocols, actions, duplicates, rule counts, and proxy availability. Candidate rules are enabled only in a cloned, in-process construction dry-run so `SingBoxConfigBuilder` actually parses them; preview does not execute the external binary. Accepted rules are saved disabled and require a second explicit action to enable, whose state-changing runtime path performs `sing-box check -c`. Model text is displayed only as plain WPF text and cannot invoke commands or tools.
 
 ### AI data disclosure
 
 OpenAI receives only the user-entered intent plus static schema/instructions. The key is read at request time from `OPENAI_API_KEY` and is never stored in application configuration, profiles, logs, exports, or diagnostics. Requests set `store=false`, but provider-side processing remains governed by OpenAI's current policies and the user's account.
 
-Ollama requests use only HTTP loopback, with proxy use and redirects disabled. LAN/public/credentialed endpoints are rejected. IntentRoute AI never sends proxy credentials, proxy addresses, existing rules, logs, filesystem paths, or a full process inventory to either provider.
+Ollama requests use only literal HTTP `127.0.0.1` or `::1`, with proxy use and redirects disabled. Hostname, other-loopback, LAN/public, and credentialed endpoints are rejected. IntentRoute AI never sends proxy credentials, proxy addresses, existing rules, logs, filesystem paths, or a full process inventory to either provider.
+
+Another local process can impersonate an Ollama service by binding the selected loopback port. Its output receives no special trust: it is size-bounded, strictly parsed, locally validated, previewed, and can only be accepted as disabled rules.
+
+### Upgrade migration interference
+
+Legacy migration holds a per-directory exclusive lock, copies only top-level `config.json` and `*.profile.json`, and uses atomic file moves plus credential-free in-progress/completion markers. A crash leaves the legacy directory intact; the next launch with an in-progress marker fills only missing known files. Pre-existing current-version user data prevents a new migration and is never overwritten. Filesystem denial or deliberate marker tampering can still prevent migration and is outside the application's ability to repair automatically.
 
 ### Secret disclosure
 

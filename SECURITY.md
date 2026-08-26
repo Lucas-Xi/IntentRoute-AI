@@ -19,7 +19,7 @@ Please allow a reasonable time for acknowledgement, triage, a coordinated fix, a
 - Exported profiles omit credentials.
 - OpenAI keys are read only from `OPENAI_API_KEY` at request time and are not stored by the application.
 - AI model output is untrusted, schema-constrained, locally validated, previewed, and persisted disabled only after explicit confirmation.
-- Local Ollama access is HTTP loopback-only with proxy use and redirects disabled. IntentRoute AI does not download or start models.
+- Local Ollama access accepts only literal HTTP `127.0.0.1` or `::1`, with proxy use and redirects disabled. IntentRoute AI does not download or start models.
 - sing-box is an external dependency and must be obtained from its official project; IntentRoute AI does not update or verify that binary.
 
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the complete model.
