@@ -227,6 +227,138 @@ public sealed class AppServiceRecoveryTests
         }
     }
 
+    [Fact]
+    public async Task SavedExecutablePath_IsUnapprovedAtTheStartOfEverySession()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        var candidatePath = Path.Combine(appDataRoot, "unapproved-sing-box.exe");
+        Directory.CreateDirectory(configDirectory);
+        File.WriteAllBytes(candidatePath, []);
+        AppConfigStore.SaveAtomic(configPath, new AppConfig
+        {
+            SingBoxExecutablePath = candidatePath,
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: true);
+
+            var readiness = await service.ProbeRuntimeReadinessAsync();
+
+            Assert.False(service.IsSingBoxExecutableApprovedForSession);
+            Assert.False(readiness.IsReady);
+            Assert.Equal(Path.GetFullPath(candidatePath), readiness.ExecutablePath);
+            Assert.Contains("本次启动中批准", readiness.Error, StringComparison.Ordinal);
+            Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task RecoveryImport_DoesNotApproveOrExecuteAnEmbeddedExecutablePath()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        var importPath = Path.Combine(appDataRoot, "import.json");
+        var candidatePath = Path.Combine(appDataRoot, "embedded-sing-box.exe");
+        Directory.CreateDirectory(configDirectory);
+        File.WriteAllText(configPath, "protected-corrupt-source");
+        File.WriteAllBytes(candidatePath, []);
+        File.WriteAllText(importPath, AppConfigStore.Serialize(new AppConfig
+        {
+            SingBoxExecutablePath = candidatePath,
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        }));
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+
+            service.RecoverConfigurationFromFile(importPath);
+            var readiness = await service.ProbeRuntimeReadinessAsync();
+
+            Assert.False(service.IsSingBoxExecutableApprovedForSession);
+            Assert.False(readiness.IsReady);
+            Assert.Contains("本次启动中批准", readiness.Error, StringComparison.Ordinal);
+            Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task InvalidSavedExecutablePath_IsReportedWithoutExecutionOrStartupFailure()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        AppConfigStore.SaveAtomic(configPath, new AppConfig
+        {
+            SingBoxExecutablePath = "invalid\0path",
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: true);
+
+            var readiness = await service.ProbeRuntimeReadinessAsync();
+
+            Assert.False(readiness.IsReady);
+            Assert.Contains("路径无效", readiness.Error, StringComparison.Ordinal);
+            Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void RuleImport_RejectsUnsupportedSemanticsBeforeChangingMemoryOrDisk()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        AppConfigStore.SaveAtomic(configPath, new AppConfig
+        {
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+        var original = File.ReadAllBytes(configPath);
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+
+            Assert.Throws<InvalidDataException>(() => service.ImportRules([
+                new ProxyRule
+                {
+                    ExeName = "unsupported.exe",
+                    ProxyChainId = "unsupported-chain",
+                    IsEnabled = true
+                }
+            ]));
+
+            Assert.Empty(service.Config.Rules);
+            Assert.Equal(original, File.ReadAllBytes(configPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "intentroute-service-test-" + Guid.NewGuid().ToString("N"));

@@ -94,7 +94,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 1. Download `IntentRoute-AI-v0.2.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
-4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse**. `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: because IntentRoute AI runs elevated, an automatically discovered candidate is displayed but never executed until you approve that exact file.
+4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.
 5. Ensure an existing proxy service is listening on a literal loopback IP such as `127.0.0.1` or `::1`. The unreleased Settings page can save SOCKS5/HTTP/HTTPS username and password values and can check whether the local TCP port accepts a connection.
 6. Run `IntentRouteAI.exe` as administrator. TUN creation requires elevation.
 

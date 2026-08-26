@@ -178,6 +178,7 @@ public class AppService : IDisposable, IAsyncDisposable
     private CancellationTokenSource? _runtimeApplyCts;
     private HashSet<string> _runningProcesses = new();
     private bool _configurationWritable = true;
+    private string? _approvedSingBoxExecutablePath;
     private string? _configurationRecoveryBackupPath;
     private string? _configurationError;
     public AppConfig Config => _config;
@@ -186,6 +187,10 @@ public class AppService : IDisposable, IAsyncDisposable
     public string ConfigDirectory => _configDir;
     public string? ConfigurationRecoveryBackupPath => _configurationRecoveryBackupPath;
     public string? ConfigurationError => _configurationError;
+    internal bool IsSingBoxExecutableApprovedForSession =>
+        !string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) &&
+        !string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) &&
+        PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath);
     public event Action<string>? StatusChanged;
     public event Action<string>? RuntimeLogReceived;
     public event Action<SingBoxRuntimeStatus>? RuntimeStatusChanged;
@@ -278,6 +283,7 @@ public class AppService : IDisposable, IAsyncDisposable
             throw new InvalidDataException("导入配置不符合当前支持的安全语义: " + build.Error);
         AppConfigStore.SaveAtomic(_configPath, recovered);
         _config = recovered;
+        _approvedSingBoxExecutablePath = null;
         MarkConfigurationRecovered();
         ApplyRules();
     }
@@ -295,6 +301,43 @@ public class AppService : IDisposable, IAsyncDisposable
         _config.Rules.Add(rule);
         SaveConfig();
         return rule;
+    }
+
+    public void ClearRules()
+    {
+        EnsureConfigurationWritable();
+        var candidate = CloneConfig(_config);
+        candidate.Rules.Clear();
+        ReplaceWithValidatedConfig(candidate, preserveRuntimeApproval: true);
+    }
+
+    public int ImportRules(IReadOnlyList<ProxyRule> rules)
+    {
+        EnsureConfigurationWritable();
+        ArgumentNullException.ThrowIfNull(rules);
+        var candidate = CloneConfig(_config);
+        var added = 0;
+        foreach (var rule in rules)
+        {
+            if (rule == null)
+                throw new InvalidDataException("导入文件包含空规则。");
+            if (candidate.Rules.Any(existing =>
+                string.Equals(existing.ExeName, rule.ExeName, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var importedRule = JsonConvert.DeserializeObject<ProxyRule>(
+                JsonConvert.SerializeObject(rule))
+                ?? throw new InvalidDataException("导入规则无法解析。");
+            importedRule.Id = Guid.NewGuid().ToString();
+            candidate.Rules.Add(importedRule);
+            added++;
+        }
+
+        if (added > 0)
+            ReplaceWithValidatedConfig(candidate, preserveRuntimeApproval: true);
+        return added;
     }
 
     internal void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
@@ -415,19 +458,75 @@ public class AppService : IDisposable, IAsyncDisposable
         if (!File.Exists(path))
             throw new FileNotFoundException("The selected sing-box executable does not exist.", path);
 
-        _config.SingBoxExecutablePath = Path.GetFullPath(path);
-        SaveConfig();
+        var approvedPath = Path.GetFullPath(path);
+        var previousPath = _config.SingBoxExecutablePath;
+        var previousApproval = _approvedSingBoxExecutablePath;
+        _config.SingBoxExecutablePath = approvedPath;
+        _approvedSingBoxExecutablePath = approvedPath;
+        try
+        {
+            SaveConfig();
+        }
+        catch
+        {
+            _config.SingBoxExecutablePath = previousPath;
+            _approvedSingBoxExecutablePath = previousApproval;
+            throw;
+        }
     }
 
     public void ClearSingBoxExecutablePath()
     {
         EnsureConfigurationWritable();
+        var previousPath = _config.SingBoxExecutablePath;
+        var previousApproval = _approvedSingBoxExecutablePath;
         _config.SingBoxExecutablePath = string.Empty;
-        SaveConfig();
+        _approvedSingBoxExecutablePath = null;
+        try
+        {
+            SaveConfig();
+        }
+        catch
+        {
+            _config.SingBoxExecutablePath = previousPath;
+            _approvedSingBoxExecutablePath = previousApproval;
+            throw;
+        }
     }
 
-    public Task<SingBoxReadinessResult> ProbeRuntimeReadinessAsync(CancellationToken cancellationToken = default) =>
-        _runtime.ProbeReadinessAsync(_config.SingBoxExecutablePath, cancellationToken);
+    public Task<SingBoxReadinessResult> ProbeRuntimeReadinessAsync(CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) &&
+            !string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) &&
+            PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath))
+        {
+            return _runtime.ProbeReadinessAsync(_approvedSingBoxExecutablePath, cancellationToken);
+        }
+
+        string? candidate;
+        if (!string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath))
+        {
+            try
+            {
+                candidate = Path.GetFullPath(_config.SingBoxExecutablePath);
+            }
+            catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+            {
+                return Task.FromResult(SingBoxReadinessResult.NotReady(
+                    null,
+                    "保存的 sing-box 路径无效，未执行任何命令。请通过“浏览…”选择有效文件。"));
+            }
+        }
+        else
+        {
+            candidate = _runtime.DiscoverExecutable();
+        }
+        return Task.FromResult(SingBoxReadinessResult.NotReady(
+            candidate,
+            candidate == null
+                ? "未发现 sing-box。请先单独安装 v1.13+，再通过“浏览…”选择并批准可执行文件。"
+                : "该 sing-box 路径尚未在本次启动中批准，未执行任何命令。请通过“浏览…”重新选择该文件后再检查。"));
+    }
 
     // ── Profiles ─────────────────────────────────
 
@@ -533,11 +632,21 @@ public class AppService : IDisposable, IAsyncDisposable
     private void QueueRuntimeApply()
     {
         if (!_configurationWritable) return;
+        if (string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) ||
+            string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) ||
+            !PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath))
+        {
+            StatusChanged?.Invoke(string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath)
+                ? "sing-box 尚未选择；配置已保存，但未启动运行时。"
+                : "sing-box 路径尚未在本次启动中批准；配置已保存，但未执行该文件。请在设置中通过“浏览…”重新选择。");
+            return;
+        }
         AppConfig snapshot;
         try
         {
             snapshot = JsonConvert.DeserializeObject<AppConfig>(
                 JsonConvert.SerializeObject(_config)) ?? new AppConfig();
+            snapshot.SingBoxExecutablePath = _approvedSingBoxExecutablePath;
         }
         catch (Exception ex)
         {
@@ -600,7 +709,7 @@ public class AppService : IDisposable, IAsyncDisposable
         }
     }
 
-    private void ReplaceWithValidatedConfig(AppConfig candidate)
+    private void ReplaceWithValidatedConfig(AppConfig candidate, bool preserveRuntimeApproval = false)
     {
         NormalizeConfig(candidate, addDefaultProxy: candidate.ProxyServers.Count == 0);
         foreach (var server in candidate.ProxyServers)
@@ -610,8 +719,33 @@ public class AppService : IDisposable, IAsyncDisposable
             throw new InvalidDataException("配置不符合当前支持的安全语义: " + build.Error);
 
         AppConfigStore.SaveAtomic(_configPath, candidate);
+        var previousApproval = preserveRuntimeApproval ? _approvedSingBoxExecutablePath : null;
         _config = candidate;
+        _approvedSingBoxExecutablePath = previousApproval != null &&
+            !string.IsNullOrWhiteSpace(candidate.SingBoxExecutablePath) &&
+            PathsEqual(previousApproval, candidate.SingBoxExecutablePath)
+                ? previousApproval
+                : null;
         ApplyRules();
+    }
+
+    private static AppConfig CloneConfig(AppConfig config) =>
+        JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(config))
+        ?? throw new InvalidDataException("无法创建配置候选副本。");
+
+    private static bool PathsEqual(string left, string right)
+    {
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private void MarkConfigurationRecovered()

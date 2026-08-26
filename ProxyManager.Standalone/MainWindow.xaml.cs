@@ -380,8 +380,7 @@ public partial class MainWindow : Window
         if (MessageBox.Show("确定清空所有规则？", "确认",
             MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
-            _service.Config.Rules.Clear();
-            _service.SaveConfig();
+            _service.ClearRules();
             LoadRules();
         }
     }
@@ -458,22 +457,13 @@ public partial class MainWindow : Window
         {
             try
             {
-                var json = File.ReadAllText(dialog.FileName);
+                var json = AppConfigStore.ReadStrictUtf8(dialog.FileName);
                 var import = Newtonsoft.Json.JsonConvert.DeserializeObject<ImportData>(json);
                 if (import?.Rules != null)
                 {
-                    foreach (var rule in import.Rules)
-                    {
-                        if (!_service.Config.Rules.Any(r =>
-                            r.ExeName.Equals(rule.ExeName, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            rule.Id = Guid.NewGuid().ToString();
-                            _service.Config.Rules.Add(rule);
-                        }
-                    }
-                    _service.SaveConfig();
+                    var added = _service.ImportRules(import.Rules);
                     LoadRules();
-                    MessageBox.Show($"导入完成: {import.Rules.Count} 条规则", "成功");
+                    MessageBox.Show($"导入完成: 新增 {added} 条规则", "成功");
                 }
             }
             catch (Exception ex)
@@ -708,6 +698,12 @@ public partial class MainWindow : Window
             RuntimeReadinessText.Text = readiness.IsReady
                 ? "已就绪：版本满足 v1.13+。规则变更仍会先执行 sing-box check。"
                 : readiness.Error ?? "sing-box 未就绪。";
+            if (!_service.GetRuntimeStatus().IsRunning)
+            {
+                StatusDetail.Text = readiness.IsReady
+                    ? "sing-box 已批准且版本兼容；正在等待或应用当前配置。"
+                    : readiness.Error ?? "sing-box 未就绪。";
+            }
         }
         catch (OperationCanceledException)
         {

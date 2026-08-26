@@ -7,7 +7,7 @@
 1. The UI edits an `AppConfig` model.
 2. `AppConfigStore` persists settings atomically and protects passwords with DPAPI.
 3. `SingBoxConfigBuilder` validates supported semantics and produces full and redacted JSON representations.
-4. `SingBoxRuntime` discovers a separately installed sing-box candidate, but only an exact path explicitly approved in Settings may run the bounded, no-shell `sing-box version` probe.
+4. `SingBoxRuntime` discovers a separately installed sing-box candidate, but only an exact path explicitly re-approved in Settings for the current elevated session may run the bounded, no-shell `sing-box version` probe.
 5. Only a recognized v1.13+ result crosses the readiness gate. Missing, old, timed-out, or unrecognized binaries do not receive configuration data and are not started.
 6. A candidate configuration is written atomically and checked with `sing-box check -c`. This validates schema and configuration, not live network reachability.
 7. A checked candidate is promoted and the managed process is replaced. If the replacement exits during its startup-settle window, IntentRoute AI atomically restores and restarts the previous checked configuration when one exists.
@@ -29,7 +29,7 @@
 | --- | --- |
 | WPF input to config builder | Validate process patterns, hosts, IP/CIDR, ports, protocols, proxy references, and server endpoints |
 | Config builder to file system | Never log full JSON; write atomically to the per-user application directory |
-| File system to sing-box | Display unapproved discovery hints; execute only a persisted user-selected path without a command shell, then validate before run |
+| File system to sing-box | Display saved/imported/discovered paths only as unapproved hints; execute only a path reselected in the current elevated session, without a command shell, then validate before run |
 | sing-box output to UI | Redact common password, secret, token, and credential patterns |
 | Profile export | Remove passwords rather than exporting DPAPI ciphertext |
 | Runtime ownership | Hold an exclusive per-config-directory lock and record the child PID, start time, and executable path without credentials |

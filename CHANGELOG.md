@@ -31,6 +31,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Treat malformed or undecryptable `dpapi:` proxy passwords as an unusable configuration instead of silently replacing them with empty credentials.
 - Fail closed when sing-box version output is missing, unreadable, timed out, or older than v1.13; no candidate configuration is written and no child process is started.
 - Never execute a sing-box candidate found through environment variables, the application directory, or `PATH` until the user explicitly approves the exact file with the Settings file picker.
+- Treat saved, migrated, and imported sing-box paths as unapproved on every elevated launch; only a file reselected in the current session may run `version`, `check`, or `run`.
+- Validate rule imports against the complete candidate configuration before atomically replacing the current config; unsupported semantics no longer persist before runtime rejection.
 
 ### Tests
 

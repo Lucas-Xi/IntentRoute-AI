@@ -657,7 +657,7 @@
                                 <Border x:Name="RuntimeSettingsCard" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                                     <StackPanel>
                                         <TextBlock Text="sing-box 就绪状态" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
-                                        <TextBlock Text="IntentRoute AI 不包含也不会下载 sing-box。请选择你单独安装并验证过的 v1.13+ 可执行文件。"
+                                        <TextBlock Text="IntentRoute AI 不包含也不会下载 sing-box。每次启动都需通过“浏览…”重新批准你单独安装并验证过的 v1.13+ 可执行文件。"
                                                    TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
