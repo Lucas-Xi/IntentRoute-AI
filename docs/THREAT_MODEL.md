@@ -47,6 +47,8 @@ Legacy migration holds a per-directory exclusive lock, copies only top-level `co
 
 Stored passwords are DPAPI-protected. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
 
+The packaged-WPF CI smoke process can opt into a one-shot unhandled-exception diagnostic path through `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH`. The file contains only the exception text after the standard secret redactor; it does not include configuration JSON, provider prompts, credentials, or runtime logs, and the smoke script removes it after the process exits.
+
 The generated sing-box configuration necessarily contains a usable password while running. It lives under the current user's application-data directory and is removed on stop, clean shutdown, and unexpected child exit. A per-directory lock prevents two IntentRoute AI instances from owning the same runtime. After an application or OS crash, the next launch uses a credential-free PID/start-time lease to recover a recorded orphan and removes stale generated configs and candidates. Abrupt termination can still leave files present until that next launch, and cleanup can fail under filesystem or administrator interference.
 
 ### Executable substitution

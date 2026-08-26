@@ -1,11 +1,16 @@
+using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace ProxyManager.Standalone;
 
 public partial class App : Application
 {
+    internal const string SmokeDiagnosticPathVariable = "INTENTROUTE_SMOKE_DIAGNOSTIC_PATH";
+
     private void App_Startup(object sender, StartupEventArgs e)
     {
+        ConfigureSmokeDiagnostics();
         try
         {
             var window = new MainWindow();
@@ -29,6 +34,32 @@ public partial class App : Application
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);
+        }
+    }
+
+    private void ConfigureSmokeDiagnostics()
+    {
+        var diagnosticPath = Environment.GetEnvironmentVariable(SmokeDiagnosticPathVariable);
+        if (string.IsNullOrWhiteSpace(diagnosticPath)) return;
+
+        DispatcherUnhandledException += (_, eventArgs) =>
+            WriteSmokeDiagnostic(diagnosticPath, eventArgs.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+            WriteSmokeDiagnostic(diagnosticPath, eventArgs.ExceptionObject as Exception);
+    }
+
+    private static void WriteSmokeDiagnostic(string path, Exception? exception)
+    {
+        try
+        {
+            var text = exception == null
+                ? "Unhandled non-Exception failure."
+                : SingBoxRuntime.RedactSecrets(exception.ToString());
+            File.WriteAllText(path, text);
+        }
+        catch
+        {
+            // Diagnostics must never replace or suppress the original fatal error.
         }
     }
 }

@@ -42,6 +42,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Added invalid UTF-8 preservation and unapproved discovery tests, plus a build-time package-content gate that rejects bundled sing-box and generated runtime files.
 - Added null-collection-entry recovery coverage for rules, proxy servers, and proxy chains.
 - Added a Windows CI and release smoke gate that starts the published single-file WPF executable, verifies its main window title, and requires a clean normal close.
+- Added opt-in redacted managed-exception diagnostics for the packaged-WPF smoke gate so shutdown regressions fail with an actionable stack without exposing configuration or credentials.
 
 ## [0.2.0] - 2026-08-26
 

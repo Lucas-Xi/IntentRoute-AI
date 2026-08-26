@@ -14,6 +14,10 @@ $ErrorActionPreference = 'Stop'
 $resolvedOutput = (Resolve-Path -LiteralPath $OutputDirectory).Path
 $application = Join-Path $resolvedOutput 'IntentRouteAI.exe'
 $expectedTitle = 'IntentRoute AI - Windows 智能分流'
+$diagnosticVariable = 'INTENTROUTE_SMOKE_DIAGNOSTIC_PATH'
+$diagnosticPath = Join-Path ([System.IO.Path]::GetTempPath()) (
+    'intentroute-wpf-smoke-' + [Guid]::NewGuid().ToString('N') + '.txt')
+$previousDiagnosticPath = [Environment]::GetEnvironmentVariable($diagnosticVariable, 'Process')
 
 if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
     throw "Published package is missing IntentRouteAI.exe: $resolvedOutput"
@@ -21,6 +25,7 @@ if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
 
 $process = $null
 try {
+    [Environment]::SetEnvironmentVariable($diagnosticVariable, $diagnosticPath, 'Process')
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $application
     $startInfo.WorkingDirectory = $resolvedOutput
@@ -62,7 +67,13 @@ try {
     }
     $process.WaitForExit()
     if ($process.ExitCode -ne 0) {
-        throw "Published IntentRouteAI.exe returned exit code $($process.ExitCode) after a normal close."
+        $diagnostic = if (Test-Path -LiteralPath $diagnosticPath -PathType Leaf) {
+            Get-Content -Raw -LiteralPath $diagnosticPath
+        }
+        else {
+            'No redacted managed-exception diagnostic was produced.'
+        }
+        throw "Published IntentRouteAI.exe returned exit code $($process.ExitCode) after a normal close.`n$diagnostic"
     }
 
     Write-Host 'WPF smoke test passed: published single-file app created the expected main window and closed cleanly.'
@@ -80,4 +91,6 @@ finally {
         }
         $process.Dispose()
     }
+    Remove-Item -LiteralPath $diagnosticPath -Force -ErrorAction SilentlyContinue
+    [Environment]::SetEnvironmentVariable($diagnosticVariable, $previousDiagnosticPath, 'Process')
 }
