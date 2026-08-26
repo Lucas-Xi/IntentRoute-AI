@@ -29,7 +29,7 @@ The active configuration is owned by a Configuration Workspace. UI and validatio
 
 Malformed JSON, invalid UTF-8, null documents or collection entries, and proxy passwords whose `dpapi:` value cannot be decoded for the current Windows user are treated as an unusable configuration. The original `config.json` is left untouched, a timestamped recovery copy is attempted, every save path is blocked, and no sing-box apply is queued. Recovery import is semantically validated before replacement; import and reset are unavailable unless the recovery copy still exists. Filesystem or ACL failures can prevent creation of the additional recovery copy, but they do not authorize overwriting the original.
 
-Rule, proxy, mode, AI acceptance, and profile changes share the same candidate commit path. Local edits retain an in-session sing-box approval only if the committed executable path is unchanged. Profile replacement, recovery import, and reset always clear approval, preventing imported configuration data from acquiring execution authority.
+Rule, proxy, mode, AI acceptance, and profile changes share the same candidate commit path. Local edits retain an in-session sing-box approval only if the committed executable path is unchanged. Profile replacement, recovery import, and reset always clear approval, preventing imported configuration data from acquiring execution authority. Approval clearing cancels an outstanding replacement apply. A previously running process is retained for connectivity but marked `RunningStale`, so the UI cannot report an older configuration as current or green while re-approval is required.
 
 ### Malicious or incorrect AI output
 
@@ -49,7 +49,7 @@ Legacy migration holds a per-directory exclusive lock, copies only top-level `co
 
 ### Secret disclosure
 
-Stored passwords are DPAPI-protected. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
+Stored passwords are DPAPI-protected. The in-memory model contains plaintext and every save creates a new DPAPI envelope, even when the literal password begins with `dpapi:`; only persisted values are interpreted as DPAPI envelopes during deserialization. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
 
 The packaged-WPF CI smoke process can opt into a one-shot managed-exception diagnostic path through `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH`. It covers unhandled failures and exceptions caught by the startup safety dialog, including an unexpected startup-window title. The file contains only the exception text after the standard secret redactor; it does not include configuration JSON, provider prompts, credentials, or runtime logs, and the smoke script removes it after the process exits or fails validation.
 

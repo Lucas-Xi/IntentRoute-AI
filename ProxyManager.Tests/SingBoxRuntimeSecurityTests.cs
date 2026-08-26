@@ -142,6 +142,42 @@ public sealed class SingBoxRuntimeSecurityTests
         }
     }
 
+    [Fact]
+    public async Task MarkRunningConfigurationStale_PreservesProcessAndRaisesWarningState()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var fakeExecutable = Path.Combine(tempDirectory, "fake-sing-box.exe");
+        File.WriteAllBytes(fakeExecutable, []);
+        var backend = new FakeSingBoxExecutionBackend(_ => null);
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(20),
+                executionBackend: backend,
+                executableOverride: fakeExecutable);
+            var applied = await runtime.ApplyAsync(CreateConfig("127.0.0.1"));
+            Assert.True(applied.Success, applied.Error);
+            var processId = applied.Status.ProcessId;
+
+            runtime.MarkRunningConfigurationStale("Current configuration requires renewed approval.");
+
+            var status = runtime.GetStatus();
+            Assert.Equal(SingBoxRuntimeState.RunningStale, status.State);
+            Assert.True(status.IsRunning);
+            Assert.Equal(processId, status.ProcessId);
+            Assert.Contains("renewed approval", status.LastError, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(1, backend.StartCount);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("sing-box version 1.12.9", false)]
     [InlineData("sing-box version 1.13.0", true)]
@@ -389,7 +425,7 @@ public sealed class SingBoxRuntimeSecurityTests
         ]
     };
 
-    private sealed class FakeSingBoxExecutionBackend(
+    internal sealed class FakeSingBoxExecutionBackend(
         Func<string, int?> startupExitCode,
         string versionOutput = "sing-box version 1.13.0")
         : ISingBoxExecutionBackend

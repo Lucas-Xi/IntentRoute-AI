@@ -112,7 +112,6 @@ public static class AppConfigStore
     public static string ProtectPassword(string? password)
     {
         if (string.IsNullOrEmpty(password)) return string.Empty;
-        if (password.StartsWith(DpapiPrefix, StringComparison.Ordinal)) return password;
 
         var bytes = ProtectedData.Protect(
             Encoding.UTF8.GetBytes(password),

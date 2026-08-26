@@ -38,6 +38,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Cancel and drain first-load/model-provider work before disposing providers, then queue the final WPF `Close` after the current closing frame, preventing managed crashes when the published app is closed immediately after launch.
 - Validate and atomically persist complete configuration candidates before publishing in-memory state or queueing runtime replacement; validation, DPAPI, and filesystem failures now leave both memory and disk unchanged.
 - Preserve current-session sing-box approval only for local transactions whose committed executable path is unchanged; Profile replacement, recovery import, and reset always clear approval.
+- When approval is cleared, cancel any queued replacement apply and mark a preserved running process as `RunningStale` instead of leaving a green status for an older configuration.
+- Treat every in-memory proxy password as plaintext at the persistence and builder boundaries, so legitimate values beginning with `dpapi:` are encrypted and round-trip instead of being misread as stored ciphertext.
 
 ### Tests
 
@@ -48,6 +50,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Added opt-in redacted managed-exception diagnostics for the packaged-WPF smoke gate so shutdown regressions fail with an actionable stack without exposing configuration or credentials.
 - Surface the same redacted diagnostic when startup is caught by the WPF safety dialog or the smoke gate observes an unexpected main-window title.
 - Added Configuration Workspace coverage for detached snapshots, filesystem-failure rollback, unsupported-mutation rollback, AI disabled-rule commits without runtime apply, and approval preservation/clearing semantics.
+- Added regression coverage for approval-clearing while an older runtime remains active, plus DPAPI-marker-prefixed password round trips.
 
 ## [0.2.0] - 2026-08-26
 

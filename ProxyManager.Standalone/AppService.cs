@@ -207,11 +207,15 @@ public class AppService : IDisposable, IAsyncDisposable
     {
     }
 
-    internal AppService(string appDataRoot, bool startMonitor, bool applyOnStart)
+    internal AppService(
+        string appDataRoot,
+        bool startMonitor,
+        bool applyOnStart,
+        Func<string, SingBoxRuntime>? runtimeFactory = null)
     {
         _configDir = AppDataMigration.PrepareConfigDirectory(appDataRoot);
         _configPath = Path.Combine(_configDir, "config.json");
-        _runtime = new SingBoxRuntime(_configDir);
+        _runtime = runtimeFactory?.Invoke(_configDir) ?? new SingBoxRuntime(_configDir);
         _workspace = ConfigurationWorkspace.Load(_configPath);
         _runtime.StatusChanged += OnRuntimeStatusChanged;
         _runtime.LogReceived += line => RuntimeLogReceived?.Invoke(line);
@@ -633,6 +637,9 @@ public class AppService : IDisposable, IAsyncDisposable
             string.IsNullOrWhiteSpace(current.SingBoxExecutablePath) ||
             !PathsEqual(_approvedSingBoxExecutablePath, current.SingBoxExecutablePath))
         {
+            CancelPendingRuntimeApply();
+            _runtime.MarkRunningConfigurationStale(
+                "The active configuration was saved but cannot be applied until the sing-box executable is approved again for this session.");
             StatusChanged?.Invoke(string.IsNullOrWhiteSpace(current.SingBoxExecutablePath)
                 ? "sing-box 尚未选择；配置已保存，但未启动运行时。"
                 : "sing-box 路径尚未在本次启动中批准；配置已保存，但未执行该文件。请在设置中通过“浏览…”重新选择。");
@@ -677,6 +684,20 @@ public class AppService : IDisposable, IAsyncDisposable
                 StatusChanged?.Invoke("运行时错误: " + SingBoxRuntime.RedactSecrets(ex.Message));
             }
         }, token);
+    }
+
+    private void CancelPendingRuntimeApply()
+    {
+        CancellationTokenSource? pending;
+        lock (_runtimeApplyGate)
+        {
+            pending = _runtimeApplyCts;
+            _runtimeApplyCts = null;
+        }
+
+        if (pending == null) return;
+        try { pending.Cancel(); }
+        finally { pending.Dispose(); }
     }
 
     private void OnRuntimeStatusChanged(SingBoxRuntimeStatus status)

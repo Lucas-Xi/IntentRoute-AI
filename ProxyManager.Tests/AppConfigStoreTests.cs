@@ -20,6 +20,19 @@ public sealed class AppConfigStoreTests
     }
 
     [Fact]
+    public void Serialize_EncryptsLiteralPasswordBeginningWithDpapiMarker()
+    {
+        const string password = "dpapi:literal-password";
+        var config = ConfigWithPassword(password);
+
+        var json = AppConfigStore.Serialize(config);
+        var restored = AppConfigStore.Deserialize(json);
+
+        Assert.DoesNotContain(password, json, StringComparison.Ordinal);
+        Assert.Equal(password, restored.ProxyServers[0].Password);
+    }
+
+    [Fact]
     public void Serialize_RedactedExportOmitsCredentials()
     {
         var json = AppConfigStore.Serialize(ConfigWithPassword("must-not-export"), redactPasswords: true);

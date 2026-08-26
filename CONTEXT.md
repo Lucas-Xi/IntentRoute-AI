@@ -23,3 +23,11 @@ _Avoid_: Mutable config, config reference
 **Recovery Protection**:
 The state in which an unreadable Active Configuration is preserved and all replacement actions remain blocked until a recovery copy is available and the user explicitly recovers or resets.
 _Avoid_: Fallback mode, auto-reset
+
+**Runtime Approval**:
+Current-session authority to execute one exact, user-selected sing-box path. Persisted or imported paths are hints and never carry this authority.
+_Avoid_: Trusted config path, remembered approval
+
+**Stale Runtime**:
+A preserved sing-box process that still runs an older accepted configuration after the Active Configuration changes but cannot yet be applied.
+_Avoid_: Running, healthy current config

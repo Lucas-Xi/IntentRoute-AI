@@ -122,6 +122,28 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
         }
     }
 
+    internal void MarkRunningConfigurationStale(string error)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        var changed = false;
+        lock (_gate)
+        {
+            var isRunning = false;
+            try { isRunning = _process is { HasExited: false }; }
+            catch { isRunning = false; }
+
+            if (isRunning)
+            {
+                _state = SingBoxRuntimeState.RunningStale;
+                _lastError = RedactSecrets(error);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            RaiseStatusChanged();
+    }
+
     public IReadOnlyList<string> GetRecentLogs() => _recentLogs.ToArray();
 
     public void ClearRecentLogs()

@@ -379,10 +379,12 @@ public static class SingBoxConfigBuilder
         return "proxy-" + safe;
     }
 
-    private static string ResolvePassword(string? stored)
+    private static string ResolvePassword(string? plaintext)
     {
-        if (string.IsNullOrEmpty(stored)) return "";
-        return AppConfigStore.UnprotectPassword(stored);
+        // AppConfigStore decrypts values at the persistence boundary. In-memory
+        // AppConfig instances always carry plaintext, including legitimate
+        // passwords whose literal value begins with the on-disk "dpapi:" marker.
+        return plaintext ?? string.Empty;
     }
 
     private static JObject RedactSecrets(JObject root)

@@ -472,6 +472,98 @@ public sealed class AppServiceRecoveryTests
         }
     }
 
+    [Fact]
+    public async Task ProfileReplacementWithoutApproval_MarksRunningConfigurationStale()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var executablePath = Path.Combine(appDataRoot, "selected-sing-box.exe");
+        var profilePath = Path.Combine(appDataRoot, "replacement.profile.json");
+        File.WriteAllBytes(executablePath, []);
+        AppConfigStore.SaveAtomic(profilePath, new AppConfig
+        {
+            GlobalMode = GlobalMode.DirectAll,
+            SingBoxExecutablePath = executablePath,
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+        var backend = new SingBoxRuntimeSecurityTests.FakeSingBoxExecutionBackend(_ => null);
+
+        try
+        {
+            using var service = new AppService(
+                appDataRoot,
+                startMonitor: false,
+                applyOnStart: false,
+                runtimeFactory: configDirectory => new SingBoxRuntime(
+                    configDirectory,
+                    maxLogLines: 64,
+                    checkTimeout: TimeSpan.FromSeconds(1),
+                    startupSettleTime: TimeSpan.FromMilliseconds(20),
+                    executionBackend: backend,
+                    executableOverride: executablePath));
+            var runtimeStates = new List<SingBoxRuntimeState>();
+            service.RuntimeStatusChanged += status => runtimeStates.Add(status.State);
+
+            service.SetSingBoxExecutablePath(executablePath);
+            await WaitUntilAsync(() => service.GetRuntimeStatus().State == SingBoxRuntimeState.Running);
+            var processId = service.GetRuntimeStatus().ProcessId;
+
+            service.ImportProfile(profilePath);
+
+            var status = service.GetRuntimeStatus();
+            Assert.False(service.IsSingBoxExecutableApprovedForSession);
+            Assert.Equal(GlobalMode.DirectAll, service.Config.GlobalMode);
+            Assert.Equal(SingBoxRuntimeState.RunningStale, status.State);
+            Assert.True(status.IsRunning);
+            Assert.Equal(processId, status.ProcessId);
+            Assert.Contains("approved again", status.LastError, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(SingBoxRuntimeState.RunningStale, runtimeStates);
+            Assert.Equal(1, backend.StartCount);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void DpapiMarkerPrefixedPassword_CommitsAndReloadsThroughWorkspace()
+    {
+        const string password = "dpapi:legitimate-plaintext";
+        var appDataRoot = CreateTempDirectory();
+        try
+        {
+            using (var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false))
+            {
+                service.UpdatePrimaryProxy(
+                    ProxyType.Socks5,
+                    "127.0.0.1",
+                    1080,
+                    "local-user",
+                    password);
+
+                Assert.Equal(password, service.GetPrimaryProxy()?.Password);
+            }
+
+            using var reloaded = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+            Assert.Equal(password, reloaded.GetPrimaryProxy()?.Password);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            if (condition()) return;
+            await Task.Delay(20);
+        }
+
+        Assert.Fail("Timed out waiting for the expected runtime state.");
+    }
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "intentroute-service-test-" + Guid.NewGuid().ToString("N"));
