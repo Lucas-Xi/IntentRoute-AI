@@ -43,6 +43,10 @@ jobs:
         shell: pwsh
         run: ./scripts/build.ps1 -OutputDirectory "$env:RUNNER_TEMP/package"
 
+      - name: Smoke test published WPF app
+        shell: pwsh
+        run: ./scripts/smoke-test-wpf.ps1 -OutputDirectory "$env:RUNNER_TEMP/package"
+
       - name: Package and checksum
         shell: pwsh
         run: |
@@ -50,7 +54,7 @@ jobs:
           @'
           IntentRoute AI does not include sing-box, an AI model, an API key, or a proxy service.
           Install sing-box v1.13+ separately from https://github.com/SagerNet/sing-box/releases
-          Then place sing-box.exe beside IntentRouteAI.exe and run IntentRoute AI as administrator.
+          Run IntentRoute AI as administrator, then use Settings > Browse on every launch to approve your separately installed sing-box.exe.
           '@ | Set-Content "$env:RUNNER_TEMP/package/README_RELEASE.txt" -Encoding utf8
           $archive = "IntentRoute-AI-$env:GITHUB_REF_NAME-win-x64.zip"
           Compress-Archive -Path "$env:RUNNER_TEMP/package/*" -DestinationPath $archive -CompressionLevel Optimal

@@ -10,7 +10,7 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 
 - OSI-style MIT license for project-owned code.
 - Public source, issue templates, contributor guide, code of conduct, support and security policies.
-- Automated Windows tests, builds, vulnerability checks, and release archives with SHA-256 checksums.
+- Automated Windows tests, builds, vulnerability checks, a packaged-WPF launch/close smoke gate, and release archives with SHA-256 checksums.
 - Architecture and threat-model documentation.
 - Honest supported/unsupported feature table.
 - Maintainer instructions that prohibit secrets, fake telemetry, silent semantic fallbacks, and bundled network binaries.

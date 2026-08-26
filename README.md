@@ -122,9 +122,10 @@ Requirements for source builds:
 ./scripts/test.ps1
 ./scripts/check-vulnerabilities.ps1
 ./scripts/build.ps1
+./scripts/smoke-test-wpf.ps1 -OutputDirectory ./artifacts/win-x64
 ```
 
-Provider tests use mocked HTTP handlers. They do not require an OpenAI key, a paid API call, a running Ollama service, or a downloaded local model.
+Provider tests use mocked HTTP handlers. They do not require an OpenAI key, a paid API call, a running Ollama service, or a downloaded local model. The Windows CI also launches the published single-file executable, verifies that the expected WPF main window is created, requests a normal close, and requires a clean zero exit.
 
 ## Architecture and security
 
