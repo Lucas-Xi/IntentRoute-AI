@@ -48,11 +48,11 @@ jobs:
         run: |
           Copy-Item README.md, LICENSE, THIRD_PARTY_NOTICES.md "$env:RUNNER_TEMP/package"
           @'
-          ProxyManager does not include sing-box or a proxy service.
+          IntentRoute AI does not include sing-box, an AI model, an API key, or a proxy service.
           Install sing-box v1.13+ separately from https://github.com/SagerNet/sing-box/releases
-          Then place sing-box.exe beside ProxyManager.exe and run ProxyManager as administrator.
+          Then place sing-box.exe beside IntentRouteAI.exe and run IntentRoute AI as administrator.
           '@ | Set-Content "$env:RUNNER_TEMP/package/README_RELEASE.txt" -Encoding utf8
-          $archive = "ProxyManager-$env:GITHUB_REF_NAME-win-x64.zip"
+          $archive = "IntentRoute-AI-$env:GITHUB_REF_NAME-win-x64.zip"
           Compress-Archive -Path "$env:RUNNER_TEMP/package/*" -DestinationPath $archive -CompressionLevel Optimal
           $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
           "$hash  $archive" | Set-Content "$archive.sha256" -Encoding ascii
@@ -62,6 +62,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $archive = (Get-Item ProxyManager-*.zip).FullName
-          $checksum = (Get-Item ProxyManager-*.sha256).FullName
-          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --prerelease --title "ProxyManager $env:GITHUB_REF_NAME"
+          $archive = (Get-Item IntentRoute-AI-*.zip).FullName
+          $checksum = (Get-Item IntentRoute-AI-*.sha256).FullName
+          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --prerelease --title "IntentRoute AI $env:GITHUB_REF_NAME"

@@ -2,7 +2,7 @@
 
 ## Our pledge
 
-We pledge to make participation in ProxyManager a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity and expression, experience level, education, socioeconomic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
+We pledge to make participation in IntentRoute AI a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity and expression, experience level, education, socioeconomic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
 
 We commit to acting and interacting in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 

@@ -8,15 +8,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyName>ProxyManager</AssemblyName>
+    <AssemblyName>IntentRouteAI</AssemblyName>
     <RootNamespace>ProxyManager.Standalone</RootNamespace>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <Authors>Lucas-Xi and contributors</Authors>
-    <Company>ProxyManager contributors</Company>
-    <Product>ProxyManager</Product>
-    <Description>Open-source per-application proxy routing for Windows, powered by sing-box TUN.</Description>
+    <Company>IntentRoute AI contributors</Company>
+    <Product>IntentRoute AI</Product>
+    <Description>Open-source AI-assisted per-application routing for Windows, powered by sing-box TUN.</Description>
     <Copyright>Copyright (c) 2026 Lucas-Xi and contributors</Copyright>
-    <RepositoryUrl>https://github.com/Lucas-Xi/ProxyManager</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Lucas-Xi/IntentRoute-AI</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>

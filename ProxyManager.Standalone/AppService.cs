@@ -183,8 +183,7 @@ public class AppService : IDisposable
     public AppService()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _configDir = Path.Combine(appData, "ProxyManager");
-        Directory.CreateDirectory(_configDir);
+        _configDir = AppDataMigration.PrepareConfigDirectory(appData);
         _configPath = Path.Combine(_configDir, "config.json");
         _runtime = new SingBoxRuntime(_configDir);
         _runtime.StatusChanged += OnRuntimeStatusChanged;
@@ -230,6 +229,13 @@ public class AppService : IDisposable
         _config.Rules.Add(rule);
         SaveConfig();
         return rule;
+    }
+
+    public void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
+    {
+        // Disabled AI drafts do not change the active routing graph. Persist once without
+        // queueing a needless sing-box replacement; enabling remains a separate user action.
+        AiRuleAcceptance.PersistDisabledRules(_config, _configPath, rules);
     }
 
     public void RemoveRule(string id) { _config.Rules.RemoveAll(r => r.Id == id); SaveConfig(); }

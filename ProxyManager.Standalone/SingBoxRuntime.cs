@@ -9,12 +9,13 @@ using Newtonsoft.Json.Linq;
 namespace ProxyManager.Standalone;
 
 /// <summary>
-/// Discovers, validates, and manages a sing-box process for ProxyManager.
+/// Discovers, validates, and manages a sing-box process for IntentRoute AI.
 /// Does not download or bundle sing-box.
 /// </summary>
 public sealed class SingBoxRuntime : IDisposable
 {
-    public const string EnvExecutable = "PROXYMANAGER_SING_BOX";
+    public const string EnvExecutable = "INTENTROUTE_SING_BOX";
+    public const string LegacyEnvExecutable = "PROXYMANAGER_SING_BOX";
     public const string DefaultExecutableName = "sing-box.exe";
     public const string DefaultConfigFileName = "sing-box.generated.json";
     internal const string RuntimeStateFileName = "sing-box.runtime-state.json";
@@ -73,7 +74,7 @@ public sealed class SingBoxRuntime : IDisposable
         {
             dir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "ProxyManager");
+                AppDataMigration.CurrentDirectoryName);
         }
 
         Directory.CreateDirectory(dir);
@@ -123,7 +124,8 @@ public sealed class SingBoxRuntime : IDisposable
     }
 
     /// <summary>
-    /// Resolves sing-box from PROXYMANAGER_SING_BOX, the application directory, or PATH.
+    /// Resolves sing-box from INTENTROUTE_SING_BOX, the legacy PROXYMANAGER_SING_BOX,
+    /// the application directory, or PATH.
     /// </summary>
     public string? DiscoverExecutable()
     {
@@ -134,6 +136,13 @@ public sealed class SingBoxRuntime : IDisposable
         if (!string.IsNullOrWhiteSpace(fromEnv))
         {
             var resolved = ResolveCandidate(fromEnv.Trim());
+            if (resolved != null) return resolved;
+        }
+
+        var fromLegacyEnv = Environment.GetEnvironmentVariable(LegacyEnvExecutable);
+        if (!string.IsNullOrWhiteSpace(fromLegacyEnv))
+        {
+            var resolved = ResolveCandidate(fromLegacyEnv.Trim());
             if (resolved != null) return resolved;
         }
 
@@ -162,7 +171,7 @@ public sealed class SingBoxRuntime : IDisposable
             if (exe == null)
             {
                 return FailApply(
-                    "sing-box executable not found. Set PROXYMANAGER_SING_BOX, place sing-box.exe beside the app, or add it to PATH.",
+                    "sing-box executable not found. Set INTENTROUTE_SING_BOX, place sing-box.exe beside the app, or add it to PATH.",
                     preserveRunningProcess: true);
             }
 
@@ -463,7 +472,7 @@ public sealed class SingBoxRuntime : IDisposable
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                "Another ProxyManager instance is already managing this configuration directory.",
+                "Another IntentRoute AI instance is already managing this configuration directory.",
                 ex);
         }
     }

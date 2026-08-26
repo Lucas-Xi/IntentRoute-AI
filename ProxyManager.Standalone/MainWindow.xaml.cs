@@ -13,9 +13,15 @@ public partial class MainWindow : Window
     private readonly AppService _service;
     private readonly ObservableCollection<ProxyRule> _rules = new();
     private readonly ObservableCollection<RuntimeLogLine> _runtimeLogs = new();
+    private readonly ObservableCollection<AiRulePreviewLine> _aiDrafts = new();
+    private readonly OpenAiRuleProvider _openAiProvider = new();
+    private readonly OllamaRuleProvider _ollamaProvider = new();
     private List<ProxyRule> _allRules = new();
     private string _searchFilter = "";
     private bool _isMaximized = false;
+    private CancellationTokenSource? _aiGenerationCts;
+    private AiRuleSuggestion? _currentAiSuggestion;
+    private AiRuleValidationResult? _currentAiValidation;
 
     public MainWindow()
     {
@@ -33,16 +39,20 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
         RulesList.ItemsSource = _rules;
         LogsList.ItemsSource = _runtimeLogs;
+        AiDraftList.ItemsSource = _aiDrafts;
+        AiProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
+        AiProviderCombo.SelectedIndex = 0;
 
         // 允许标题栏拖动
         MouseLeftButtonDown += (s, e) => { if (e.ChangedButton == MouseButton.Left) DragMove(); };
     }
 
-    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         LoadRules();
         LoadSettings();
         RefreshProcessList();
+        await RefreshAiModelsAsync();
     }
 
     #region 窗口控制
@@ -64,6 +74,7 @@ public partial class MainWindow : Window
     private void Nav_Click(object sender, RoutedEventArgs e)
     {
         PageRules.Visibility = Visibility.Collapsed;
+        PageAiAssistant.Visibility = Visibility.Collapsed;
         PageMonitor.Visibility = Visibility.Collapsed;
         PageProcess.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Collapsed;
@@ -74,6 +85,7 @@ public partial class MainWindow : Window
             UIElement? page = rb.Name switch
             {
                 "NavRules" => PageRules,
+                "NavAi" => PageAiAssistant,
                 "NavMonitor" => PageMonitor,
                 "NavProcess" => PageProcess,
                 "NavSettings" => PageSettings,
@@ -87,6 +99,7 @@ public partial class MainWindow : Window
             PageTitle.Text = rb.Name switch
             {
                 "NavRules" => "规则管理",
+                "NavAi" => "AI 规则助手",
                 "NavMonitor" => "运行日志",
                 "NavProcess" => "进程列表",
                 "NavSettings" => "设置",
@@ -97,6 +110,7 @@ public partial class MainWindow : Window
             PageSubtitle.Text = rb.Name switch
             {
                 "NavRules" => " - 拖拽 .exe 添加规则",
+                "NavAi" => " - 自然语言生成可审查的规则草案",
                 "NavMonitor" => " - sing-box 运行日志",
                 "NavProcess" => " - 运行中的进程",
                 "NavSettings" => " - 配置代理和功能",
@@ -104,6 +118,168 @@ public partial class MainWindow : Window
                 _ => ""
             };
         }
+    }
+
+    #endregion
+
+    #region AI 规则助手
+
+    private IAiRuleProvider GetSelectedAiProvider() =>
+        AiProviderCombo.SelectedIndex == 1 ? _ollamaProvider : _openAiProvider;
+
+    private async void AiProvider_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        await RefreshAiModelsAsync();
+    }
+
+    private async void RefreshAiModels_Click(object sender, RoutedEventArgs e) =>
+        await RefreshAiModelsAsync();
+
+    private async Task RefreshAiModelsAsync()
+    {
+        var provider = GetSelectedAiProvider();
+        AiModelCombo.ItemsSource = null;
+        AiModelCombo.IsEnabled = false;
+        AiGenerateButton.IsEnabled = false;
+        AiAcceptButton.IsEnabled = false;
+        ResetAiDraft();
+
+        AiPrivacyText.Text = provider.Kind == AiProviderKind.OpenAI
+            ? "OpenAI 模式只发送你输入的意图和静态规则格式；请求设置 store=false。不会发送代理凭据、现有规则、日志或进程列表。"
+            : "Ollama 模式只连接本机 127.0.0.1；不会自动下载模型、启动服务或回退到云端。";
+
+        try
+        {
+            var models = await provider.ListModelsAsync();
+            AiModelCombo.ItemsSource = models;
+            if (models.Count > 0)
+            {
+                AiModelCombo.SelectedIndex = 0;
+                AiStatusText.Text = provider.Kind == AiProviderKind.OpenAI && !provider.IsAvailable
+                    ? "已加载 OpenAI 模型。生成前请设置当前用户环境变量 OPENAI_API_KEY，然后重新打开应用。"
+                    : $"已加载 {models.Count} 个可用模型。AI 草案不会自动写入或启用。";
+                AiGenerateButton.IsEnabled = true;
+            }
+            else
+            {
+                AiStatusText.Text = "Ollama 正在运行，但没有已安装模型。请先在终端执行 ollama pull <模型名>。";
+            }
+        }
+        catch (AiProviderException ex)
+        {
+            AiStatusText.Text = ex.Message;
+        }
+        finally
+        {
+            AiModelCombo.IsEnabled = true;
+        }
+    }
+
+    private async void GenerateAi_Click(object sender, RoutedEventArgs e)
+    {
+        if (_aiGenerationCts != null) return;
+        var intent = AiIntentBox.Text.Trim();
+        var model = AiModelCombo.SelectedItem as string;
+        if (string.IsNullOrWhiteSpace(intent) || string.IsNullOrWhiteSpace(model))
+        {
+            AiStatusText.Text = "请输入分流意图并选择模型。";
+            return;
+        }
+
+        ResetAiDraft();
+        var cts = new CancellationTokenSource();
+        _aiGenerationCts = cts;
+        AiGenerateButton.IsEnabled = false;
+        AiCancelButton.IsEnabled = true;
+        AiStatusText.Text = "正在生成结构化草案；结果返回后会立即执行本地确定性校验…";
+
+        try
+        {
+            var suggestion = await GetSelectedAiProvider().GenerateDraftAsync(
+                new AiRuleRequest(intent, model),
+                cts.Token);
+            var validation = AiRuleDraftValidator.Validate(suggestion, _service.Config);
+            _currentAiSuggestion = suggestion;
+            _currentAiValidation = validation;
+
+            foreach (var draft in suggestion.Rules)
+                _aiDrafts.Add(AiRulePreviewLine.FromDraft(draft));
+            AiDraftCount.Text = $"{_aiDrafts.Count} 条规则";
+
+            if (validation.Success)
+            {
+                var warnings = suggestion.Warnings.Count == 0
+                    ? "无模型警告。"
+                    : "警告: " + string.Join("；", suggestion.Warnings);
+                AiStatusText.Text = $"本地校验通过。{suggestion.Summary} {warnings} 添加后规则仍为禁用状态。";
+                AiAcceptButton.IsEnabled = true;
+            }
+            else
+            {
+                AiStatusText.Text = "本地校验未通过: " + string.Join("；", validation.Errors);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            AiStatusText.Text = "已取消 AI 规则生成，配置未发生变化。";
+        }
+        catch (AiProviderException ex)
+        {
+            AiStatusText.Text = ex.Message;
+        }
+        catch
+        {
+            AiStatusText.Text = "AI 规则生成失败。配置未发生变化，请检查提供商后重试。";
+        }
+        finally
+        {
+            if (ReferenceEquals(_aiGenerationCts, cts))
+            {
+                _aiGenerationCts = null;
+                cts.Dispose();
+            }
+            AiCancelButton.IsEnabled = false;
+            AiGenerateButton.IsEnabled = AiModelCombo.SelectedItem is string;
+        }
+    }
+
+    private void CancelAi_Click(object sender, RoutedEventArgs e) => _aiGenerationCts?.Cancel();
+
+    private void AcceptAiRules_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentAiSuggestion == null || _currentAiValidation is not { Success: true }) return;
+        try
+        {
+            var revalidated = AiRuleDraftValidator.Validate(_currentAiSuggestion, _service.Config);
+            if (!revalidated.Success)
+            {
+                _currentAiValidation = revalidated;
+                AiAcceptButton.IsEnabled = false;
+                AiStatusText.Text = "现有配置在预览后发生变化，草案重新校验未通过: " + string.Join("；", revalidated.Errors);
+                return;
+            }
+
+            _service.AcceptDisabledAiRules(revalidated.Rules);
+            LoadRules();
+            AiStatusText.Text = $"已添加 {revalidated.Rules.Count} 条禁用规则。请到规则管理页逐条检查并手动启用。";
+            AiAcceptButton.IsEnabled = false;
+            _currentAiSuggestion = null;
+            _currentAiValidation = null;
+        }
+        catch
+        {
+            AiStatusText.Text = "保存 AI 草案失败；本次添加已回滚，现有配置未被替换。";
+        }
+    }
+
+    private void ResetAiDraft()
+    {
+        _currentAiSuggestion = null;
+        _currentAiValidation = null;
+        _aiDrafts.Clear();
+        AiDraftCount.Text = "0 条规则";
+        AiAcceptButton.IsEnabled = false;
     }
 
     #endregion
@@ -297,7 +473,7 @@ public partial class MainWindow : Window
             {
                 var export = new
                 {
-                    Version = "0.1.1",
+                    Version = "0.2.0",
                     ExportTime = DateTime.Now,
                     Rules = _service.Config.Rules
                 };
@@ -437,6 +613,10 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _aiGenerationCts?.Cancel();
+        _aiGenerationCts?.Dispose();
+        _openAiProvider.Dispose();
+        _ollamaProvider.Dispose();
         _service.Dispose();
         base.OnClosed(e);
     }
@@ -455,4 +635,27 @@ public partial class MainWindow : Window
     }
 
     private sealed record RuntimeLogLine(string Time, string Message);
+
+    private sealed record AiRulePreviewLine(
+        string ProcessName,
+        string Action,
+        string Conditions,
+        string Rationale,
+        string Confidence)
+    {
+        public static AiRulePreviewLine FromDraft(AiRuleDraft draft)
+        {
+            var conditions = new List<string>();
+            if (!string.IsNullOrWhiteSpace(draft.TargetHosts)) conditions.Add("域名: " + draft.TargetHosts);
+            if (!string.IsNullOrWhiteSpace(draft.TargetIps)) conditions.Add("IP: " + draft.TargetIps);
+            if (!string.IsNullOrWhiteSpace(draft.TargetPorts)) conditions.Add("端口: " + draft.TargetPorts);
+            conditions.Add("协议: " + draft.Protocol);
+            return new AiRulePreviewLine(
+                draft.ProcessName,
+                draft.Action,
+                string.Join(" | ", conditions),
+                draft.Rationale,
+                draft.Confidence.ToString("P0"));
+        }
+    }
 }

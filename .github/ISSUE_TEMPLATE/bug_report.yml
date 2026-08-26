@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible ProxyManager defect
+description: Report a reproducible IntentRoute AI defect
 title: "[Bug]: "
 labels: [bug, triage]
 body:
@@ -9,7 +9,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: ProxyManager version
+      label: IntentRoute AI version
       placeholder: v0.1.0
     validations:
       required: true

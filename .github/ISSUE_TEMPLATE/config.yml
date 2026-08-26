@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/Lucas-Xi/ProxyManager/security/advisories/new
+    url: https://github.com/Lucas-Xi/IntentRoute-AI/security/advisories/new
     about: Report vulnerabilities privately.

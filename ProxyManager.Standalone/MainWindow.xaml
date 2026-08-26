@@ -1,7 +1,7 @@
 <Window x:Class="ProxyManager.Standalone.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ProxyManager - Windows 网络分流" Height="680" Width="960"
+        Title="IntentRoute AI - Windows 智能分流" Height="720" Width="1040"
         MinHeight="500" MinWidth="750"
         Background="#0F0F0F"
         WindowStartupLocation="CenterScreen"
@@ -157,6 +157,15 @@
             </Setter>
         </Style>
 
+        <Style TargetType="GridViewColumnHeader">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
         <!-- 右键菜单 -->
         <ContextMenu x:Key="RuleMenu" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}">
             <MenuItem Header="切换启用" Click="ToggleRule_Click" Foreground="{StaticResource TextBrush}"/>
@@ -191,14 +200,16 @@
                     <!-- Logo区域 -->
                     <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <StackPanel>
-                            <TextBlock Text="⚡ ProxyManager" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="v0.1.1 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="✦ IntentRoute AI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock Text="v0.2.0 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- 导航菜单 -->
                     <StackPanel Grid.Row="1" Margin="10,16,10,0">
                         <RadioButton x:Name="NavRules" Content="📋  规则管理" GroupName="Nav" IsChecked="True"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                        <RadioButton x:Name="NavAi" Content="✦  AI 规则助手" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"/>
                         <RadioButton x:Name="NavMonitor" Content="📋  运行日志" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"/>
@@ -381,6 +392,108 @@
                         </Border>
                     </Grid>
 
+                    <!-- 页面: AI 规则助手 -->
+                    <Grid x:Name="PageAiAssistant" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="AI 提供商" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="AiProviderCombo" Style="{StaticResource InputCombo}"
+                                              Background="#F3F4F6" Foreground="#111827"
+                                              SelectionChanged="AiProvider_Changed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" Foreground="#111827"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                    <TextBlock Text="模型" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="AiModelCombo" Style="{StaticResource InputCombo}"
+                                              Background="#F3F4F6" Foreground="#111827">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" Foreground="#111827"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <Button Grid.Column="2" Content="刷新模型" Style="{StaticResource SecondaryBtn}" Padding="12,6"
+                                        VerticalAlignment="Bottom" Margin="0,0,14,0" Click="RefreshAiModels_Click"/>
+                                <Border Grid.Column="3" Background="#1422C55E" BorderBrush="#3322C55E" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                                    <TextBlock x:Name="AiPrivacyText" Text="只发送你输入的意图和静态规则格式；不会发送代理凭据、现有规则、日志或进程列表。"
+                                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="用自然语言描述分流意图" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                <TextBlock Text="示例：让 Chrome 和 Cursor 访问 GitHub、OpenAI 时走代理，其他流量保持直连。"
+                                           FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,8"/>
+                                <TextBox x:Name="AiIntentBox" Style="{StaticResource InputBox}" Height="82"
+                                         AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                         MaxLength="2000"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                    <Button x:Name="AiCancelButton" Content="取消" Style="{StaticResource SecondaryBtn}"
+                                            IsEnabled="False" Click="CancelAi_Click" Margin="0,0,8,0"/>
+                                    <Button x:Name="AiGenerateButton" Content="生成并本地校验" Style="{StaticResource PrimaryBtn}"
+                                            Click="GenerateAi_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Padding="14,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <TextBlock Text="AI 草案预览（未写入、未启用）" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                        <TextBlock x:Name="AiDraftCount" Text="0 条规则" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </Grid>
+                                </Border>
+                                <ListView Grid.Row="1" x:Name="AiDraftList" Background="Transparent" BorderThickness="0">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="进程" Width="115" DisplayMemberBinding="{Binding ProcessName}"/>
+                                            <GridViewColumn Header="动作" Width="60" DisplayMemberBinding="{Binding Action}"/>
+                                            <GridViewColumn Header="条件" Width="260" DisplayMemberBinding="{Binding Conditions}"/>
+                                            <GridViewColumn Header="理由" Width="235" DisplayMemberBinding="{Binding Rationale}"/>
+                                            <GridViewColumn Header="置信度" Width="65" DisplayMemberBinding="{Binding Confidence}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                            <Grid>
+                                <TextBlock x:Name="AiStatusText" Text="AI 生成的内容必须经过本地校验和人工确认。"
+                                           FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,170,0"/>
+                                <Button x:Name="AiAcceptButton" Content="添加为禁用规则" Style="{StaticResource PrimaryBtn}"
+                                        IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Click="AcceptAiRules_Click"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
                     <!-- 页面: sing-box 运行日志 -->
                     <Grid x:Name="PageMonitor" Visibility="Collapsed">
                         <Border Background="{StaticResource CardBrush}" CornerRadius="8">
@@ -462,7 +575,7 @@
                                         <TextBlock Text="代理设置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16"/>
                                         <TextBlock Text="本地 SOCKS5 端口" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                                         <TextBox x:Name="SocksPort" Text="10808" Style="{StaticResource InputBox}"/>
-                                        <TextBlock Text="v0.1.1 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                        <TextBlock Text="v0.2.0 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
                                         <Button Content="保存代理设置" Style="{StaticResource PrimaryBtn}"
                                                 HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveProxy_Click"/>
                                     </StackPanel>
@@ -476,9 +589,9 @@
                     <Grid x:Name="PageAbout" Visibility="Collapsed">
                         <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="32">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="⚡" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                                <TextBlock Text="ProxyManager" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="网络分流工具 v0.1.1" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                                <TextBlock Text="✦" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="IntentRoute AI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.2.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
 
                                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                                     <StackPanel>
@@ -487,6 +600,8 @@
                                         <TextBlock Text="• 支持代理/直连/阻止三种模式" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <TextBlock Text="• 实时进程监控" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <TextBlock Text="• 规则导入导出" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• OpenAI / 本地 Ollama 自然语言规则草案" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• 严格本地校验，草案默认禁用" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <TextBlock Text="• sing-box TUN 数据面（需单独安装）" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Border>

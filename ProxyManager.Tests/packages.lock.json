@@ -107,7 +107,7 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "ProxyManager": {
+      "IntentRouteAI": {
         "type": "Project",
         "dependencies": {
           "Newtonsoft.Json": "[13.0.4, )"

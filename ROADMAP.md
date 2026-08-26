@@ -13,6 +13,16 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] dual-stack Windows TUN configuration
 - [x] failed-start rollback, orphan recovery, and stale generated-config cleanup
 
+## v0.2 — AI-assisted intent authoring
+
+- [x] IntentRoute AI product/repository branding
+- [x] OpenAI Responses API strict structured output with `store=false`
+- [x] Loopback-only local Ollama provider and installed-model discovery
+- [x] Shared untrusted-output validator and enabled-clone dry-run
+- [x] Human preview plus disabled, atomic rule acceptance
+- [x] Non-destructive migration from the v0.1 data directory
+- [x] Mocked provider, validation, persistence, and migration tests
+
 ## Candidate next work
 
 - [ ] Guided sing-box discovery with version reporting
@@ -21,7 +31,9 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [ ] Accessible keyboard navigation and high-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
 - [ ] Signed release artifacts when sustainable signing infrastructure exists
+- [ ] Editable AI draft fields before acceptance, with revalidation after every edit
+- [ ] Provider health diagnostics that remain credential-free
 
 ## Explicitly not promised
 
-Proxy chains, provider subscriptions, remote node management, per-connection traffic attribution, and cross-platform support are not scheduled. They require separate design and security review before implementation.
+Autonomous AI rule activation, proxy chains, provider subscriptions, remote node management, remote Ollama endpoints, per-connection traffic attribution, and cross-platform support are not scheduled. They require separate design and security review before implementation.

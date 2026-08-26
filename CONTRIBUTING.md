@@ -1,11 +1,11 @@
-# Contributing to ProxyManager
+# Contributing to IntentRoute AI
 
 Thank you for helping make Windows application routing more transparent and reliable.
 
 ## Before opening work
 
 - Search existing issues and discussions.
-- For a bug, include Windows version, sing-box version, ProxyManager version, expected behavior, actual behavior, and minimal reproduction steps.
+- For a bug, include Windows version, sing-box version, IntentRoute AI version, AI provider/model when relevant, expected behavior, actual behavior, and minimal reproduction steps.
 - Redact proxy credentials, tokens, personal paths, IP addresses that identify people, and private hostnames.
 - For a larger feature or security-boundary change, open an issue before investing in an implementation.
 
@@ -27,6 +27,8 @@ Requirements: Windows 10/11, .NET 8 SDK, and optionally sing-box v1.13+ for sche
 4. Do not bundle sing-box or another network binary.
 5. Do not log full configurations, passwords, or credentials.
 6. Run the local gates and complete the pull request checklist.
+7. Provider tests must use mocked HTTP handlers; never add a real API key, paid API call, model download, or network dependency to CI.
+8. Treat AI output as untrusted data. Do not weaken strict schema parsing, local semantic validation, preview, or the separate enable action.
 
 Maintainers may ask for changes when a contribution expands administrator privileges, process execution, configuration file exposure, or network-routing scope.
 

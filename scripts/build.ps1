@@ -23,4 +23,4 @@ dotnet publish $project `
     --output $OutputDirectory
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
-Write-Host "Published ProxyManager to $OutputDirectory"
+Write-Host "Published IntentRoute AI to $OutputDirectory"

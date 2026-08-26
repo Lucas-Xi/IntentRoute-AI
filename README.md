@@ -1,60 +1,113 @@
-# ProxyManager
+# IntentRoute AI
 
-[![CI](https://github.com/Lucas-Xi/ProxyManager/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-Xi/ProxyManager/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Lucas-Xi/ProxyManager?include_prereleases)](https://github.com/Lucas-Xi/ProxyManager/releases)
+[![CI](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Lucas-Xi/IntentRoute-AI?include_prereleases)](https://github.com/Lucas-Xi/IntentRoute-AI/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)](https://www.microsoft.com/windows)
 
-ProxyManager is an open-source Windows control plane for routing selected applications through an existing local SOCKS5 proxy. It generates a validated [sing-box](https://github.com/SagerNet/sing-box) TUN configuration, starts and supervises the sing-box process, and keeps the default route direct unless a rule says otherwise.
+IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.1.1 preview.** The supported app is `ProxyManager.Standalone`. It is useful for testing and early adoption, but it has not yet earned a large user base. Please report compatibility results instead of assuming production readiness.
+> **Project status: v0.2.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-## Why this exists
+## Why this project exists
 
-Many Windows applications do not expose proxy settings. ProxyManager provides a small, inspectable rule editor for these cases while delegating packet capture and routing to the mature sing-box TUN data plane.
+Many Windows applications do not expose useful proxy controls, while hand-authoring process/domain/IP routing rules is error-prone. IntentRoute AI provides two complementary paths:
 
-- Route an exact process name through a local SOCKS5 proxy.
-- Keep selected applications direct or reject their traffic.
-- Narrow a rule by hostname, IP/CIDR, port/range, and TCP/UDP.
-- Apply rule changes after `sing-box check` succeeds.
-- Show real sing-box runtime logs; no synthetic connection telemetry.
-- Encrypt stored proxy passwords with Windows DPAPI for the current user.
-- Export profiles without credentials.
+- A conventional, inspectable rule editor for deterministic manual configuration.
+- An optional AI authoring assistant that translates natural language into a bounded, reviewable rule draft.
 
-## Architecture
+The application does not capture packets itself. It generates a validated [sing-box](https://github.com/SagerNet/sing-box) v1.13+ TUN configuration, starts and supervises the external sing-box process, and keeps the default route direct unless a rule says otherwise.
 
-```mermaid
-flowchart LR
-    UI[WPF rule editor] --> Builder[Validated config builder]
-    Builder --> Check[sing-box check]
-    Check --> Runtime[Managed sing-box process]
-    Runtime --> TUN[Windows TUN routing]
-    TUN --> Direct[Direct outbound]
-    TUN --> Socks[Existing local SOCKS5 proxy]
+## AI workflow
+
+1. Select **OpenAI** or **Ollama (local)**.
+2. Enter an intent such as: “Route Chrome and Cursor traffic for GitHub and OpenAI through the proxy; keep everything else direct.”
+3. The provider returns a strict structured draft containing process, host/IP, port, protocol, action, rationale, confidence, and warnings.
+4. IntentRoute AI treats the result as untrusted input and validates field limits, executable names, domains, CIDRs, ports, protocols, actions, duplicates, and proxy availability.
+5. A temporary enabled candidate is passed through `SingBoxConfigBuilder` so disabled-rule filtering cannot make validation a no-op.
+6. The user reviews the preview and may add the whole draft as **disabled rules**.
+7. Enabling remains a separate user action and still requires `sing-box check` before the managed runtime is replaced.
+
+AI never directly enables rules, invokes commands, selects files, installs models, downloads sing-box, or applies an unreviewed configuration.
+
+## Provider setup
+
+### OpenAI
+
+IntentRoute AI reads the user's key at request time from `OPENAI_API_KEY`. The key is not accepted in the app UI and is never written to the application configuration, profiles, logs, exports, or diagnostics.
+
+PowerShell example for the current Windows user:
+
+```powershell
+[Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your-api-key', 'User')
 ```
 
-ProxyManager does **not** implement a packet driver and does **not** provide a proxy server. It manages a separate sing-box executable and connects to a SOCKS5 service you already run on `127.0.0.1`.
+Restart IntentRoute AI after changing the environment variable. The OpenAI request uses the Responses API, strict JSON Schema output, no tools, a bounded timeout/output size, and `store=false`.
 
-## Requirements
+### Local Ollama
 
-- Windows 10 or Windows 11, x64.
-- Administrator rights, required by TUN setup.
-- [sing-box v1.13 or newer](https://github.com/SagerNet/sing-box/releases), downloaded separately from its official project.
-- An existing SOCKS5 listener on `127.0.0.1` (default port `10808`).
-- For source builds: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Install [Ollama](https://ollama.com/), start its local service, and install a model separately. For example:
 
-## Quick start
+```powershell
+ollama pull qwen3:8b
+```
 
-1. Download `ProxyManager-v0.1.1-win-x64.zip` from [Releases](https://github.com/Lucas-Xi/ProxyManager/releases).
-2. Download the official Windows x64 sing-box archive. Put `sing-box.exe` beside `ProxyManager.exe`, add it to `PATH`, or set `PROXYMANAGER_SING_BOX` to its full path.
-3. Start your local SOCKS5 service.
-4. Run `ProxyManager.exe` as administrator.
-5. In Settings, enter the local SOCKS5 port.
-6. Drag an `.exe` into the rules page and select Proxy, Direct, or Block.
+IntentRoute AI queries only `http://127.0.0.1:11434`. v0.2.0 rejects non-loopback, credentialed, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
 
-The status bar reports validation or startup errors. The Monitor page displays sing-box's actual process output with common credential fields redacted.
+## AI data boundary
+
+| Data | OpenAI | Local Ollama |
+|---|---:|---:|
+| User-entered intent | Sent | Sent to loopback only |
+| Static rule schema/instructions | Sent | Sent to loopback only |
+| Proxy username/password | Never | Never |
+| Proxy server address | Never | Never |
+| Existing rules/configuration | Never | Never |
+| Runtime logs | Never | Never |
+| Full process list or paths | Never | Never |
+| API key | Authorization header only | Not applicable locally |
+
+OpenAI API data handling is governed by the user's OpenAI account and current API policies. `store=false` is an application-level request setting, not a promise that no provider-side security or abuse-monitoring processing exists. Ollama mode keeps the application request on loopback, but the privacy and behavior of the installed model/runtime remain the user's responsibility.
+
+## Current routing capabilities
+
+- Process-aware Proxy / Direct / Block rules.
+- Optional exact-domain and `*.suffix` filters.
+- IPv4/IPv6 address and CIDR filters.
+- Single ports and ascending port ranges.
+- TCP, UDP, or Both.
+- Explicit priority ordering.
+- IPv4 and IPv6 TUN addresses with strict routing.
+- Atomic candidate configuration, `sing-box check`, startup-settle verification, and rollback.
+- Exclusive runtime ownership plus PID/start-time orphan recovery.
+- Passwords protected at rest with Windows DPAPI `CurrentUser`.
+- Password-free profile exports and bounded/redacted runtime logs.
+
+IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bundled AI model, OpenAI API key, or sing-box binary.
+
+## Install a preview build
+
+1. Download `IntentRoute-AI-v0.2.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
+2. Verify the checksum.
+3. Download the official Windows x64 sing-box v1.13+ archive separately.
+4. Put `sing-box.exe` beside `IntentRouteAI.exe`, add it to `PATH`, or set `INTENTROUTE_SING_BOX` to its full path. The legacy `PROXYMANAGER_SING_BOX` variable remains supported for upgrades.
+5. Ensure an existing local SOCKS5 service is listening on `127.0.0.1:10808`, or configure another local port.
+6. Run `IntentRouteAI.exe` as administrator. TUN creation requires elevation.
+
+The self-contained release targets Windows x64 and does not require a separate .NET runtime.
+
+## Configuration and upgrade migration
+
+Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
+
+Proxy passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\IntentRouteAI\sing-box.generated.json` necessarily contains any configured credential in plaintext while sing-box is running. The application removes it on stop, clean exit, and unexpected child exit; the next launch performs bounded orphan recovery and stale-artifact cleanup. Cleanup remains best effort under disk, ACL, administrator, or abrupt-crash interference.
 
 ## Build and test
+
+Requirements for source builds:
+
+- Windows 10/11 x64
+- .NET 8 SDK
+- PowerShell 7 recommended
 
 ```powershell
 ./scripts/test.ps1
@@ -62,45 +115,33 @@ The status bar reports validation or startup errors. The Monitor page displays s
 ./scripts/build.ps1
 ```
 
-To validate the generated schema against your installed sing-box version:
+Provider tests use mocked HTTP handlers. They do not require an OpenAI key, a paid API call, a running Ollama service, or a downloaded local model.
 
-```powershell
-./scripts/validate-sing-box.ps1 -SingBoxPath C:\path\to\sing-box.exe
-```
+## Architecture and security
 
-The same test and publish gates run in GitHub Actions. Release archives are built from a tag and include SHA-256 checksums. sing-box is deliberately not bundled.
+- [Architecture](docs/ARCHITECTURE.md)
+- [Threat model](docs/THREAT_MODEL.md)
+- [Security policy](SECURITY.md)
+- [AI v0.2.0 approved design](docs/plans/2026-08-25-intentroute-ai-design.md)
+- [Codex for Open Source readiness](docs/CODEX_FOR_OSS_READINESS.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-## Rule behavior
+Please report vulnerabilities privately through [GitHub Security Advisories](https://github.com/Lucas-Xi/IntentRoute-AI/security/advisories/new). Do not include real API keys, proxy credentials, generated configurations, or unredacted logs in an issue.
 
-Rules are evaluated by ascending priority. Supported fields in v0.1.1 are:
+## Known limitations
 
-| Field | Supported values |
-| --- | --- |
-| Application | Exact process name, or `*` for all processes |
-| Host | Exact hostname or `*.suffix` |
-| IP | IPv4/IPv6 address or CIDR |
-| Port | Single port or inclusive range |
-| Protocol | TCP, UDP, or both |
-| Action | Proxy, Direct, or Block |
+- Preview quality; compatibility varies by Windows, firewall, endpoint-security, and sing-box versions.
+- AI suggestions are not authoritative and may omit service domains or misunderstand intent.
+- No autonomous activation, traffic self-healing, live connection attribution, arbitrary executable wildcards, or remote Ollama endpoints.
+- No proxy node distribution or connectivity guarantee.
+- `sing-box check` validates configuration syntax/schema, not adapter creation or upstream reachability.
 
-The default route can be direct or proxy. Proxy chains, failover/load balancing, arbitrary executable wildcards, remote proxy editing, custom DNS controls, and per-connection attribution are not implemented in v0.1.1. Unsupported configurations are rejected instead of silently approximated.
+## 中文快速说明
 
-## Configuration and security
+IntentRoute AI 是一个 Windows 开源 AI 分流控制工具。你可以用中文描述“哪个程序的哪些域名应该代理、直连或阻止”，再由 OpenAI 或本机 Ollama 生成结构化草案。软件会在本地执行严格校验，草案写入后默认禁用，必须由你再次确认启用。
 
-Application configuration is stored at `%APPDATA%\ProxyManager\config.json`. Passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\ProxyManager\sing-box.generated.json` must contain any configured credential in plaintext while sing-box is running. ProxyManager deletes it on stop, clean exit, and unexpected child-process exit; after an application or OS crash, the next launch uses a PID/start-time lease to recover a recorded orphan and removes stale generated files. Cleanup is best effort, so local administrators should still treat the per-user application directory as sensitive. Profile exports omit passwords.
-
-Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for security boundaries.
-
-## Contributing
-
-Issues, compatibility reports, tests, documentation, and focused pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and see the [roadmap](ROADMAP.md).
-
-## 中文说明
-
-ProxyManager 是一个 Windows 开源分流控制工具。它把应用规则转换为 sing-box TUN 配置，并在配置校验通过后管理 sing-box 进程。当前 v0.1.1 只支持连接本机已有的 SOCKS5 服务，默认地址为 `127.0.0.1:10808`；软件本身不提供代理节点，也不内置或下载 sing-box。
-
-使用前请单独从 sing-box 官方项目下载 `sing-box.exe`，放到 `ProxyManager.exe` 同目录，然后以管理员身份运行。当前是早期预览版，请优先在测试环境验证，并通过 GitHub Issues 反馈 Windows 版本、sing-box 版本、复现步骤和脱敏日志。
+OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只连接 `127.0.0.1:11434`。两种模式都不会发送代理密码、现有规则、运行日志或完整进程列表。没有配置 AI 时，所有手工分流功能仍可正常使用。
 
 ## License
 
-ProxyManager is licensed under the [MIT License](LICENSE). sing-box is a separate GPL-licensed program and is not included in this repository or its release archives; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+IntentRoute AI is licensed under the [MIT License](LICENSE). sing-box is a separate GPL-licensed program and is not included in this repository or its release archives; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
