@@ -77,6 +77,25 @@ public sealed class SingBoxConfigBuilderTests
         Assert.Null(root["route"]!["rules"]![0]!["process_name"]);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Build_RejectsMissingExecutableName(string? executableName)
+    {
+        var config = BaseConfig();
+        config.Rules.Add(new ProxyRule
+        {
+            ExeName = executableName!,
+            Mode = ProxyMode.Block
+        });
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.False(result.Success);
+        Assert.Contains("executable name is required", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void Build_RejectsProxyRuleWithoutEnabledServer()
     {

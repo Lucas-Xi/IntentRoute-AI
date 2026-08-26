@@ -34,7 +34,13 @@ internal sealed class ConfigurationWorkspace
     public static ConfigurationWorkspace Load(string configPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
-        var load = AppConfigStore.LoadPreservingInvalidFile(configPath);
+        var load = AppConfigStore.LoadPreservingInvalidFile(
+            configPath,
+            candidate =>
+            {
+                Normalize(candidate, addDefaultProxyWhenEmpty: true);
+                Validate(candidate);
+            });
         if (load.Status == AppConfigLoadStatus.Unusable)
         {
             return new ConfigurationWorkspace(
@@ -139,22 +145,41 @@ internal sealed class ConfigurationWorkspace
 
         foreach (var rule in candidate.Rules)
         {
+            if (string.IsNullOrWhiteSpace(rule.Id))
+                throw new InvalidDataException("规则必须包含非空 ID。");
+            if (string.IsNullOrWhiteSpace(rule.ExeName))
+                throw new InvalidDataException("规则必须包含进程名称；全局规则请明确使用 *。");
             if (!Enum.IsDefined(rule.Mode))
                 throw new InvalidDataException("配置包含不支持的规则模式。");
         }
 
+        if (HasDuplicateIds(candidate.Rules.Select(rule => rule.Id)))
+            throw new InvalidDataException("规则 ID 不能重复。");
+
         foreach (var server in candidate.ProxyServers)
         {
+            if (string.IsNullOrWhiteSpace(server.Id))
+                throw new InvalidDataException("代理服务器必须包含非空 ID。");
             if (!Enum.IsDefined(server.ProxyType))
                 throw new InvalidDataException("配置包含不支持的代理类型。");
             server.Host = LocalProxyEndpoint.NormalizeOrThrow(server.Host, server.Port);
         }
 
+        if (HasDuplicateIds(candidate.ProxyServers.Select(server => server.Id)))
+            throw new InvalidDataException("代理服务器 ID 不能重复。");
+
         foreach (var chain in candidate.ProxyChains)
         {
+            if (string.IsNullOrWhiteSpace(chain.Id))
+                throw new InvalidDataException("代理链必须包含非空 ID。");
             if (!Enum.IsDefined(chain.ChainType))
                 throw new InvalidDataException("配置包含不支持的代理链类型。");
+            if (chain.Servers.Any(string.IsNullOrWhiteSpace))
+                throw new InvalidDataException("代理链不能包含空服务器引用。");
         }
+
+        if (HasDuplicateIds(candidate.ProxyChains.Select(chain => chain.Id)))
+            throw new InvalidDataException("代理链 ID 不能重复。");
 
         var build = SingBoxConfigBuilder.Build(candidate);
         if (!build.Success)
@@ -166,6 +191,42 @@ internal sealed class ConfigurationWorkspace
         config.Rules ??= [];
         config.ProxyServers ??= [];
         config.ProxyChains ??= [];
+        config.SingBoxExecutablePath ??= string.Empty;
+        config.SocksHost ??= string.Empty;
+        config.HttpHost ??= string.Empty;
+
+        foreach (var rule in config.Rules.Where(rule => rule is not null))
+        {
+            rule.Id = rule.Id?.Trim() ?? string.Empty;
+            rule.ExeName = rule.ExeName?.Trim() ?? string.Empty;
+            rule.ExePath ??= string.Empty;
+            rule.CreatedAt ??= string.Empty;
+            rule.Note ??= string.Empty;
+            rule.TargetHosts ??= string.Empty;
+            rule.TargetIPs ??= string.Empty;
+            rule.TargetPorts ??= string.Empty;
+            rule.Protocol ??= string.Empty;
+            rule.ProxyId ??= string.Empty;
+            rule.ProxyChainId ??= string.Empty;
+        }
+
+        foreach (var server in config.ProxyServers.Where(server => server is not null))
+        {
+            server.Id = server.Id?.Trim() ?? string.Empty;
+            server.Name ??= string.Empty;
+            server.Host ??= string.Empty;
+            server.Username ??= string.Empty;
+            server.Password ??= string.Empty;
+            server.TestUrl ??= string.Empty;
+        }
+
+        foreach (var chain in config.ProxyChains.Where(chain => chain is not null))
+        {
+            chain.Id = chain.Id?.Trim() ?? string.Empty;
+            chain.Name ??= string.Empty;
+            chain.Servers ??= [];
+        }
+
         if (addDefaultProxyWhenEmpty && config.ProxyServers.Count == 0)
         {
             config.ProxyServers.Add(new ProxyServer
@@ -181,6 +242,9 @@ internal sealed class ConfigurationWorkspace
     private static AppConfig Clone(AppConfig config) =>
         JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(config))
         ?? throw new InvalidDataException("无法创建配置候选副本。");
+
+    private static bool HasDuplicateIds(IEnumerable<string> ids) =>
+        ids.GroupBy(id => id, StringComparer.Ordinal).Any(group => group.Count() > 1);
 
     private void EnsureWritable()
     {

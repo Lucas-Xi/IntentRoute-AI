@@ -440,6 +440,82 @@ public sealed class AppServiceRecoveryTests
         }
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ImportRules_RejectsMissingExecutableNameWithoutPublishing(string? executableName)
+    {
+        var appDataRoot = CreateTempDirectory();
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+            service.AddRule("baseline.exe", ProxyMode.Direct);
+            var original = File.ReadAllBytes(service.ConfigPath);
+
+            Assert.Throws<InvalidDataException>(() => service.ImportRules([
+                new ProxyRule
+                {
+                    ExeName = executableName!,
+                    Mode = ProxyMode.Block,
+                    IsEnabled = true
+                }
+            ]));
+
+            Assert.Equal("baseline.exe", Assert.Single(service.Config.Rules).ExeName);
+            Assert.Equal(original, File.ReadAllBytes(service.ConfigPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void PersistedMissingExecutableName_EntersRecoveryProtection()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        const string json = """
+        {
+          "Rules": [
+            {
+              "Id": "rule-1",
+              "ExeName": null,
+              "Mode": 2,
+              "IsEnabled": true
+            }
+          ],
+          "ProxyServers": [
+            {
+              "Id": "proxy-1",
+              "Host": "127.0.0.1",
+              "Port": 1080
+            }
+          ]
+        }
+        """;
+        File.WriteAllText(configPath, json);
+        var original = File.ReadAllBytes(configPath);
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+
+            Assert.False(service.IsConfigurationWritable);
+            Assert.Empty(service.Config.Rules);
+            Assert.Equal(original, File.ReadAllBytes(configPath));
+            Assert.NotNull(service.ConfigurationRecoveryBackupPath);
+            Assert.True(File.Exists(service.ConfigurationRecoveryBackupPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
     [Fact]
     public void LocalMutationPreservesApprovalButProfileReplacementClearsIt()
     {

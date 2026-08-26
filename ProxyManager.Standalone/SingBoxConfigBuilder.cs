@@ -165,6 +165,9 @@ public static class SingBoxConfigBuilder
         IReadOnlyDictionary<string, string> outboundTagsByServerId,
         string? defaultProxyTag)
     {
+        if (string.IsNullOrWhiteSpace(rule.ExeName))
+            return RouteRuleBuild.Fail("Rule executable name is required; use '*' explicitly for a global rule.");
+
         if (!string.IsNullOrWhiteSpace(rule.ProxyChainId))
             return RouteRuleBuild.Fail(
                 $"Rule '{SafeRuleName(rule)}' references proxy chain '{rule.ProxyChainId}', which is not supported.");

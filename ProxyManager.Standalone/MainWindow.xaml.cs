@@ -368,8 +368,8 @@ public partial class MainWindow : Window
         var filtered = string.IsNullOrWhiteSpace(_searchFilter)
             ? _allRules
             : _allRules.Where(r =>
-                r.ExeName.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                r.ExePath.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase))
+                (r.ExeName ?? string.Empty).Contains(_searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                (r.ExePath ?? string.Empty).Contains(_searchFilter, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
         int index = 1;
@@ -1012,7 +1012,8 @@ public partial class MainWindow : Window
     private static string GetConfiguredMode(IEnumerable<ProxyRule> rules, string processName)
     {
         var rule = rules.FirstOrDefault(r =>
-            r.ExeName == "*" || r.ExeName.Equals(processName, StringComparison.OrdinalIgnoreCase));
+            string.Equals(r.ExeName, "*", StringComparison.Ordinal) ||
+            string.Equals(r.ExeName, processName, StringComparison.OrdinalIgnoreCase));
         return rule?.Mode switch
         {
             ProxyMode.Proxy => "代理规则",

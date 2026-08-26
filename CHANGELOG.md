@@ -40,6 +40,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Preserve current-session sing-box approval only for local transactions whose committed executable path is unchanged; Profile replacement, recovery import, and reset always clear approval.
 - When approval is cleared, cancel any queued replacement apply and mark a preserved running process as `RunningStale` instead of leaving a green status for an older configuration.
 - Treat every in-memory proxy password as plaintext at the persistence and builder boundaries, so legitimate values beginning with `dpapi:` are encrypted and round-trip instead of being misread as stored ciphertext.
+- Reject rules with null, empty, or whitespace-only process names at both the workspace and builder boundaries; only an explicit `*` represents a global rule. Persisted semantic failures now enter the same preservation-first recovery state as malformed JSON.
+- Normalize optional imported strings defensively and reject missing or duplicate rule, proxy-server, and proxy-chain IDs before publication; UI matching remains null-safe as a second line of defense.
 
 ### Tests
 
@@ -51,6 +53,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Surface the same redacted diagnostic when startup is caught by the WPF safety dialog or the smoke gate observes an unexpected main-window title.
 - Added Configuration Workspace coverage for detached snapshots, filesystem-failure rollback, unsupported-mutation rollback, AI disabled-rule commits without runtime apply, and approval preservation/clearing semantics.
 - Added regression coverage for approval-clearing while an older runtime remains active, plus DPAPI-marker-prefixed password round trips.
+- Added builder, import-rollback, and startup-recovery coverage for null, empty, and whitespace-only executable names.
 
 ## [0.2.0] - 2026-08-26
 

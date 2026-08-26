@@ -17,7 +17,22 @@ public static class AppConfigStore
         encoderShouldEmitUTF8Identifier: false,
         throwOnInvalidBytes: true);
 
-    public static AppConfigLoadResult LoadPreservingInvalidFile(string path, DateTime? utcNow = null)
+    public static AppConfigLoadResult LoadPreservingInvalidFile(string path, DateTime? utcNow = null) =>
+        LoadPreservingInvalidFileCore(path, semanticValidator: null, utcNow);
+
+    internal static AppConfigLoadResult LoadPreservingInvalidFile(
+        string path,
+        Action<AppConfig> semanticValidator,
+        DateTime? utcNow = null) =>
+        LoadPreservingInvalidFileCore(
+            path,
+            semanticValidator ?? throw new ArgumentNullException(nameof(semanticValidator)),
+            utcNow);
+
+    private static AppConfigLoadResult LoadPreservingInvalidFileCore(
+        string path,
+        Action<AppConfig>? semanticValidator,
+        DateTime? utcNow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (!File.Exists(path))
@@ -25,9 +40,11 @@ public static class AppConfigStore
 
         try
         {
-            return AppConfigLoadResult.Loaded(Deserialize(ReadStrictUtf8(path)));
+            var config = Deserialize(ReadStrictUtf8(path));
+            semanticValidator?.Invoke(config);
+            return AppConfigLoadResult.Loaded(config);
         }
-        catch (Exception ex) when (ex is JsonException or DecoderFallbackException or IOException or UnauthorizedAccessException or SecurityException or AppConfigProtectionException)
+        catch (Exception ex) when (ex is JsonException or DecoderFallbackException or IOException or UnauthorizedAccessException or SecurityException or AppConfigProtectionException or InvalidDataException or ArgumentException)
         {
             string? backupPath = null;
             try

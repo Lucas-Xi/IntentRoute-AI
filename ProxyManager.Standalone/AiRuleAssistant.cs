@@ -678,7 +678,7 @@ public static class AiRuleDraftValidator
     }
 
     private static string CreateRuleKey(ProxyRule rule) => string.Join("\u001f",
-        rule.ExeName.Trim().ToLowerInvariant(),
+        (rule.ExeName ?? string.Empty).Trim().ToLowerInvariant(),
         NormalizeList(rule.TargetHosts, true),
         NormalizeList(rule.TargetIPs, false),
         NormalizeList(rule.TargetPorts, false),
