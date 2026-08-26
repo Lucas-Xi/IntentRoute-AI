@@ -10,7 +10,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>ProxyManager</AssemblyName>
     <RootNamespace>ProxyManager.Standalone</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Lucas-Xi and contributors</Authors>
     <Company>ProxyManager contributors</Company>
     <Product>ProxyManager</Product>

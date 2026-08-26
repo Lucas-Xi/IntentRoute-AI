@@ -297,7 +297,7 @@ public partial class MainWindow : Window
             {
                 var export = new
                 {
-                    Version = "0.1.0",
+                    Version = "0.1.1",
                     ExportTime = DateTime.Now,
                     Rules = _service.Config.Rules
                 };

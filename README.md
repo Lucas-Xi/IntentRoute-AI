@@ -7,7 +7,7 @@
 
 ProxyManager is an open-source Windows control plane for routing selected applications through an existing local SOCKS5 proxy. It generates a validated [sing-box](https://github.com/SagerNet/sing-box) TUN configuration, starts and supervises the sing-box process, and keeps the default route direct unless a rule says otherwise.
 
-> **Project status: v0.1.0 preview.** The supported app is `ProxyManager.Standalone`. It is useful for testing and early adoption, but it has not yet earned a large user base. Please report compatibility results instead of assuming production readiness.
+> **Project status: v0.1.1 preview.** The supported app is `ProxyManager.Standalone`. It is useful for testing and early adoption, but it has not yet earned a large user base. Please report compatibility results instead of assuming production readiness.
 
 ## Why this exists
 
@@ -45,7 +45,7 @@ ProxyManager does **not** implement a packet driver and does **not** provide a p
 
 ## Quick start
 
-1. Download `ProxyManager-v0.1.0-win-x64.zip` from [Releases](https://github.com/Lucas-Xi/ProxyManager/releases).
+1. Download `ProxyManager-v0.1.1-win-x64.zip` from [Releases](https://github.com/Lucas-Xi/ProxyManager/releases).
 2. Download the official Windows x64 sing-box archive. Put `sing-box.exe` beside `ProxyManager.exe`, add it to `PATH`, or set `PROXYMANAGER_SING_BOX` to its full path.
 3. Start your local SOCKS5 service.
 4. Run `ProxyManager.exe` as administrator.
@@ -58,6 +58,7 @@ The status bar reports validation or startup errors. The Monitor page displays s
 
 ```powershell
 ./scripts/test.ps1
+./scripts/check-vulnerabilities.ps1
 ./scripts/build.ps1
 ```
 
@@ -71,7 +72,7 @@ The same test and publish gates run in GitHub Actions. Release archives are buil
 
 ## Rule behavior
 
-Rules are evaluated by ascending priority. Supported fields in v0.1.0 are:
+Rules are evaluated by ascending priority. Supported fields in v0.1.1 are:
 
 | Field | Supported values |
 | --- | --- |
@@ -82,11 +83,11 @@ Rules are evaluated by ascending priority. Supported fields in v0.1.0 are:
 | Protocol | TCP, UDP, or both |
 | Action | Proxy, Direct, or Block |
 
-The default route can be direct or proxy. Proxy chains, failover/load balancing, arbitrary executable wildcards, remote proxy editing, custom DNS controls, and per-connection attribution are not implemented in v0.1.0. Unsupported configurations are rejected instead of silently approximated.
+The default route can be direct or proxy. Proxy chains, failover/load balancing, arbitrary executable wildcards, remote proxy editing, custom DNS controls, and per-connection attribution are not implemented in v0.1.1. Unsupported configurations are rejected instead of silently approximated.
 
 ## Configuration and security
 
-Application configuration is stored at `%APPDATA%\ProxyManager\config.json`. Passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\ProxyManager\sing-box.generated.json` must contain any configured credential in plaintext while sing-box is running; ProxyManager deletes this managed file on clean exit. Profile exports omit passwords.
+Application configuration is stored at `%APPDATA%\ProxyManager\config.json`. Passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\ProxyManager\sing-box.generated.json` must contain any configured credential in plaintext while sing-box is running. ProxyManager deletes it on stop, clean exit, and unexpected child-process exit; after an application or OS crash, the next launch uses a PID/start-time lease to recover a recorded orphan and removes stale generated files. Cleanup is best effort, so local administrators should still treat the per-user application directory as sensitive. Profile exports omit passwords.
 
 Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for security boundaries.
 
@@ -96,7 +97,7 @@ Issues, compatibility reports, tests, documentation, and focused pull requests a
 
 ## 中文说明
 
-ProxyManager 是一个 Windows 开源分流控制工具。它把应用规则转换为 sing-box TUN 配置，并在配置校验通过后管理 sing-box 进程。当前 v0.1.0 只支持连接本机已有的 SOCKS5 服务，默认地址为 `127.0.0.1:10808`；软件本身不提供代理节点，也不内置或下载 sing-box。
+ProxyManager 是一个 Windows 开源分流控制工具。它把应用规则转换为 sing-box TUN 配置，并在配置校验通过后管理 sing-box 进程。当前 v0.1.1 只支持连接本机已有的 SOCKS5 服务，默认地址为 `127.0.0.1:10808`；软件本身不提供代理节点，也不内置或下载 sing-box。
 
 使用前请单独从 sing-box 官方项目下载 `sing-box.exe`，放到 `ProxyManager.exe` 同目录，然后以管理员身份运行。当前是早期预览版，请优先在测试环境验证，并通过 GitHub Issues 反馈 Windows 版本、sing-box 版本、复现步骤和脱敏日志。
 

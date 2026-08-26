@@ -25,15 +25,15 @@ ProxyManager constructs JSON through typed objects and invokes sing-box with `Pr
 
 Stored passwords are DPAPI-protected. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
 
-The generated sing-box configuration necessarily contains a usable password while running. It lives under the current user's application-data directory and is removed on clean shutdown. Abrupt termination can leave it behind; stale-file cleanup is roadmap work.
+The generated sing-box configuration necessarily contains a usable password while running. It lives under the current user's application-data directory and is removed on stop, clean shutdown, and unexpected child exit. A per-directory lock prevents two ProxyManager instances from owning the same runtime. After an application or OS crash, the next launch uses a credential-free PID/start-time lease to recover a recorded orphan and removes stale generated configs and candidates. Abrupt termination can still leave files present until that next launch, and cleanup can fail under filesystem or administrator interference.
 
 ### Executable substitution
 
 Discovery checks `PROXYMANAGER_SING_BOX`, the application directory, then `PATH`. A malicious file placed earlier in one of those trusted locations could be executed with administrator privileges. Users should install sing-box from its official release, verify it independently, and prefer an explicit environment path. Future work should add version and checksum visibility.
 
-### Network lockout
+### Runtime replacement and network lockout
 
-TUN and strict routing can disrupt connectivity when a rule or upstream proxy is wrong. ProxyManager checks configuration syntax before replacing its managed process, but it cannot prove upstream reachability. Closing ProxyManager normally stops its child process. Users should retain an administrative recovery path.
+TUN and strict routing can disrupt connectivity when a rule or upstream proxy is wrong. ProxyManager uses IPv4 and IPv6 TUN addresses and checks configuration schema/syntax before replacing its managed process, but `sing-box check` cannot prove adapter creation, firewall compatibility, or upstream reachability. If a checked replacement exits during startup, ProxyManager attempts to restore and restart the previous checked configuration. Closing ProxyManager normally stops its child process. Users should retain an administrative recovery path because rollback and orphan recovery are best effort.
 
 ### Log manipulation
 
@@ -46,3 +46,4 @@ sing-box output is untrusted text. It is displayed as text rather than interpret
 - Traffic observation by a selected proxy or destination.
 - Verification of third-party binary signatures or checksums.
 - Protection against an attacker who can read another process's memory as administrator.
+- Guaranteed cleanup after disk failure, ACL interference, deliberate state-file tampering, or a crash before the next ProxyManager launch.

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ProxyManager.Standalone;
 
@@ -15,8 +17,11 @@ public sealed class SingBoxRuntime : IDisposable
     public const string EnvExecutable = "PROXYMANAGER_SING_BOX";
     public const string DefaultExecutableName = "sing-box.exe";
     public const string DefaultConfigFileName = "sing-box.generated.json";
+    internal const string RuntimeStateFileName = "sing-box.runtime-state.json";
+    internal const string RuntimeLockFileName = "sing-box.runtime.lock";
 
     private static readonly TimeSpan DefaultCheckTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan DefaultStartupSettleTime = TimeSpan.FromMilliseconds(300);
     private static readonly Regex SecretLinePattern = new(
         @"(?i)(password|passwd|pwd|secret|token|credential)\s*([:=]\s*)\S+",
         RegexOptions.Compiled);
@@ -28,16 +33,40 @@ public sealed class SingBoxRuntime : IDisposable
     private readonly SemaphoreSlim _applyGate = new(1, 1);
     private readonly ConcurrentQueue<string> _recentLogs = new();
     private readonly int _maxLogLines;
+    private readonly string _configDirectory;
     private readonly string _configPath;
+    private readonly string _processStatePath;
+    private readonly string _runtimeLockPath;
     private readonly TimeSpan _checkTimeout;
+    private readonly TimeSpan _startupSettleTime;
+    private readonly ISingBoxExecutionBackend _executionBackend;
+    private readonly string? _executableOverride;
+    private readonly FileStream _runtimeLock;
 
-    private Process? _process;
+    private ISingBoxManagedProcess? _process;
     private bool _disposed;
     private string? _executablePath;
     private string? _lastError;
     private SingBoxRuntimeState _state = SingBoxRuntimeState.Stopped;
 
     public SingBoxRuntime(string? configDirectory = null, int maxLogLines = 200, TimeSpan? checkTimeout = null)
+        : this(
+            configDirectory,
+            maxLogLines,
+            checkTimeout,
+            DefaultStartupSettleTime,
+            new SystemSingBoxExecutionBackend(),
+            executableOverride: null)
+    {
+    }
+
+    internal SingBoxRuntime(
+        string? configDirectory,
+        int maxLogLines,
+        TimeSpan? checkTimeout,
+        TimeSpan startupSettleTime,
+        ISingBoxExecutionBackend executionBackend,
+        string? executableOverride)
     {
         var dir = configDirectory;
         if (string.IsNullOrWhiteSpace(dir))
@@ -48,9 +77,29 @@ public sealed class SingBoxRuntime : IDisposable
         }
 
         Directory.CreateDirectory(dir);
-        _configPath = Path.Combine(dir, DefaultConfigFileName);
+        _configDirectory = Path.GetFullPath(dir);
+        _configPath = Path.Combine(_configDirectory, DefaultConfigFileName);
+        _processStatePath = Path.Combine(_configDirectory, RuntimeStateFileName);
+        _runtimeLockPath = Path.Combine(_configDirectory, RuntimeLockFileName);
         _maxLogLines = Math.Max(32, maxLogLines);
         _checkTimeout = checkTimeout ?? DefaultCheckTimeout;
+        _startupSettleTime = startupSettleTime <= TimeSpan.Zero
+            ? DefaultStartupSettleTime
+            : startupSettleTime;
+        _executionBackend = executionBackend ?? throw new ArgumentNullException(nameof(executionBackend));
+        _executableOverride = executableOverride;
+
+        _runtimeLock = AcquireRuntimeLock(_runtimeLockPath);
+        try
+        {
+            RecoverOrphanedProcess();
+            CleanupStaleRuntimeArtifacts();
+        }
+        catch
+        {
+            _runtimeLock.Dispose();
+            throw;
+        }
     }
 
     public event Action<string>? LogReceived;
@@ -78,6 +127,9 @@ public sealed class SingBoxRuntime : IDisposable
     /// </summary>
     public string? DiscoverExecutable()
     {
+        if (!string.IsNullOrWhiteSpace(_executableOverride))
+            return ResolveCandidate(_executableOverride);
+
         var fromEnv = Environment.GetEnvironmentVariable(EnvExecutable);
         if (!string.IsNullOrWhiteSpace(fromEnv))
         {
@@ -124,6 +176,14 @@ public sealed class SingBoxRuntime : IDisposable
                     preserveRunningProcess: true);
             }
 
+            var previousConfig = TryReadConfigBytes();
+            if (GetStatus().IsRunning && previousConfig == null)
+            {
+                return FailApply(
+                    "The managed sing-box process is running, but its previous generated config is unavailable; stop it before applying a replacement.",
+                    preserveRunningProcess: true);
+            }
+
             string? candidatePath = null;
             try
             {
@@ -131,11 +191,13 @@ public sealed class SingBoxRuntime : IDisposable
 
                 SetState(SingBoxRuntimeState.Checking);
 
-                var check = await RunCheckAsync(exe, candidatePath, cancellationToken).ConfigureAwait(false);
+                var check = await _executionBackend
+                    .CheckAsync(exe, candidatePath, _checkTimeout, cancellationToken)
+                    .ConfigureAwait(false);
                 if (!check.Success)
                 {
                     return FailApply(
-                        check.Error ?? "sing-box check failed.",
+                        RedactSecrets(Truncate(check.Error ?? "sing-box check failed.", 800)),
                         preserveRunningProcess: true);
                 }
 
@@ -157,9 +219,27 @@ public sealed class SingBoxRuntime : IDisposable
             {
                 await ReplaceProcessAsync(exe, _configPath, cancellationToken).ConfigureAwait(false);
             }
+            catch (OperationCanceledException)
+            {
+                try { RestoreConfig(previousConfig); } catch { /* preserve cancellation */ }
+                throw;
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                return FailApply("Failed to start sing-box: " + RedactSecrets(ex.Message));
+                var startupError = "Failed to start replacement sing-box: " + RedactSecrets(ex.Message);
+                var rollback = await TryRollbackAsync(exe, previousConfig).ConfigureAwait(false);
+                if (rollback.Success)
+                {
+                    return FailApply(
+                        startupError + " Previous configuration was restored and restarted.",
+                        preserveRunningProcess: true);
+                }
+
+                TryDeleteConfig();
+                var rollbackDetail = string.IsNullOrWhiteSpace(rollback.Error)
+                    ? "No previous running configuration was available."
+                    : " Rollback also failed: " + RedactSecrets(rollback.Error);
+                return FailApply(startupError + rollbackDetail);
             }
 
             SetState(SingBoxRuntimeState.Running, clearError: true);
@@ -182,6 +262,8 @@ public sealed class SingBoxRuntime : IDisposable
                 _state = SingBoxRuntimeState.Stopped;
                 _lastError = null;
             }
+
+            CleanupManagedFiles();
         }
         finally
         {
@@ -210,7 +292,9 @@ public sealed class SingBoxRuntime : IDisposable
             _applyGate.Release();
         }
 
-        TryDeleteConfig();
+        CleanupManagedFiles();
+        _runtimeLock.Dispose();
+        TryDeleteFile(_runtimeLockPath);
         RaiseStatusChanged();
         GC.SuppressFinalize(this);
     }
@@ -242,54 +326,50 @@ public sealed class SingBoxRuntime : IDisposable
             File.Move(candidatePath, _configPath);
     }
 
-    private async Task<SingBoxCheckResult> RunCheckAsync(string exe, string configPath, CancellationToken cancellationToken)
+    private async Task<RollbackResult> TryRollbackAsync(string executablePath, byte[]? previousConfig)
     {
-        var psi = CreateSingBoxStartInfo(exe);
-        psi.ArgumentList.Add("check");
-        psi.ArgumentList.Add("-c");
-        psi.ArgumentList.Add(configPath);
-
-        using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-        var stdout = new StringBuilder();
-        var stderr = new StringBuilder();
-        process.OutputDataReceived += (_, e) => { if (e.Data != null) stdout.AppendLine(e.Data); };
-        process.ErrorDataReceived += (_, e) => { if (e.Data != null) stderr.AppendLine(e.Data); };
+        if (previousConfig == null)
+            return RollbackResult.Fail(null);
 
         try
         {
-            if (!process.Start())
-                return SingBoxCheckResult.Fail("Failed to start sing-box check process.");
-
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(_checkTimeout);
-
-            try
-            {
-                await process.WaitForExitAsync(timeoutCts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                TryKillProcessTree(process);
-                return SingBoxCheckResult.Fail($"sing-box check timed out after {_checkTimeout.TotalSeconds:0}s.");
-            }
-
-            if (process.ExitCode != 0)
-            {
-                var detail = RedactSecrets((stderr.ToString() + "\n" + stdout.ToString()).Trim());
-                if (string.IsNullOrWhiteSpace(detail))
-                    detail = $"exit code {process.ExitCode}";
-                return SingBoxCheckResult.Fail("sing-box check failed: " + Truncate(detail, 800));
-            }
-
-            return SingBoxCheckResult.Ok();
+            RestoreConfig(previousConfig);
+            await ReplaceProcessAsync(executablePath, _configPath, CancellationToken.None).ConfigureAwait(false);
+            return RollbackResult.Ok();
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
-            TryKillProcessTree(process);
-            return SingBoxCheckResult.Fail("sing-box check error: " + RedactSecrets(ex.Message));
+            TryDeleteConfig();
+            return RollbackResult.Fail(ex.Message);
+        }
+    }
+
+    private byte[]? TryReadConfigBytes()
+    {
+        try { return File.Exists(_configPath) ? File.ReadAllBytes(_configPath) : null; }
+        catch { return null; }
+    }
+
+    private void RestoreConfig(byte[]? configBytes)
+    {
+        if (configBytes == null)
+        {
+            TryDeleteConfig();
+            return;
+        }
+
+        var temporaryPath = _configPath + "." + Guid.NewGuid().ToString("N") + ".rollback";
+        try
+        {
+            File.WriteAllBytes(temporaryPath, configBytes);
+            if (File.Exists(_configPath))
+                File.Replace(temporaryPath, _configPath, destinationBackupFileName: null, ignoreMetadataErrors: true);
+            else
+                File.Move(temporaryPath, _configPath);
+        }
+        finally
+        {
+            TryDeleteFile(temporaryPath);
         }
     }
 
@@ -297,100 +377,216 @@ public sealed class SingBoxRuntime : IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        Process process;
+        ISingBoxManagedProcess process;
         lock (_gate)
         {
             KillManagedProcess_NoLock();
-
-            var psi = CreateSingBoxStartInfo(exe);
-            psi.ArgumentList.Add("run");
-            psi.ArgumentList.Add("-c");
-            psi.ArgumentList.Add(configPath);
-
-            process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            process.OutputDataReceived += OnProcessOutput;
-            process.ErrorDataReceived += OnProcessOutput;
-            process.Exited += OnProcessExited;
-
-            if (!process.Start())
-            {
-                process.Dispose();
-                throw new InvalidOperationException("Process.Start returned false.");
-            }
-
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+            process = _executionBackend.Start(exe, configPath, OnProcessOutput, OnProcessExited);
             _process = process;
+            WriteProcessState_NoLock(process, exe);
         }
 
         // Brief settle so immediate crash is visible to callers.
-        await Task.Delay(150, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(_startupSettleTime).ConfigureAwait(false);
 
         lock (_gate)
         {
-            if (_process == process && process.HasExited)
+            if (!ReferenceEquals(_process, process) || process.HasExited)
             {
-                var code = process.ExitCode;
-                _process = null;
-                throw new InvalidOperationException($"sing-box exited immediately with code {code}.");
+                var code = process.ExitCode?.ToString() ?? "unknown";
+                if (ReferenceEquals(_process, process))
+                {
+                    _process = null;
+                    TryDeleteFile(_processStatePath);
+                }
+
+                try { process.Dispose(); } catch { /* ignore teardown races */ }
+                throw new InvalidOperationException($"sing-box exited during startup with code {code}.");
             }
         }
     }
 
-    private void OnProcessOutput(object sender, DataReceivedEventArgs e)
+    private void OnProcessOutput(string output)
     {
-        if (string.IsNullOrEmpty(e.Data)) return;
-        var line = RedactSecrets(e.Data);
+        if (string.IsNullOrEmpty(output)) return;
+        var line = RedactSecrets(output);
         AppendLog(line);
         try { LogReceived?.Invoke(line); } catch { /* ignore subscriber errors */ }
     }
 
-    private void OnProcessExited(object? sender, EventArgs e)
+    private void OnProcessExited(ISingBoxManagedProcess process)
     {
+        var changed = false;
         lock (_gate)
         {
             if (_disposed) return;
-            if (_process != null && ReferenceEquals(sender, _process))
+            if (_process != null && ReferenceEquals(process, _process))
             {
-                var code = _process.HasExited ? _process.ExitCode : -1;
+                var code = _process.ExitCode?.ToString() ?? "unknown";
                 _lastError = $"sing-box exited with code {code}.";
                 _state = SingBoxRuntimeState.Failed;
                 try { _process.Dispose(); } catch { /* ignore */ }
                 _process = null;
+                TryDeleteFile(_processStatePath);
+                TryDeleteConfig();
+                changed = true;
             }
         }
 
-        RaiseStatusChanged();
+        if (changed)
+            RaiseStatusChanged();
     }
 
     private void KillManagedProcess_NoLock()
     {
         var process = _process;
         _process = null;
+        TryDeleteFile(_processStatePath);
         if (process == null) return;
 
-        try
-        {
-            process.OutputDataReceived -= OnProcessOutput;
-            process.ErrorDataReceived -= OnProcessOutput;
-            process.Exited -= OnProcessExited;
-        }
-        catch { /* ignore */ }
-
-        TryKillProcessTree(process);
+        try { process.Kill(); } catch { /* already exited or access denied */ }
         try { process.Dispose(); } catch { /* ignore */ }
     }
 
-    private static void TryKillProcessTree(Process process)
+    private static FileStream AcquireRuntimeLock(string lockPath)
     {
         try
         {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
+            return new FileStream(
+                lockPath,
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                bufferSize: 1,
+                FileOptions.None);
         }
-        catch { /* already exited or access denied */ }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException(
+                "Another ProxyManager instance is already managing this configuration directory.",
+                ex);
+        }
+    }
 
-        try { process.WaitForExit(3000); } catch { /* ignore */ }
+    private void RecoverOrphanedProcess()
+    {
+        try
+        {
+            if (!File.Exists(_processStatePath)) return;
+
+            var state = JObject.Parse(File.ReadAllText(_processStatePath));
+            var processId = state["process_id"]?.Value<int>() ?? 0;
+            var expectedStartTicks = state["start_time_utc_ticks"]?.Value<long>() ?? 0;
+            var expectedExecutable = state["executable_path"]?.Value<string>();
+            if (processId <= 0 || expectedStartTicks <= 0) return;
+
+            using var process = Process.GetProcessById(processId);
+            if (process.HasExited) return;
+
+            var actualStartTicks = process.StartTime.ToUniversalTime().Ticks;
+            if (Math.Abs(actualStartTicks - expectedStartTicks) > TimeSpan.TicksPerSecond)
+                return;
+
+            try
+            {
+                var actualExecutable = process.MainModule?.FileName;
+                if (!string.IsNullOrWhiteSpace(expectedExecutable) &&
+                    !string.IsNullOrWhiteSpace(actualExecutable) &&
+                    !Path.GetFullPath(actualExecutable).Equals(
+                        Path.GetFullPath(expectedExecutable),
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+            catch
+            {
+                // Exact PID plus start time still protects against ordinary PID reuse.
+            }
+
+            process.Kill(entireProcessTree: true);
+            process.WaitForExit(3000);
+        }
+        catch
+        {
+            // Recovery is best effort; stale secret-bearing files are still removed below.
+        }
+        finally
+        {
+            TryDeleteFile(_processStatePath);
+        }
+    }
+
+    private void WriteProcessState_NoLock(ISingBoxManagedProcess process, string executablePath)
+    {
+        var state = new JObject
+        {
+            ["process_id"] = process.Id,
+            ["start_time_utc_ticks"] = process.StartTimeUtc.Ticks,
+            ["executable_path"] = Path.GetFullPath(executablePath)
+        };
+
+        var temporaryPath = _processStatePath + "." + Guid.NewGuid().ToString("N") + ".candidate";
+        try
+        {
+            File.WriteAllText(
+                temporaryPath,
+                state.ToString(Formatting.None),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            if (File.Exists(_processStatePath))
+                File.Replace(temporaryPath, _processStatePath, destinationBackupFileName: null, ignoreMetadataErrors: true);
+            else
+                File.Move(temporaryPath, _processStatePath);
+        }
+        finally
+        {
+            TryDeleteFile(temporaryPath);
+        }
+    }
+
+    private void CleanupStaleRuntimeArtifacts()
+    {
+        TryDeleteConfig();
+        TryDeleteFile(_processStatePath);
+        CleanupCandidateFiles();
+    }
+
+    private void CleanupManagedFiles()
+    {
+        TryDeleteConfig();
+        TryDeleteFile(_processStatePath);
+        CleanupCandidateFiles();
+    }
+
+    private void CleanupCandidateFiles()
+    {
+        try
+        {
+            foreach (var path in Directory.EnumerateFiles(
+                         _configDirectory,
+                         DefaultConfigFileName + ".*.candidate",
+                         SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(path);
+            }
+
+            foreach (var path in Directory.EnumerateFiles(
+                         _configDirectory,
+                         DefaultConfigFileName + ".*.rollback",
+                         SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(path);
+            }
+
+            foreach (var path in Directory.EnumerateFiles(
+                         _configDirectory,
+                         RuntimeStateFileName + ".*.candidate",
+                         SearchOption.TopDirectoryOnly))
+            {
+                TryDeleteFile(path);
+            }
+        }
+        catch { /* best effort cleanup */ }
     }
 
     private void TryDeleteConfig()
@@ -417,7 +613,10 @@ public sealed class SingBoxRuntime : IDisposable
             }
 
             if (!isRunning)
+            {
                 KillManagedProcess_NoLock();
+                TryDeleteConfig();
+            }
             _lastError = error;
             _state = isRunning ? SingBoxRuntimeState.Running : SingBoxRuntimeState.Failed;
         }
@@ -477,17 +676,6 @@ public sealed class SingBoxRuntime : IDisposable
         while (_recentLogs.Count > _maxLogLines && _recentLogs.TryDequeue(out _)) { }
     }
 
-    private static ProcessStartInfo CreateSingBoxStartInfo(string exe) => new()
-    {
-        FileName = exe,
-        UseShellExecute = false,
-        CreateNoWindow = true,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        RedirectStandardInput = false,
-        WorkingDirectory = Path.GetDirectoryName(exe) ?? AppContext.BaseDirectory
-    };
-
     private static string? ResolveCandidate(string pathOrDir)
     {
         try
@@ -541,12 +729,12 @@ public sealed class SingBoxRuntime : IDisposable
         return text[..max] + "…";
     }
 
-    private readonly struct SingBoxCheckResult
+    private readonly struct RollbackResult
     {
         public bool Success { get; init; }
         public string? Error { get; init; }
-        public static SingBoxCheckResult Ok() => new() { Success = true };
-        public static SingBoxCheckResult Fail(string error) => new() { Success = false, Error = error };
+        public static RollbackResult Ok() => new() { Success = true };
+        public static RollbackResult Fail(string? error) => new() { Success = false, Error = error };
     }
 }
 

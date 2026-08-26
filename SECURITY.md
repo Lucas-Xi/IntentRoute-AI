@@ -15,7 +15,7 @@ Please allow a reasonable time for acknowledgement, triage, a coordinated fix, a
 - The application requires administrator rights because it manages TUN routing through sing-box.
 - ProxyManager executes only the discovered sing-box path and uses argument-list process invocation without a shell.
 - Stored passwords use Windows DPAPI for the current user.
-- The managed sing-box configuration contains credentials in plaintext while in use and is deleted on clean exit. A crash or forced termination can leave the file behind.
+- The managed sing-box configuration contains credentials in plaintext while in use. It is deleted on stop, clean exit, and unexpected child exit; the next launch also performs best-effort orphan recovery and stale-file cleanup. A crash or forced termination can leave the file behind until that next launch.
 - Exported profiles omit credentials.
 - sing-box is an external dependency and must be obtained from its official project; ProxyManager does not update or verify that binary.
 

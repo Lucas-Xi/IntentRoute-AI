@@ -29,6 +29,8 @@ public sealed class SingBoxConfigBuilderTests
         Assert.DoesNotContain("top-secret-value", result.RedactedJson, StringComparison.Ordinal);
         var root = JObject.Parse(result.RedactedJson!);
         Assert.Equal("tun", root["inbounds"]![0]!["type"]!.Value<string>());
+        Assert.Contains(SingBoxConfigBuilder.TunIpv4Address, root["inbounds"]![0]!["address"]!.Values<string>());
+        Assert.Contains(SingBoxConfigBuilder.TunIpv6Address, root["inbounds"]![0]!["address"]!.Values<string>());
         Assert.True(root["inbounds"]![0]!["auto_route"]!.Value<bool>());
         Assert.True(root["inbounds"]![0]!["strict_route"]!.Value<bool>());
         Assert.Equal("***", root["outbounds"]![1]!["password"]!.Value<string>());

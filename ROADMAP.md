@@ -10,13 +10,14 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] managed sing-box lifecycle and redacted runtime logs
 - [x] DPAPI password storage and credential-free exports
 - [x] Windows CI, release archives, and checksums
+- [x] dual-stack Windows TUN configuration
+- [x] failed-start rollback, orphan recovery, and stale generated-config cleanup
 
 ## Candidate next work
 
 - [ ] Guided sing-box discovery with version reporting
-- [ ] Safer crash recovery and stale generated-config cleanup
 - [ ] Authenticated local proxy editing in the UI
-- [ ] Automated integration tests against a pinned sing-box release
+- [ ] Automated CI integration tests against a pinned real sing-box release
 - [ ] Accessible keyboard navigation and high-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
 - [ ] Signed release artifacts when sustainable signing infrastructure exists

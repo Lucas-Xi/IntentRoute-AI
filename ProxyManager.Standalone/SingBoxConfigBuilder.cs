@@ -16,7 +16,8 @@ public static class SingBoxConfigBuilder
 {
     public const string DirectTag = "direct";
     public const string TunInboundTag = "tun-in";
-    public const string TunAddress = "172.19.0.1/30";
+    public const string TunIpv4Address = "172.19.0.1/30";
+    public const string TunIpv6Address = "fdfe:dcba:9876::1/126";
 
     private static readonly char[] ListSeparators = [',', ';', '|', '\n', '\r', '\t', ' '];
 
@@ -88,7 +89,7 @@ public static class SingBoxConfigBuilder
                     {
                         ["type"] = "tun",
                         ["tag"] = TunInboundTag,
-                        ["address"] = new JArray(TunAddress),
+                        ["address"] = new JArray(TunIpv4Address, TunIpv6Address),
                         ["auto_route"] = true,
                         ["strict_route"] = true,
                         ["stack"] = "system"

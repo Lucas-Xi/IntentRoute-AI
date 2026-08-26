@@ -33,6 +33,10 @@ jobs:
         shell: pwsh
         run: dotnet test ProxyManager.Tests/ProxyManager.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=tests.trx"
 
+      - name: Check vulnerable dependencies
+        shell: pwsh
+        run: ./scripts/check-vulnerabilities.ps1
+
       - name: Publish Windows x64
         shell: pwsh
         run: ./scripts/build.ps1 -OutputDirectory "$env:RUNNER_TEMP/ProxyManager-win-x64"

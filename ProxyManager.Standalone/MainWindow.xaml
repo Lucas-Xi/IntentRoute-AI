@@ -192,7 +192,7 @@
                     <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <StackPanel>
                             <TextBlock Text="⚡ ProxyManager" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="v0.1.0 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="v0.1.1 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -462,7 +462,7 @@
                                         <TextBlock Text="代理设置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16"/>
                                         <TextBlock Text="本地 SOCKS5 端口" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                                         <TextBox x:Name="SocksPort" Text="10808" Style="{StaticResource InputBox}"/>
-                                        <TextBlock Text="v0.1.0 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                        <TextBlock Text="v0.1.1 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
                                         <Button Content="保存代理设置" Style="{StaticResource PrimaryBtn}"
                                                 HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveProxy_Click"/>
                                     </StackPanel>
@@ -478,7 +478,7 @@
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="⚡" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="ProxyManager" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="网络分流工具 v0.1.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                                <TextBlock Text="网络分流工具 v0.1.1" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
 
                                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                                     <StackPanel>

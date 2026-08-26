@@ -22,9 +22,22 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Verify tag matches project version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content ProxyManager.Standalone/ProxyManager.Standalone.csproj
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ($env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME does not match project version v$version"
+          }
+
       - name: Test
         shell: pwsh
         run: ./scripts/test.ps1
+
+      - name: Check vulnerable dependencies
+        shell: pwsh
+        run: ./scripts/check-vulnerabilities.ps1
 
       - name: Publish
         shell: pwsh
@@ -51,4 +64,4 @@ jobs:
         run: |
           $archive = (Get-Item ProxyManager-*.zip).FullName
           $checksum = (Get-Item ProxyManager-*.sha256).FullName
-          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --title "ProxyManager $env:GITHUB_REF_NAME"
+          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --prerelease --title "ProxyManager $env:GITHUB_REF_NAME"
