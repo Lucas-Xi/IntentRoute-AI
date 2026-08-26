@@ -12,7 +12,7 @@ namespace ProxyManager.Standalone;
 /// Discovers, validates, and manages a sing-box process for IntentRoute AI.
 /// Does not download or bundle sing-box.
 /// </summary>
-public sealed class SingBoxRuntime : IDisposable
+public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
 {
     public const string EnvExecutable = "INTENTROUTE_SING_BOX";
     public const string LegacyEnvExecutable = "PROXYMANAGER_SING_BOX";
@@ -22,7 +22,12 @@ public sealed class SingBoxRuntime : IDisposable
     internal const string RuntimeLockFileName = "sing-box.runtime.lock";
 
     private static readonly TimeSpan DefaultCheckTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan DefaultVersionTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan DefaultStartupSettleTime = TimeSpan.FromMilliseconds(300);
+    private static readonly Version MinimumSupportedVersion = new(1, 13, 0);
+    private static readonly Regex VersionPattern = new(
+        @"(?im)^\s*sing-box\s+version\s+v?(\d+)\.(\d+)\.(\d+)(?:\s|$)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex SecretLinePattern = new(
         @"(?i)(password|passwd|pwd|secret|token|credential)\s*([:=]\s*)\S+",
         RegexOptions.Compiled);
@@ -48,6 +53,7 @@ public sealed class SingBoxRuntime : IDisposable
     private bool _disposed;
     private string? _executablePath;
     private string? _lastError;
+    private string? _version;
     private SingBoxRuntimeState _state = SingBoxRuntimeState.Stopped;
 
     public SingBoxRuntime(string? configDirectory = null, int maxLogLines = 200, TimeSpan? checkTimeout = null)
@@ -127,8 +133,11 @@ public sealed class SingBoxRuntime : IDisposable
     /// Resolves sing-box from INTENTROUTE_SING_BOX, the legacy PROXYMANAGER_SING_BOX,
     /// the application directory, or PATH.
     /// </summary>
-    public string? DiscoverExecutable()
+    public string? DiscoverExecutable(string? preferredPath = null)
     {
+        if (!string.IsNullOrWhiteSpace(preferredPath))
+            return ResolveCandidate(preferredPath.Trim());
+
         if (!string.IsNullOrWhiteSpace(_executableOverride))
             return ResolveCandidate(_executableOverride);
 
@@ -155,6 +164,74 @@ public sealed class SingBoxRuntime : IDisposable
         return FindOnPath(DefaultExecutableName) ?? FindOnPath("sing-box");
     }
 
+    public async Task<SingBoxReadinessResult> ProbeReadinessAsync(
+        string? preferredPath = null,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        string? executablePath;
+        if (!string.IsNullOrWhiteSpace(preferredPath))
+        {
+            executablePath = ResolveCandidate(preferredPath.Trim());
+            if (executablePath == null)
+            {
+                return SingBoxReadinessResult.NotReady(
+                    preferredPath.Trim(),
+                    "The selected sing-box executable no longer exists. Select another file or return to automatic discovery.");
+            }
+        }
+        else
+        {
+            executablePath = !string.IsNullOrWhiteSpace(_executableOverride)
+                ? ResolveCandidate(_executableOverride)
+                : DiscoverExecutable();
+            if (string.IsNullOrWhiteSpace(_executableOverride) && executablePath != null)
+            {
+                return SingBoxReadinessResult.NotReady(
+                    executablePath,
+                    "A sing-box candidate was discovered but has not been approved. Select that exact file with Browse before IntentRoute AI executes it.");
+            }
+        }
+        if (executablePath == null)
+        {
+            return SingBoxReadinessResult.NotReady(
+                null,
+                "sing-box executable not found. Select a separately installed sing-box v1.13+ executable, set INTENTROUTE_SING_BOX, place it beside the app, or add it to PATH.");
+        }
+
+        var probe = await _executionBackend
+            .GetVersionAsync(executablePath, DefaultVersionTimeout, cancellationToken)
+            .ConfigureAwait(false);
+        if (!probe.Success)
+        {
+            return SingBoxReadinessResult.NotReady(
+                executablePath,
+                RedactSecrets(Truncate(probe.Error ?? "sing-box version probe failed.", 800)));
+        }
+
+        var match = VersionPattern.Match(probe.Output ?? string.Empty);
+        if (!match.Success ||
+            !int.TryParse(match.Groups[1].Value, out var major) ||
+            !int.TryParse(match.Groups[2].Value, out var minor) ||
+            !int.TryParse(match.Groups[3].Success ? match.Groups[3].Value : "0", out var patch))
+        {
+            return SingBoxReadinessResult.NotReady(
+                executablePath,
+                "sing-box version output could not be recognized; v1.13 or newer is required.");
+        }
+
+        var version = new Version(major, minor, patch);
+        if (version < MinimumSupportedVersion)
+        {
+            return SingBoxReadinessResult.NotReady(
+                executablePath,
+                $"sing-box {version} is not supported; v{MinimumSupportedVersion} or newer is required.",
+                version.ToString());
+        }
+
+        return SingBoxReadinessResult.Ready(executablePath, version.ToString());
+    }
+
     public async Task<SingBoxApplyResult> ApplyAsync(AppConfig config, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -167,15 +244,19 @@ public sealed class SingBoxRuntime : IDisposable
 
             SetState(SingBoxRuntimeState.Starting, clearError: true);
 
-            var exe = DiscoverExecutable();
-            if (exe == null)
+            SetState(SingBoxRuntimeState.Probing);
+            var readiness = await ProbeReadinessAsync(config.SingBoxExecutablePath, cancellationToken)
+                .ConfigureAwait(false);
+            if (!readiness.IsReady || readiness.ExecutablePath == null)
             {
                 return FailApply(
-                    "sing-box executable not found. Set INTENTROUTE_SING_BOX, place sing-box.exe beside the app, or add it to PATH.",
+                    readiness.Error ?? "sing-box is not ready.",
                     preserveRunningProcess: true);
             }
 
+            var exe = readiness.ExecutablePath;
             _executablePath = exe;
+            _version = readiness.Version;
 
             var build = SingBoxConfigBuilder.Build(config);
             if (!build.Success || string.IsNullOrEmpty(build.ConfigJson))
@@ -284,7 +365,12 @@ public sealed class SingBoxRuntime : IDisposable
 
     public void Dispose()
     {
-        _applyGate.Wait();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _applyGate.WaitAsync().ConfigureAwait(false);
         try
         {
             if (_disposed) return;
@@ -471,7 +557,7 @@ public sealed class SingBoxRuntime : IDisposable
         }
         catch (IOException ex)
         {
-            throw new InvalidOperationException(
+            throw new SingBoxRuntimeOwnershipException(
                 "Another IntentRoute AI instance is already managing this configuration directory.",
                 ex);
         }
@@ -627,7 +713,7 @@ public sealed class SingBoxRuntime : IDisposable
                 TryDeleteConfig();
             }
             _lastError = error;
-            _state = isRunning ? SingBoxRuntimeState.Running : SingBoxRuntimeState.Failed;
+            _state = isRunning ? SingBoxRuntimeState.RunningStale : SingBoxRuntimeState.Failed;
         }
 
         RaiseStatusChanged();
@@ -665,6 +751,7 @@ public sealed class SingBoxRuntime : IDisposable
             ExecutablePath = _executablePath,
             ConfigPath = _configPath,
             LastError = _lastError,
+            Version = _version,
             ProcessId = pid,
             IsRunning = running
         };
@@ -750,9 +837,11 @@ public sealed class SingBoxRuntime : IDisposable
 public enum SingBoxRuntimeState
 {
     Stopped,
+    Probing,
     Starting,
     Checking,
     Running,
+    RunningStale,
     Failed
 }
 
@@ -762,8 +851,46 @@ public sealed class SingBoxRuntimeStatus
     public string? ExecutablePath { get; init; }
     public string? ConfigPath { get; init; }
     public string? LastError { get; init; }
+    public string? Version { get; init; }
     public int? ProcessId { get; init; }
     public bool IsRunning { get; init; }
+}
+
+public sealed class SingBoxReadinessResult
+{
+    private SingBoxReadinessResult(
+        bool isReady,
+        string? executablePath,
+        string? version,
+        string? error)
+    {
+        IsReady = isReady;
+        ExecutablePath = executablePath;
+        Version = version;
+        Error = error;
+    }
+
+    public bool IsReady { get; }
+    public string? ExecutablePath { get; }
+    public string? Version { get; }
+    public string? Error { get; }
+
+    public static SingBoxReadinessResult Ready(string executablePath, string version) =>
+        new(true, executablePath, version, null);
+
+    public static SingBoxReadinessResult NotReady(
+        string? executablePath,
+        string error,
+        string? version = null) =>
+        new(false, executablePath, version, error);
+}
+
+public sealed class SingBoxRuntimeOwnershipException : InvalidOperationException
+{
+    public SingBoxRuntimeOwnershipException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
 }
 
 public sealed class SingBoxApplyResult

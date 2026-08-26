@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,17 +22,22 @@ public partial class MainWindow : Window
     private string _searchFilter = "";
     private bool _isMaximized = false;
     private CancellationTokenSource? _aiGenerationCts;
+    private CancellationTokenSource? _runtimeReadinessCts;
     private int _aiModelRefreshVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
+    private bool _shutdownStarted;
+    private bool _shutdownComplete;
 
     public MainWindow()
     {
         InitializeComponent();
 
         _service = new AppService();
-        _service.StatusChanged += s => Dispatcher.Invoke(() => StatusDetail.Text = s);
-        _service.RuntimeLogReceived += line => Dispatcher.Invoke(() =>
+        _service.StatusChanged += s => PostToUi(() => StatusDetail.Text = s);
+        _service.RuntimeStatusChanged += status => PostToUi(() => UpdateRuntimeStatusUi(status));
+        _service.ConfigurationStateChanged += () => PostToUi(UpdateConfigurationUi);
+        _service.RuntimeLogReceived += line => PostToUi(() =>
         {
             _runtimeLogs.Add(new RuntimeLogLine(DateTime.Now.ToString("HH:mm:ss"), line));
             while (_runtimeLogs.Count > 500)
@@ -50,9 +57,12 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        UpdateConfigurationUi();
         LoadRules();
         LoadSettings();
         RefreshProcessList();
+        await RefreshRuntimeReadinessAsync();
+        UpdateRuntimeStatusUi(_service.GetRuntimeStatus());
         await RefreshAiModelsAsync();
     }
 
@@ -488,7 +498,7 @@ public partial class MainWindow : Window
             {
                 var export = new
                 {
-                    Version = "0.2.0",
+                    Version = "0.3.0",
                     ExportTime = DateTime.Now,
                     Rules = _service.Config.Rules
                 };
@@ -565,22 +575,286 @@ public partial class MainWindow : Window
     private void LoadSettings()
     {
         var config = _service.Config;
-        SocksPort.Text = config.SocksPort.ToString();
+        var proxy = _service.GetPrimaryProxy();
+        ProxyHost.Text = proxy?.Host ?? config.SocksHost;
+        ProxyPort.Text = (proxy?.Port ?? config.SocksPort).ToString();
+        ProxyUsername.Text = proxy?.Username ?? string.Empty;
+        ProxyPassword.Password = proxy?.Password ?? string.Empty;
+        ProxyTypeCombo.SelectedIndex = (proxy?.ProxyType ?? ProxyType.Socks5) switch
+        {
+            ProxyType.Http => 1,
+            ProxyType.Https => 2,
+            _ => 0
+        };
+        RuntimePathBox.Text = config.SingBoxExecutablePath;
         ModeProxy.IsChecked = config.GlobalMode == GlobalMode.ProxyAll;
         ModeDirect.IsChecked = config.GlobalMode == GlobalMode.DirectAll;
     }
 
     private void SaveProxy_Click(object sender, RoutedEventArgs e)
     {
-        if (int.TryParse(SocksPort.Text, out var socksPort) && socksPort is >= 1 and <= 65535)
+        if (!int.TryParse(ProxyPort.Text, out var port))
         {
-            _service.UpdateProxy("127.0.0.1", socksPort, "127.0.0.1", 10809);
-            StatusDetail.Text = $"本地 SOCKS5 代理已更新: 127.0.0.1:{socksPort}";
+            MessageBox.Show("请输入有效的端口号", "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var proxyType = GetSelectedProxyType();
+        try
+        {
+            _service.UpdatePrimaryProxy(
+                proxyType,
+                ProxyHost.Text,
+                port,
+                ProxyUsername.Text,
+                ProxyPassword.Password);
+            ProxyHost.Text = LocalProxyEndpoint.NormalizeOrThrow(ProxyHost.Text, port);
+            StatusDetail.Text = $"本地 {proxyType} 代理已保存: {ProxyHost.Text}:{port}";
+            ProxyTestStatus.Text = "设置已保存。端口测试仍需单独执行，保存不代表代理可用。";
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            MessageBox.Show(ex.Message, "无法保存代理设置", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void TestProxy_Click(object sender, RoutedEventArgs e)
+    {
+        if (!int.TryParse(ProxyPort.Text, out var port))
+        {
+            ProxyTestStatus.Text = "请输入有效的本地代理端口。";
+            return;
+        }
+
+        if (!LocalProxyEndpoint.TryNormalize(ProxyHost.Text, port, out var normalizedHost, out var error))
+        {
+            ProxyTestStatus.Text = error;
+            return;
+        }
+
+        TestProxyButton.IsEnabled = false;
+        ProxyTestStatus.Text = $"正在检查 {normalizedHost}:{port} 的 TCP 端口…";
+        try
+        {
+            var connected = await _service.TestLocalProxyAsync(normalizedHost, port);
+            ProxyTestStatus.Text = connected
+                ? "本机端口可以连接。此结果不验证代理协议、账号密码或真实互联网流量。"
+                : "无法连接本机端口。请先确认代理程序正在监听该地址和端口。";
+        }
+        finally
+        {
+            TestProxyButton.IsEnabled = _service.IsConfigurationWritable;
+        }
+    }
+
+    private async void BrowseSingBox_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "选择已单独安装的 sing-box 可执行文件",
+            Filter = "sing-box 可执行文件 (sing-box.exe)|sing-box.exe|可执行文件 (*.exe)|*.exe"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            _service.SetSingBoxExecutablePath(dialog.FileName);
+            RuntimePathBox.Text = Path.GetFullPath(dialog.FileName);
+            await RefreshRuntimeReadinessAsync();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            MessageBox.Show(ex.Message, "无法使用 sing-box", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void RefreshRuntime_Click(object sender, RoutedEventArgs e) =>
+        await RefreshRuntimeReadinessAsync();
+
+    private async void ClearSingBoxPath_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            _service.ClearSingBoxExecutablePath();
+            RuntimePathBox.Text = string.Empty;
+            await RefreshRuntimeReadinessAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(ex.Message, "无法更改 sing-box 路径", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async Task RefreshRuntimeReadinessAsync()
+    {
+        if (!_service.IsConfigurationWritable)
+        {
+            RuntimeReadinessText.Text = "配置保护期间不会检查或启动 sing-box。请先完成配置恢复。";
+            RuntimeVersionText.Text = "版本：已阻止检查";
+            return;
+        }
+
+        RefreshRuntimeButton.IsEnabled = false;
+        RuntimeReadinessText.Text = "正在读取实际路径和版本…";
+        _runtimeReadinessCts?.Cancel();
+        _runtimeReadinessCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _runtimeReadinessCts = cts;
+        try
+        {
+            var readiness = await _service.ProbeRuntimeReadinessAsync(cts.Token);
+            RuntimePathBox.Text = readiness.ExecutablePath ?? _service.Config.SingBoxExecutablePath;
+            RuntimeVersionText.Text = "版本：" + (readiness.Version ?? "未识别");
+            RuntimeReadinessText.Text = readiness.IsReady
+                ? "已就绪：版本满足 v1.13+。规则变更仍会先执行 sing-box check。"
+                : readiness.Error ?? "sing-box 未就绪。";
+        }
+        catch (OperationCanceledException)
+        {
+            RuntimeReadinessText.Text = "sing-box 就绪检查已取消。";
+        }
+        finally
+        {
+            if (ReferenceEquals(_runtimeReadinessCts, cts))
+            {
+                _runtimeReadinessCts = null;
+                cts.Dispose();
+            }
+            RefreshRuntimeButton.IsEnabled = _service.IsConfigurationWritable;
+        }
+    }
+
+    private ProxyType GetSelectedProxyType() => ProxyTypeCombo.SelectedIndex switch
+    {
+        1 => ProxyType.Http,
+        2 => ProxyType.Https,
+        _ => ProxyType.Socks5
+    };
+
+    private void UpdateConfigurationUi()
+    {
+        var writable = _service.IsConfigurationWritable;
+        ConfigRecoveryBanner.Visibility = writable ? Visibility.Collapsed : Visibility.Visible;
+        PageRules.IsEnabled = writable;
+        PageAiAssistant.IsEnabled = writable;
+        RuntimeSettingsCard.IsEnabled = writable;
+        ProxySettingsCard.IsEnabled = writable;
+        ModeDirect.IsEnabled = writable;
+        ModeProxy.IsEnabled = writable;
+
+        if (!writable)
+        {
+            var backup = _service.ConfigurationRecoveryBackupPath;
+            var recoveryCopyAvailable = !string.IsNullOrWhiteSpace(backup) && File.Exists(backup);
+            ResetConfigButton.IsEnabled = recoveryCopyAvailable;
+            RecoverConfigButton.IsEnabled = recoveryCopyAvailable;
+            ResetConfigButton.ToolTip = ResetConfigButton.IsEnabled
+                ? "恢复副本存在；确认后可以重置活动配置。"
+                : "恢复副本不可用。为避免覆盖唯一原件，重置已禁用；请先手动复制原文件并重新启动应用。";
+            RecoverConfigButton.ToolTip = RecoverConfigButton.IsEnabled
+                ? "先验证所选配置的安全语义，再替换活动配置。"
+                : "恢复副本不可用。为避免覆盖唯一原件，导入替换已禁用；请先手动复制原文件并重新启动应用。";
+            var reason = string.IsNullOrWhiteSpace(_service.ConfigurationError)
+                ? string.Empty
+                : "原因：" + _service.ConfigurationError + " ";
+            ConfigRecoveryText.Text = string.IsNullOrWhiteSpace(backup)
+                ? reason + "配置文件不可安全读取，且无法创建恢复副本。原文件仍未被修改；所有保存、导入替换、重置和 sing-box 启动均已阻止。请先手动复制原文件并重新启动应用。"
+                : reason + $"配置文件不可安全读取。原文件未被修改，恢复副本位于：{backup}。所有保存和 sing-box 启动均已阻止。";
+            StatusDetail.Text = "配置保护已启动；等待用户恢复";
         }
         else
         {
-            MessageBox.Show("请输入有效的端口号", "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ResetConfigButton.IsEnabled = false;
+            RecoverConfigButton.IsEnabled = false;
         }
+    }
+
+    private void OpenConfigFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                UseShellExecute = false
+            };
+            startInfo.ArgumentList.Add(_service.ConfigDirectory);
+            Process.Start(startInfo);
+        }
+        catch
+        {
+            MessageBox.Show(_service.ConfigDirectory, "配置目录", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private async void RecoverConfig_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "导入有效的 IntentRoute AI 配置",
+            Filter = "JSON 文件 (*.json)|*.json"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            _service.RecoverConfigurationFromFile(dialog.FileName);
+            UpdateConfigurationUi();
+            LoadSettings();
+            LoadRules();
+            await RefreshRuntimeReadinessAsync();
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or Newtonsoft.Json.JsonException or AppConfigProtectionException)
+        {
+            MessageBox.Show("所选文件无法安全读取，现有配置仍保持保护状态。\n\n" + ex.Message,
+                "恢复失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void ResetConfig_Click(object sender, RoutedEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "这会用全新的默认配置替换当前损坏的 config.json。恢复副本会保留。是否继续？",
+            "确认重置配置",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            _service.ResetUnusableConfiguration();
+            UpdateConfigurationUi();
+            LoadSettings();
+            LoadRules();
+            await RefreshRuntimeReadinessAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "重置失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void UpdateRuntimeStatusUi(SingBoxRuntimeStatus status)
+    {
+        var brushKey = status.State switch
+        {
+            SingBoxRuntimeState.Running when status.IsRunning => "SuccessBrush",
+            SingBoxRuntimeState.RunningStale when status.IsRunning => "WarningBrush",
+            SingBoxRuntimeState.Probing or SingBoxRuntimeState.Starting or SingBoxRuntimeState.Checking => "WarningBrush",
+            SingBoxRuntimeState.Failed => "DangerBrush",
+            _ => "TextMutedBrush"
+        };
+        SetStatusBrush(brushKey);
+        if (!string.IsNullOrWhiteSpace(status.ExecutablePath))
+            RuntimePathBox.Text = status.ExecutablePath;
+        if (!string.IsNullOrWhiteSpace(status.Version))
+            RuntimeVersionText.Text = "版本：" + status.Version;
+    }
+
+    private void SetStatusBrush(string resourceKey)
+    {
+        if (FindResource(resourceKey) is Brush brush)
+            StatusDot.Fill = brush;
     }
 
     #endregion
@@ -626,14 +900,55 @@ public partial class MainWindow : Window
 
     #endregion
 
-    protected override void OnClosed(EventArgs e)
+    protected override async void OnClosing(CancelEventArgs e)
     {
+        if (_shutdownComplete)
+        {
+            base.OnClosing(e);
+            return;
+        }
+
+        e.Cancel = true;
+        base.OnClosing(e);
+        if (_shutdownStarted) return;
+        _shutdownStarted = true;
+        IsEnabled = false;
+        StatusDetail.Text = "正在安全停止 sing-box…";
         _aiGenerationCts?.Cancel();
-        _aiGenerationCts?.Dispose();
-        _openAiProvider.Dispose();
-        _ollamaProvider.Dispose();
-        _service.Dispose();
-        base.OnClosed(e);
+        _runtimeReadinessCts?.Cancel();
+        try
+        {
+            await _service.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("IntentRoute AI shutdown cleanup failed: " + SingBoxRuntime.RedactSecrets(ex.Message));
+        }
+        finally
+        {
+            _aiGenerationCts?.Dispose();
+            _runtimeReadinessCts?.Dispose();
+            _openAiProvider.Dispose();
+            _ollamaProvider.Dispose();
+            _shutdownComplete = true;
+            _shutdownStarted = false;
+            Close();
+        }
+    }
+
+    private void PostToUi(Action action)
+    {
+        try
+        {
+            if (Dispatcher.CheckAccess())
+                action();
+            else
+                _ = Dispatcher.BeginInvoke(action);
+        }
+        catch
+        {
+            // The window may already be shutting down; runtime cleanup must not wait on UI dispatch.
+        }
     }
 
     private static string GetConfiguredMode(IEnumerable<ProxyRule> rules, string processName)

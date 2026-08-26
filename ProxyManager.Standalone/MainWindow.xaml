@@ -201,7 +201,7 @@
                     <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <StackPanel>
                             <TextBlock Text="✦ IntentRoute AI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="v0.2.0 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="v0.3.0 开发预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -228,7 +228,7 @@
                     <Border Grid.Row="2" Padding="14,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
+                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
                                 <TextBlock x:Name="StatusLabel" Text="运行状态" FontSize="12" Foreground="{StaticResource TextBrush}"/>
                             </StackPanel>
                             <TextBlock x:Name="StatusDetail" Text="正在检查 sing-box…" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
@@ -240,6 +240,7 @@
             <!-- ═══ 右侧内容区 ═══ -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
@@ -286,8 +287,34 @@
                     </Grid>
                 </Border>
 
+                <!-- 配置恢复阻断提示 -->
+                <Border x:Name="ConfigRecoveryBanner" Grid.Row="1" Visibility="Collapsed"
+                        Background="#3D2E00" BorderBrush="{StaticResource WarningBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="16,8,16,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="配置保护已启动" FontWeight="SemiBold" FontSize="13"
+                                       Foreground="{StaticResource WarningBrush}"/>
+                            <TextBlock x:Name="ConfigRecoveryText" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="打开目录" Style="{StaticResource SecondaryBtn}" Padding="10,5"
+                                    Margin="0,0,6,0" Click="OpenConfigFolder_Click"/>
+                            <Button x:Name="RecoverConfigButton" Content="导入有效配置" Style="{StaticResource SecondaryBtn}" Padding="10,5"
+                                    Margin="0,0,6,0" Click="RecoverConfig_Click"/>
+                            <Button x:Name="ResetConfigButton" Content="明确重置" Style="{StaticResource PrimaryBtn}" Padding="10,5"
+                                    Click="ResetConfig_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- 主内容区 -->
-                <Grid Grid.Row="1" Margin="16,8,16,16">
+                <Grid Grid.Row="2" Margin="16,8,16,16">
                     <!-- 页面: 规则管理 -->
                     <Grid x:Name="PageRules" Visibility="Visible" AllowDrop="True"
                           Drop="Window_Drop" DragOver="Window_DragOver" DragLeave="Window_DragLeave">
@@ -372,7 +399,64 @@
                                 <!-- 列表内容 -->
                                 <ListBox x:Name="RulesList" Margin="0,38,0,0" Background="Transparent"
                                          BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                         ContextMenu="{StaticResource RuleMenu}"/>
+                                         ContextMenu="{StaticResource RuleMenu}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#263B82F6"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid MinHeight="48" Margin="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="30"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11"
+                                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,5">
+                                                    <TextBlock Text="{Binding ExeName}" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding ExePath}"/>
+                                                    <TextBlock Text="{Binding ConditionSummary}" FontSize="10"
+                                                               Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding ModeText}" FontSize="11"
+                                                           Foreground="{Binding ModeColor}" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding StatusText}" FontSize="11"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="4" Text="{Binding CreatedAt}" FontSize="10"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="5" Text="⋮" FontSize="16"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           ToolTip="选择后右键管理规则"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
                                 <!-- 空状态 -->
                                 <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -569,15 +653,86 @@
                     <Grid x:Name="PageSettings" Visibility="Collapsed">
                         <ScrollViewer>
                             <StackPanel>
-                                <!-- 代理设置 -->
-                                <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                <!-- sing-box 就绪状态 -->
+                                <Border x:Name="RuntimeSettingsCard" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                                     <StackPanel>
-                                        <TextBlock Text="代理设置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16"/>
-                                        <TextBlock Text="本地 SOCKS5 端口" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
-                                        <TextBox x:Name="SocksPort" Text="10808" Style="{StaticResource InputBox}"/>
-                                        <TextBlock Text="v0.2.0 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
-                                        <Button Content="保存代理设置" Style="{StaticResource PrimaryBtn}"
-                                                HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveProxy_Click"/>
+                                        <TextBlock Text="sing-box 就绪状态" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="IntentRoute AI 不包含也不会下载 sing-box。请选择你单独安装并验证过的 v1.13+ 可执行文件。"
+                                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="RuntimePathBox" Grid.Column="0" IsReadOnly="True"
+                                                     Style="{StaticResource InputBox}" ToolTip="已批准路径，或尚待你通过“浏览…”按钮批准的发现候选"/>
+                                            <Button Grid.Column="1" Content="浏览…" Style="{StaticResource SecondaryBtn}"
+                                                    Margin="8,0,0,0" Click="BrowseSingBox_Click"/>
+                                            <Button x:Name="RefreshRuntimeButton" Grid.Column="2" Content="重新检查" Style="{StaticResource SecondaryBtn}"
+                                                    Margin="8,0,0,0" Click="RefreshRuntime_Click"/>
+                                            <Button Grid.Column="3" Content="清除选择" Style="{StaticResource SecondaryBtn}"
+                                                    Margin="8,0,0,0" Click="ClearSingBoxPath_Click"/>
+                                        </Grid>
+                                        <TextBlock x:Name="RuntimeVersionText" Text="版本：尚未检查" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="RuntimeReadinessText" Text="正在检查…" TextWrapping="Wrap" FontSize="11"
+                                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- 本地代理设置 -->
+                                <Border x:Name="ProxySettingsCard" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="本地代理设置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="仅支持已经运行在本机字面量回环地址上的 SOCKS5 / HTTP / HTTPS 代理；不提供代理节点或账号。"
+                                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="110"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                <TextBlock Text="类型" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                                <ComboBox x:Name="ProxyTypeCombo" Style="{StaticResource InputCombo}" SelectedIndex="0">
+                                                    <ComboBoxItem Content="SOCKS5" Tag="Socks5"/>
+                                                    <ComboBoxItem Content="HTTP" Tag="Http"/>
+                                                    <ComboBoxItem Content="HTTPS" Tag="Https"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                                <TextBlock Text="回环 IP 地址" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                                <TextBox x:Name="ProxyHost" Text="127.0.0.1" Style="{StaticResource InputBox}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="端口" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                                <TextBox x:Name="ProxyPort" Text="10808" Style="{StaticResource InputBox}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                <TextBlock Text="用户名（可选）" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                                <TextBox x:Name="ProxyUsername" Style="{StaticResource InputBox}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="密码（可选，使用 Windows DPAPI 保存）" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                                <PasswordBox x:Name="ProxyPassword" Style="{StaticResource InputPassBox}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Content="保存代理设置" Style="{StaticResource PrimaryBtn}"
+                                                    Margin="0,0,8,0" Click="SaveProxy_Click"/>
+                                            <Button x:Name="TestProxyButton" Content="测试端口" Style="{StaticResource SecondaryBtn}"
+                                                    Click="TestProxy_Click"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="ProxyTestStatus" Text="测试只检查本机端口能否连接，不会发送凭据，也不代表认证或真实流量成功。"
+                                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
                                     </StackPanel>
                                 </Border>
 
@@ -591,7 +746,7 @@
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="✦" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="IntentRoute AI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.2.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.3.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
 
                                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                                     <StackPanel>

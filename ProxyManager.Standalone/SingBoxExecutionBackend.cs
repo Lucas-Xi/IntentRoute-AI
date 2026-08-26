@@ -6,6 +6,11 @@ namespace ProxyManager.Standalone;
 
 internal interface ISingBoxExecutionBackend
 {
+    Task<SingBoxVersionProbeResult> GetVersionAsync(
+        string executablePath,
+        TimeSpan timeout,
+        CancellationToken cancellationToken);
+
     Task<SingBoxCheckResult> CheckAsync(
         string executablePath,
         string configPath,
@@ -17,6 +22,16 @@ internal interface ISingBoxExecutionBackend
         string configPath,
         Action<string> outputReceived,
         Action<ISingBoxManagedProcess> exited);
+}
+
+internal readonly struct SingBoxVersionProbeResult
+{
+    public bool Success { get; init; }
+    public string? Output { get; init; }
+    public string? Error { get; init; }
+
+    public static SingBoxVersionProbeResult Ok(string output) => new() { Success = true, Output = output };
+    public static SingBoxVersionProbeResult Fail(string error) => new() { Success = false, Error = error };
 }
 
 internal interface ISingBoxManagedProcess : IDisposable
@@ -39,6 +54,64 @@ internal readonly struct SingBoxCheckResult
 
 internal sealed class SystemSingBoxExecutionBackend : ISingBoxExecutionBackend
 {
+    private const int MaxVersionOutputChars = 8_192;
+
+    public async Task<SingBoxVersionProbeResult> GetVersionAsync(
+        string executablePath,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var psi = CreateStartInfo(executablePath);
+        psi.ArgumentList.Add("version");
+
+        using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+        process.OutputDataReceived += (_, e) => AppendBounded(stdout, e.Data, MaxVersionOutputChars);
+        process.ErrorDataReceived += (_, e) => AppendBounded(stderr, e.Data, MaxVersionOutputChars);
+
+        try
+        {
+            if (!process.Start())
+                return SingBoxVersionProbeResult.Fail("Failed to start sing-box version process.");
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(timeout);
+            try
+            {
+                await process.WaitForExitAsync(timeoutCts.Token).ConfigureAwait(false);
+                process.WaitForExit(); // flush asynchronous stdout/stderr callbacks
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                TryKillProcessTree(process);
+                return SingBoxVersionProbeResult.Fail($"sing-box version timed out after {timeout.TotalSeconds:0}s.");
+            }
+            catch (OperationCanceledException)
+            {
+                TryKillProcessTree(process);
+                throw;
+            }
+
+            var output = (stdout.ToString() + "\n" + stderr.ToString()).Trim();
+            if (process.ExitCode != 0)
+                return SingBoxVersionProbeResult.Fail(
+                    string.IsNullOrWhiteSpace(output)
+                        ? $"sing-box version exited with code {process.ExitCode}."
+                        : output);
+
+            return SingBoxVersionProbeResult.Ok(output);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            TryKillProcessTree(process);
+            return SingBoxVersionProbeResult.Fail("sing-box version error: " + ex.Message);
+        }
+    }
+
     public async Task<SingBoxCheckResult> CheckAsync(
         string executablePath,
         string configPath,
@@ -75,6 +148,11 @@ internal sealed class SystemSingBoxExecutionBackend : ISingBoxExecutionBackend
             {
                 TryKillProcessTree(process);
                 return SingBoxCheckResult.Fail($"sing-box check timed out after {timeout.TotalSeconds:0}s.");
+            }
+            catch (OperationCanceledException)
+            {
+                TryKillProcessTree(process);
+                throw;
             }
 
             if (process.ExitCode != 0)
@@ -139,6 +217,15 @@ internal sealed class SystemSingBoxExecutionBackend : ISingBoxExecutionBackend
         catch { /* already exited or access denied */ }
 
         try { process.WaitForExit(3000); } catch { /* ignore */ }
+    }
+
+    private static void AppendBounded(StringBuilder builder, string? line, int maxChars)
+    {
+        if (string.IsNullOrEmpty(line) || builder.Length >= maxChars) return;
+        var remaining = maxChars - builder.Length;
+        if (line.Length > remaining)
+            line = line[..remaining];
+        builder.AppendLine(line);
     }
 
     private sealed class SystemSingBoxManagedProcess : ISingBoxManagedProcess

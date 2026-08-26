@@ -1,3 +1,4 @@
+using System.IO;
 using ProxyManager.Standalone;
 using Xunit;
 
@@ -46,6 +47,125 @@ public sealed class AppConfigStoreTests
         Assert.DoesNotContain("legacy-password", AppConfigStore.Serialize(config), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void LoadPreservingInvalidFile_KeepsOriginalAndCreatesRecoveryCopy()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        var original = "{ truncated configuration";
+        File.WriteAllText(path, original);
+        try
+        {
+            var result = AppConfigStore.LoadPreservingInvalidFile(
+                path,
+                new DateTime(2026, 8, 26, 12, 34, 56, DateTimeKind.Utc));
+
+            Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
+            Assert.Null(result.Config);
+            Assert.NotNull(result.BackupPath);
+            Assert.Equal(original, File.ReadAllText(path));
+            Assert.Equal(original, File.ReadAllText(result.BackupPath!));
+            Assert.Contains("corrupt-20260826T123456Z", result.BackupPath!, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadPreservingInvalidFile_TreatsBrokenDpapiAsUnusableInsteadOfEmptyPassword()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        const string json = """
+        {
+          "ProxyServers": [
+            { "Id": "broken", "Name": "Broken", "Host": "127.0.0.1", "Port": 1080, "Password": "dpapi:not-base64" }
+          ]
+        }
+        """;
+        File.WriteAllText(path, json);
+        try
+        {
+            var result = AppConfigStore.LoadPreservingInvalidFile(path);
+
+            Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
+            Assert.Contains("无法解密", result.Error, StringComparison.Ordinal);
+            Assert.Equal(json, File.ReadAllText(path));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadPreservingInvalidFile_RejectsInvalidUtf8AndPreservesExactBytes()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        byte[] invalidUtf8 = [0x7B, 0x22, 0x78, 0x22, 0x3A, 0x22, 0xC3, 0x28, 0x22, 0x7D];
+        File.WriteAllBytes(path, invalidUtf8);
+        try
+        {
+            var result = AppConfigStore.LoadPreservingInvalidFile(path);
+
+            Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
+            Assert.Equal(invalidUtf8, File.ReadAllBytes(path));
+            Assert.NotNull(result.BackupPath);
+            Assert.Equal(invalidUtf8, File.ReadAllBytes(result.BackupPath!));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadPreservingInvalidFile_DistinguishesMissingAndValidFiles()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        try
+        {
+            Assert.Equal(AppConfigLoadStatus.Missing, AppConfigStore.LoadPreservingInvalidFile(path).Status);
+
+            File.WriteAllText(path, AppConfigStore.Serialize(new AppConfig()));
+            var loaded = AppConfigStore.LoadPreservingInvalidFile(path);
+
+            Assert.Equal(AppConfigLoadStatus.Loaded, loaded.Status);
+            Assert.NotNull(loaded.Config);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("null")]
+    public void LoadPreservingInvalidFile_RejectsEmptyOrNullDocument(string json)
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        File.WriteAllText(path, json);
+        try
+        {
+            var result = AppConfigStore.LoadPreservingInvalidFile(path);
+
+            Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
+            Assert.Equal(json, File.ReadAllText(path));
+            Assert.NotNull(result.BackupPath);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static AppConfig ConfigWithPassword(string password) => new()
     {
         ProxyServers =
@@ -60,4 +180,11 @@ public sealed class AppConfigStoreTests
             }
         ]
     };
+
+    private static string CreateTempDirectory()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "intentroute-config-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return path;
+    }
 }

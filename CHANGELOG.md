@@ -2,6 +2,41 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Fixed
+
+- Include the WPF native runtime libraries in the self-contained single-file publish so the packaged executable can create its main window instead of terminating during native window subclass initialization.
+- Render rule rows with their application, condition, routing mode, enabled state, and creation time instead of the model type name.
+- Reject malformed UTF-8 configuration bytes and profile imports instead of accepting replacement characters that could later overwrite the original file.
+- Show a yellow stale-runtime state when a replacement fails but the previously applied sing-box process remains healthy.
+
+### Added
+
+- Added a Settings readiness panel that reports the resolved sing-box path, probes `sing-box version`, and requires a recognized v1.13+ release before configuration checking or process launch.
+- Added an explicit file picker for a separately installed sing-box executable without bundling, downloading, or installing it.
+- Added authenticated local proxy editing for SOCKS5, HTTP, and HTTPS listeners with DPAPI-protected passwords.
+- Added a bounded local TCP port check that sends no proxy credentials and does not claim protocol, authentication, or internet reachability success.
+- Added guided recovery actions for an unreadable configuration: open the data directory, import a valid configuration, or explicitly reset.
+
+### Changed
+
+- Restrict supported proxy endpoints to literal loopback IP addresses; hostnames, LAN addresses, public addresses, and IPv4-mapped IPv6 forms are rejected.
+- Drive the runtime status indicator from real probing, checking, starting, running, failed, and stopped states instead of a fixed green indicator.
+- Show a clear dialog when another IntentRoute AI instance already owns the sing-box runtime lock.
+
+### Security
+
+- Preserve an unreadable `config.json` byte-for-byte, create a timestamped recovery copy when possible, block every configuration save path, and skip sing-box application until the user explicitly recovers or resets.
+- Treat malformed or undecryptable `dpapi:` proxy passwords as an unusable configuration instead of silently replacing them with empty credentials.
+- Fail closed when sing-box version output is missing, unreadable, timed out, or older than v1.13; no candidate configuration is written and no child process is started.
+- Never execute a sing-box candidate found through environment variables, the application directory, or `PATH` until the user explicitly approves the exact file with the Settings file picker.
+
+### Tests
+
+- Added coverage for corrupt JSON preservation, DPAPI failure, save blocking, explicit reset, loopback-only endpoint validation, local TCP checks, sing-box version compatibility, and prevention of check/start on unsupported versions.
+- Added invalid UTF-8 preservation and unapproved discovery tests, plus a build-time package-content gate that rejects bundled sing-box and generated runtime files.
+
 ## [0.2.0] - 2026-08-26
 
 ### Added

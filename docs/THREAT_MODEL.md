@@ -21,7 +21,11 @@
 
 ### Configuration injection
 
-IntentRoute AI constructs JSON through typed objects and invokes sing-box with `ProcessStartInfo.ArgumentList`, `UseShellExecute=false`, and no command shell. Host, port, CIDR, protocol, process wildcard, and proxy references are validated.
+IntentRoute AI constructs JSON through typed objects and invokes sing-box with `ProcessStartInfo.ArgumentList`, `UseShellExecute=false`, and no command shell. Host, port, CIDR, protocol, process wildcard, and proxy references are validated. Upstream proxy hosts must be literal loopback IP addresses; hostnames, LAN/public addresses, and IPv4-mapped IPv6 forms are rejected.
+
+### Corrupted or undecryptable persisted configuration
+
+Malformed JSON and proxy passwords whose `dpapi:` value cannot be decoded for the current Windows user are treated as an unusable configuration. The original `config.json` is left untouched, a timestamped recovery copy is attempted, every save path is blocked, and no sing-box apply is queued. Recovery import is semantically validated before replacement; import and reset are unavailable unless the recovery copy still exists. Filesystem or ACL failures can prevent creation of the additional recovery copy, but they do not authorize overwriting the original.
 
 ### Malicious or incorrect AI output
 
@@ -47,11 +51,17 @@ The generated sing-box configuration necessarily contains a usable password whil
 
 ### Executable substitution
 
-Discovery checks `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, then `PATH`. A malicious file placed earlier in one of those trusted locations could be executed with administrator privileges. Users should install sing-box from its official release, verify it independently, and prefer an explicit environment path. Future work should add version and checksum visibility.
+Discovery checks a user-selected persisted path, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, then `PATH`. Environment, application-directory, and `PATH` results are unapproved hints: IntentRoute AI may display the resolved candidate but never executes it until the user approves that exact file through the Settings file picker. Only a persisted, explicitly selected path is allowed to run the bounded `sing-box version` probe, configuration check, or data-plane process. A malicious compatible program can still replace a previously approved file at the same path and will then be executed with administrator privileges; content fingerprints and signature verification remain future hardening. Users should obtain and verify sing-box independently.
+
+### Local proxy probing and credential exposure
+
+Authenticated proxy settings are limited to literal loopback IP addresses and DPAPI-protected storage. The Settings test performs only a bounded TCP connection to that local address and never transmits a username or password. A malicious local listener can make the port test pass, so the result is explicitly not presented as authentication, protocol, internet-reachability, or routed-traffic success.
 
 ### Runtime replacement and network lockout
 
 TUN and strict routing can disrupt connectivity when a rule or upstream proxy is wrong. IntentRoute AI uses IPv4 and IPv6 TUN addresses and checks configuration schema/syntax before replacing its managed process, but `sing-box check` cannot prove adapter creation, firewall compatibility, or upstream reachability. If a checked replacement exits during startup, IntentRoute AI attempts to restore and restart the previous checked configuration. Closing IntentRoute AI normally stops its child process. Users should retain an administrative recovery path because rollback and orphan recovery are best effort.
+
+Version/check helper processes are killed on timeout and caller cancellation. WPF shutdown cancels readiness and apply work, then asynchronously waits for runtime cleanup so the UI dispatcher does not deadlock against status callbacks while a child process is being stopped.
 
 ### Log manipulation
 

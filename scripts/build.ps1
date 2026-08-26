@@ -23,4 +23,5 @@ dotnet publish $project `
     --output $OutputDirectory
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
+& (Join-Path $PSScriptRoot 'verify-package.ps1') -OutputDirectory $OutputDirectory
 Write-Host "Published IntentRoute AI to $OutputDirectory"

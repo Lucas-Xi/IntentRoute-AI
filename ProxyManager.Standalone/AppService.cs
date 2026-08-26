@@ -113,6 +113,7 @@ public class ProfileInfo
 
 public class AppConfig
 {
+    public string SingBoxExecutablePath { get; set; } = "";
     public string SocksHost { get; set; } = "127.0.0.1";
     public int SocksPort { get; set; } = 10808;
     public string HttpHost { get; set; } = "127.0.0.1";
@@ -166,7 +167,7 @@ public static class ProcessMonitor
 
 #region AppService
 
-public class AppService : IDisposable
+public class AppService : IDisposable, IAsyncDisposable
 {
     private readonly string _configDir;
     private readonly string _configPath;
@@ -176,31 +177,57 @@ public class AppService : IDisposable
     private System.Threading.Timer? _monitorTimer;
     private CancellationTokenSource? _runtimeApplyCts;
     private HashSet<string> _runningProcesses = new();
+    private bool _configurationWritable = true;
+    private string? _configurationRecoveryBackupPath;
+    private string? _configurationError;
     public AppConfig Config => _config;
+    public bool IsConfigurationWritable => _configurationWritable;
+    public string ConfigPath => _configPath;
+    public string ConfigDirectory => _configDir;
+    public string? ConfigurationRecoveryBackupPath => _configurationRecoveryBackupPath;
+    public string? ConfigurationError => _configurationError;
     public event Action<string>? StatusChanged;
     public event Action<string>? RuntimeLogReceived;
+    public event Action<SingBoxRuntimeStatus>? RuntimeStatusChanged;
+    public event Action? ConfigurationStateChanged;
 
     public AppService()
+        : this(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            startMonitor: true,
+            applyOnStart: true)
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _configDir = AppDataMigration.PrepareConfigDirectory(appData);
+    }
+
+    internal AppService(string appDataRoot, bool startMonitor, bool applyOnStart)
+    {
+        _configDir = AppDataMigration.PrepareConfigDirectory(appDataRoot);
         _configPath = Path.Combine(_configDir, "config.json");
         _runtime = new SingBoxRuntime(_configDir);
         _runtime.StatusChanged += OnRuntimeStatusChanged;
         _runtime.LogReceived += line => RuntimeLogReceived?.Invoke(line);
         LoadConfig();
-        StartMonitor();
-        ApplyRules();
+        if (startMonitor) StartMonitor();
+        if (_configurationWritable && applyOnStart)
+            ApplyRules();
     }
 
     private void LoadConfig()
     {
-        if (File.Exists(_configPath))
+        var load = AppConfigStore.LoadPreservingInvalidFile(_configPath);
+        if (load.Status == AppConfigLoadStatus.Unusable)
         {
-            try { _config = AppConfigStore.Deserialize(File.ReadAllText(_configPath)); }
-            catch { _config = new AppConfig(); }
+            _config = new AppConfig();
+            _configurationWritable = false;
+            _configurationRecoveryBackupPath = load.BackupPath;
+            _configurationError = load.Error;
+            return;
         }
-        else _config = new AppConfig();
+
+        _config = load.Config ?? new AppConfig();
+        _configurationWritable = true;
+        _configurationRecoveryBackupPath = null;
+        _configurationError = null;
 
         // Ensure defaults for new fields
         _config.ProxyServers ??= new();
@@ -213,7 +240,45 @@ public class AppService : IDisposable
 
     public void SaveConfig()
     {
+        EnsureConfigurationWritable();
         AppConfigStore.SaveAtomic(_configPath, _config);
+        ApplyRules();
+    }
+
+    public void ResetUnusableConfiguration()
+    {
+        if (_configurationWritable)
+            throw new InvalidOperationException("Configuration recovery is not required.");
+        if (string.IsNullOrWhiteSpace(_configurationRecoveryBackupPath) ||
+            !File.Exists(_configurationRecoveryBackupPath))
+        {
+            throw new InvalidOperationException(
+                "恢复副本不可用，已阻止重置以避免覆盖唯一的原始配置。请先手动复制原文件或导入有效配置。");
+        }
+
+        var replacement = CreateDefaultConfig();
+        AppConfigStore.SaveAtomic(_configPath, replacement);
+        _config = replacement;
+        MarkConfigurationRecovered();
+        ApplyRules();
+    }
+
+    public void RecoverConfigurationFromFile(string sourcePath)
+    {
+        if (_configurationWritable)
+            throw new InvalidOperationException("Configuration recovery is not required.");
+        EnsureRecoveryCopyAvailable();
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        var recovered = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(sourcePath));
+        NormalizeConfig(recovered, addDefaultProxy: recovered.ProxyServers.Count == 0);
+        foreach (var server in recovered.ProxyServers)
+            ValidateLocalServer(server);
+        var build = SingBoxConfigBuilder.Build(recovered);
+        if (!build.Success)
+            throw new InvalidDataException("导入配置不符合当前支持的安全语义: " + build.Error);
+        AppConfigStore.SaveAtomic(_configPath, recovered);
+        _config = recovered;
+        MarkConfigurationRecovered();
         ApplyRules();
     }
 
@@ -221,6 +286,7 @@ public class AppService : IDisposable
 
     public ProxyRule AddRule(string exePath, ProxyMode mode = ProxyMode.Proxy)
     {
+        EnsureConfigurationWritable();
         var exeName = Path.GetFileName(exePath);
         if (_config.Rules.Any(r => r.ExeName.Equals(exeName, StringComparison.OrdinalIgnoreCase)))
             return null!;
@@ -233,16 +299,18 @@ public class AppService : IDisposable
 
     internal void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
     {
+        EnsureConfigurationWritable();
         // Disabled AI drafts do not change the active routing graph. Persist once without
         // queueing a needless sing-box replacement; enabling remains a separate user action.
         AiRuleAcceptance.PersistDisabledRules(_config, _configPath, rules);
     }
 
-    public void RemoveRule(string id) { _config.Rules.RemoveAll(r => r.Id == id); SaveConfig(); }
-    public void ToggleRule(string id) { var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.IsEnabled = !r.IsEnabled; SaveConfig(); } }
-    public void UpdateRuleMode(string id, ProxyMode mode) { var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.Mode = mode; SaveConfig(); } }
+    public void RemoveRule(string id) { EnsureConfigurationWritable(); _config.Rules.RemoveAll(r => r.Id == id); SaveConfig(); }
+    public void ToggleRule(string id) { EnsureConfigurationWritable(); var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.IsEnabled = !r.IsEnabled; SaveConfig(); } }
+    public void UpdateRuleMode(string id, ProxyMode mode) { EnsureConfigurationWritable(); var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.Mode = mode; SaveConfig(); } }
     public void MoveRule(string id, int delta)
     {
+        EnsureConfigurationWritable();
         var idx = _config.Rules.FindIndex(r => r.Id == id);
         if (idx < 0) return;
         int newIdx = idx + delta;
@@ -254,10 +322,12 @@ public class AppService : IDisposable
 
     // ── Proxy Servers ───────────────────────────
 
-    public ProxyServer AddServer(ProxyServer s) { _config.ProxyServers.Add(s); SaveConfig(); return s; }
-    public void RemoveServer(string id) { _config.ProxyServers.RemoveAll(s => s.Id == id); SaveConfig(); }
+    public ProxyServer AddServer(ProxyServer s) { EnsureConfigurationWritable(); ValidateLocalServer(s); _config.ProxyServers.Add(s); SaveConfig(); return s; }
+    public void RemoveServer(string id) { EnsureConfigurationWritable(); _config.ProxyServers.RemoveAll(s => s.Id == id); SaveConfig(); }
     public void UpdateServer(ProxyServer s)
     {
+        EnsureConfigurationWritable();
+        ValidateLocalServer(s);
         var idx = _config.ProxyServers.FindIndex(x => x.Id == s.Id);
         if (idx >= 0) { _config.ProxyServers[idx] = s; SaveConfig(); }
     }
@@ -265,11 +335,24 @@ public class AppService : IDisposable
     {
         var s = _config.ProxyServers.FirstOrDefault(x => x.Id == id);
         if (s == null) return false;
+        return await TestLocalProxyAsync(s.Host, s.Port);
+    }
+
+    public async Task<bool> TestLocalProxyAsync(
+        string host,
+        int port,
+        CancellationToken cancellationToken = default)
+    {
+        if (!LocalProxyEndpoint.TryNormalize(host, port, out var normalizedHost, out _))
+            return false;
+
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            using var client = new System.Net.Sockets.TcpClient();
-            await client.ConnectAsync(s.Host, s.Port, cts.Token);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(5));
+            var address = System.Net.IPAddress.Parse(normalizedHost);
+            using var client = new System.Net.Sockets.TcpClient(address.AddressFamily);
+            await client.ConnectAsync(address, port, cts.Token);
             return true;
         }
         catch { return false; }
@@ -277,8 +360,8 @@ public class AppService : IDisposable
 
     // ── Proxy Chains ─────────────────────────────
 
-    public ProxyChain AddChain(ProxyChain c) { _config.ProxyChains.Add(c); SaveConfig(); return c; }
-    public void RemoveChain(string id) { _config.ProxyChains.RemoveAll(c => c.Id == id); SaveConfig(); }
+    public ProxyChain AddChain(ProxyChain c) { EnsureConfigurationWritable(); _config.ProxyChains.Add(c); SaveConfig(); return c; }
+    public void RemoveChain(string id) { EnsureConfigurationWritable(); _config.ProxyChains.RemoveAll(c => c.Id == id); SaveConfig(); }
 
     // ── Runtime Logs ─────────────────────────────
 
@@ -289,13 +372,20 @@ public class AppService : IDisposable
 
     // ── Global Settings ──────────────────────────
 
-    public void SetGlobalMode(GlobalMode mode) { _config.GlobalMode = mode; SaveConfig(); }
-    public void SetDnsMode(DnsMode mode) { _config.DnsMode = mode; SaveConfig(); }
-    public void UpdateProxy(string socksHost, int socksPort, string httpHost, int httpPort)
+    public void SetGlobalMode(GlobalMode mode) { EnsureConfigurationWritable(); _config.GlobalMode = mode; SaveConfig(); }
+    public void SetDnsMode(DnsMode mode) { EnsureConfigurationWritable(); _config.DnsMode = mode; SaveConfig(); }
+    public void UpdatePrimaryProxy(
+        ProxyType proxyType,
+        string host,
+        int port,
+        string username,
+        string password)
     {
-        _config.SocksHost = socksHost; _config.SocksPort = socksPort;
-        _config.HttpHost = httpHost; _config.HttpPort = httpPort;
-        var socks = _config.ProxyServers.FirstOrDefault(s => s.ProxyType == ProxyType.Socks5);
+        EnsureConfigurationWritable();
+        var normalizedHost = LocalProxyEndpoint.NormalizeOrThrow(host, port);
+        _config.SocksHost = normalizedHost;
+        _config.SocksPort = port;
+        var socks = GetPrimaryProxy();
         if (socks == null)
         {
             socks = new ProxyServer
@@ -306,10 +396,38 @@ public class AppService : IDisposable
             };
             _config.ProxyServers.Insert(0, socks);
         }
-        socks.Host = socksHost;
-        socks.Port = socksPort;
+        socks.ProxyType = proxyType;
+        socks.Host = normalizedHost;
+        socks.Port = port;
+        socks.Username = username?.Trim() ?? string.Empty;
+        socks.Password = password ?? string.Empty;
+        socks.Enabled = true;
         SaveConfig();
     }
+
+    public ProxyServer? GetPrimaryProxy() =>
+        _config.ProxyServers.FirstOrDefault(server => server.Enabled) ?? _config.ProxyServers.FirstOrDefault();
+
+    public void SetSingBoxExecutablePath(string path)
+    {
+        EnsureConfigurationWritable();
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (!File.Exists(path))
+            throw new FileNotFoundException("The selected sing-box executable does not exist.", path);
+
+        _config.SingBoxExecutablePath = Path.GetFullPath(path);
+        SaveConfig();
+    }
+
+    public void ClearSingBoxExecutablePath()
+    {
+        EnsureConfigurationWritable();
+        _config.SingBoxExecutablePath = string.Empty;
+        SaveConfig();
+    }
+
+    public Task<SingBoxReadinessResult> ProbeRuntimeReadinessAsync(CancellationToken cancellationToken = default) =>
+        _runtime.ProbeReadinessAsync(_config.SingBoxExecutablePath, cancellationToken);
 
     // ── Profiles ─────────────────────────────────
 
@@ -335,24 +453,27 @@ public class AppService : IDisposable
         var path = Path.Combine(_configDir, $"{name}.profile.json");
         if (File.Exists(path))
         {
-            var cfg = AppConfigStore.Deserialize(File.ReadAllText(path));
-            if (cfg != null) { _config = cfg; SaveConfig(); }
+            EnsureConfigurationWritable();
+            var cfg = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(path));
+            ReplaceWithValidatedConfig(cfg);
         }
     }
 
     public void SaveProfile(string name)
     {
+        EnsureConfigurationWritable();
         var path = Path.Combine(_configDir, $"{name}.profile.json");
         AppConfigStore.SaveAtomic(path, _config);
     }
 
-    public void ExportProfile(string filePath) => AppConfigStore.SaveAtomic(filePath, _config, redactPasswords: true);
+    public void ExportProfile(string filePath) { EnsureConfigurationWritable(); AppConfigStore.SaveAtomic(filePath, _config, redactPasswords: true); }
     public void ImportProfile(string filePath)
     {
+        EnsureConfigurationWritable();
         if (File.Exists(filePath))
         {
-            var cfg = AppConfigStore.Deserialize(File.ReadAllText(filePath));
-            if (cfg != null) { _config = cfg; SaveConfig(); }
+            var cfg = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(filePath));
+            ReplaceWithValidatedConfig(cfg);
         }
     }
 
@@ -369,6 +490,11 @@ public class AppService : IDisposable
 
     public void ApplyRules()
     {
+        if (!_configurationWritable)
+        {
+            StatusChanged?.Invoke("配置文件不可安全读取；已阻止保存和 sing-box 启动。请先完成恢复。");
+            return;
+        }
         var proxyApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Proxy).Select(r => r.ExeName).ToList();
         var directApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Direct).Select(r => r.ExeName).ToList();
         var blockApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Block).Select(r => r.ExeName).ToList();
@@ -386,19 +512,27 @@ public class AppService : IDisposable
 
     public void Dispose()
     {
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
         _monitorTimer?.Dispose();
+        CancellationTokenSource? runtimeApplyCts;
         lock (_runtimeApplyGate)
         {
             _runtimeApplyCts?.Cancel();
-            _runtimeApplyCts?.Dispose();
+            runtimeApplyCts = _runtimeApplyCts;
             _runtimeApplyCts = null;
         }
-        _runtime.Dispose();
+        await _runtime.DisposeAsync().ConfigureAwait(false);
+        runtimeApplyCts?.Dispose();
         GC.SuppressFinalize(this);
     }
 
     private void QueueRuntimeApply()
     {
+        if (!_configurationWritable) return;
         AppConfig snapshot;
         try
         {
@@ -426,7 +560,11 @@ public class AppService : IDisposable
             {
                 var result = await _runtime.ApplyAsync(snapshot, token);
                 if (!result.Success && !token.IsCancellationRequested)
-                    StatusChanged?.Invoke("运行时未启动: " + result.Error);
+                {
+                    StatusChanged?.Invoke(result.Status.IsRunning
+                        ? "新配置未应用；原 sing-box 仍在运行: " + result.Error
+                        : "运行时未启动: " + result.Error);
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -441,12 +579,87 @@ public class AppService : IDisposable
         var text = status.State switch
         {
             SingBoxRuntimeState.Running when status.IsRunning => $"sing-box TUN 运行中 (PID {status.ProcessId})",
+            SingBoxRuntimeState.RunningStale when status.IsRunning =>
+                "新配置未应用；原 sing-box 仍在运行" + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
+            SingBoxRuntimeState.Probing => "正在检查 sing-box 路径和版本…",
             SingBoxRuntimeState.Checking => "正在校验 sing-box 配置…",
             SingBoxRuntimeState.Starting => "正在应用分流规则…",
             SingBoxRuntimeState.Failed => "sing-box 未运行" + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
             _ => "sing-box 已停止"
         };
+        RuntimeStatusChanged?.Invoke(status);
         StatusChanged?.Invoke(text);
+    }
+
+    private void EnsureConfigurationWritable()
+    {
+        if (!_configurationWritable)
+        {
+            throw new InvalidOperationException(
+                "配置文件不可安全读取，已阻止覆盖保存。请先导入有效配置或明确重置。");
+        }
+    }
+
+    private void ReplaceWithValidatedConfig(AppConfig candidate)
+    {
+        NormalizeConfig(candidate, addDefaultProxy: candidate.ProxyServers.Count == 0);
+        foreach (var server in candidate.ProxyServers)
+            ValidateLocalServer(server);
+        var build = SingBoxConfigBuilder.Build(candidate);
+        if (!build.Success)
+            throw new InvalidDataException("配置不符合当前支持的安全语义: " + build.Error);
+
+        AppConfigStore.SaveAtomic(_configPath, candidate);
+        _config = candidate;
+        ApplyRules();
+    }
+
+    private void MarkConfigurationRecovered()
+    {
+        _configurationWritable = true;
+        _configurationError = null;
+        _configurationRecoveryBackupPath = null;
+        ConfigurationStateChanged?.Invoke();
+    }
+
+    private void EnsureRecoveryCopyAvailable()
+    {
+        if (string.IsNullOrWhiteSpace(_configurationRecoveryBackupPath) ||
+            !File.Exists(_configurationRecoveryBackupPath))
+        {
+            throw new InvalidOperationException(
+                "恢复副本不可用，已阻止替换唯一的原始配置。请先手动复制原文件并重新启动应用。");
+        }
+    }
+
+    private static AppConfig CreateDefaultConfig()
+    {
+        var config = new AppConfig();
+        NormalizeConfig(config, addDefaultProxy: true);
+        return config;
+    }
+
+    private static void NormalizeConfig(AppConfig config, bool addDefaultProxy)
+    {
+        config.Rules ??= [];
+        config.ProxyServers ??= [];
+        config.ProxyChains ??= [];
+        if (addDefaultProxy && config.ProxyServers.Count == 0)
+        {
+            config.ProxyServers.Add(new ProxyServer
+            {
+                Name = "默认 SOCKS5",
+                Host = "127.0.0.1",
+                Port = 10808,
+                ProxyType = ProxyType.Socks5
+            });
+        }
+    }
+
+    private static void ValidateLocalServer(ProxyServer server)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        server.Host = LocalProxyEndpoint.NormalizeOrThrow(server.Host, server.Port);
     }
 }
 

@@ -45,11 +45,11 @@ public static class SingBoxConfigBuilder
             for (var index = 0; index < enabledServers.Count; index++)
             {
                 var server = enabledServers[index];
-                ValidateServer(server);
+                var normalizedHost = ValidateServer(server);
                 var tag = MakeOutboundTag(server, index);
                 if (!string.IsNullOrEmpty(server.Id))
                     outboundTagsByServerId[server.Id] = tag;
-                outbounds.Add(BuildProxyOutbound(server, tag));
+                outbounds.Add(BuildProxyOutbound(server, tag, normalizedHost));
                 defaultProxyTag ??= tag;
             }
 
@@ -118,7 +118,7 @@ public static class SingBoxConfigBuilder
         }
     }
 
-    private static JObject BuildProxyOutbound(ProxyServer server, string tag)
+    private static JObject BuildProxyOutbound(ProxyServer server, string tag, string normalizedHost)
     {
         var password = ResolvePassword(server.Password);
         JObject outbound = server.ProxyType switch
@@ -127,7 +127,7 @@ public static class SingBoxConfigBuilder
             {
                 ["type"] = "socks",
                 ["tag"] = tag,
-                ["server"] = server.Host,
+                ["server"] = normalizedHost,
                 ["server_port"] = server.Port,
                 ["version"] = "5"
             },
@@ -135,14 +135,14 @@ public static class SingBoxConfigBuilder
             {
                 ["type"] = "http",
                 ["tag"] = tag,
-                ["server"] = server.Host,
+                ["server"] = normalizedHost,
                 ["server_port"] = server.Port
             },
             ProxyType.Https => new JObject
             {
                 ["type"] = "http",
                 ["tag"] = tag,
-                ["server"] = server.Host,
+                ["server"] = normalizedHost,
                 ["server_port"] = server.Port,
                 ["tls"] = new JObject
                 {
@@ -365,12 +365,11 @@ public static class SingBoxConfigBuilder
         }
     }
 
-    private static void ValidateServer(ProxyServer server)
+    private static string ValidateServer(ProxyServer server)
     {
-        if (string.IsNullOrWhiteSpace(server.Host))
-            throw new SingBoxConfigException($"Proxy server '{SafeName(server)}' has an empty host.");
-        if (server.Port is < 1 or > 65535)
-            throw new SingBoxConfigException($"Proxy server '{SafeName(server)}' has an invalid port.");
+        if (!LocalProxyEndpoint.TryNormalize(server.Host, server.Port, out var normalizedHost, out var error))
+            throw new SingBoxConfigException($"Proxy server '{SafeName(server)}' is invalid: {error}");
+        return normalizedHost;
     }
 
     private static string MakeOutboundTag(ProxyServer server, int index)

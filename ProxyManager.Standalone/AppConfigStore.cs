@@ -1,5 +1,6 @@
 using System.IO;
 using System.Security.Cryptography;
+using System.Security;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -12,16 +13,57 @@ namespace ProxyManager.Standalone;
 public static class AppConfigStore
 {
     private const string DpapiPrefix = "dpapi:";
+    private static readonly UTF8Encoding StrictUtf8 = new(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
+
+    public static AppConfigLoadResult LoadPreservingInvalidFile(string path, DateTime? utcNow = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (!File.Exists(path))
+            return AppConfigLoadResult.Missing();
+
+        try
+        {
+            return AppConfigLoadResult.Loaded(Deserialize(ReadStrictUtf8(path)));
+        }
+        catch (Exception ex) when (ex is JsonException or DecoderFallbackException or IOException or UnauthorizedAccessException or SecurityException or AppConfigProtectionException)
+        {
+            string? backupPath = null;
+            try
+            {
+                backupPath = CreateRecoveryCopy(path, utcNow ?? DateTime.UtcNow);
+            }
+            catch
+            {
+                // The original is never modified. Recovery-copy failure is surfaced
+                // through the null BackupPath and configuration remains save-blocked.
+            }
+
+            return AppConfigLoadResult.Unusable(
+                backupPath,
+                ex is AppConfigProtectionException
+                    ? "当前 Windows 用户无法解密已保存的代理凭据。"
+                    : "配置文件无法安全读取。文件可能已损坏或被截断。");
+        }
+    }
 
     public static AppConfig Deserialize(string json)
     {
-        var config = JsonConvert.DeserializeObject<AppConfig>(json) ?? new AppConfig();
+        var config = JsonConvert.DeserializeObject<AppConfig>(json)
+            ?? throw new JsonSerializationException("Configuration must contain a JSON object.");
         NormalizeCollections(config);
 
         foreach (var server in config.ProxyServers)
             server.Password = UnprotectPassword(server.Password);
 
         return config;
+    }
+
+    public static string ReadStrictUtf8(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        return File.ReadAllText(path, StrictUtf8);
     }
 
     public static string Serialize(AppConfig config, bool redactPasswords = false)
@@ -93,14 +135,29 @@ public static class AppConfigStore
                 optionalEntropy: null,
                 DataProtectionScope.CurrentUser));
         }
-        catch (CryptographicException)
+        catch (CryptographicException ex)
         {
-            return string.Empty;
+            throw new AppConfigProtectionException(
+                "A DPAPI-protected proxy password could not be decrypted for the current Windows user.",
+                ex);
         }
-        catch (FormatException)
+        catch (FormatException ex)
         {
-            return string.Empty;
+            throw new AppConfigProtectionException(
+                "A DPAPI-protected proxy password is malformed.",
+                ex);
         }
+    }
+
+    private static string CreateRecoveryCopy(string path, DateTime utcNow)
+    {
+        var timestamp = utcNow.ToUniversalTime().ToString("yyyyMMdd'T'HHmmss'Z'");
+        var candidate = path + $".corrupt-{timestamp}.bak";
+        for (var suffix = 1; File.Exists(candidate); suffix++)
+            candidate = path + $".corrupt-{timestamp}-{suffix}.bak";
+
+        File.Copy(path, candidate, overwrite: false);
+        return candidate;
     }
 
     private static void NormalizeCollections(AppConfig config)
@@ -108,5 +165,49 @@ public static class AppConfigStore
         config.Rules ??= [];
         config.ProxyServers ??= [];
         config.ProxyChains ??= [];
+    }
+}
+
+public enum AppConfigLoadStatus
+{
+    Missing,
+    Loaded,
+    Unusable
+}
+
+public sealed class AppConfigLoadResult
+{
+    private AppConfigLoadResult(
+        AppConfigLoadStatus status,
+        AppConfig? config,
+        string? backupPath,
+        string? error)
+    {
+        Status = status;
+        Config = config;
+        BackupPath = backupPath;
+        Error = error;
+    }
+
+    public AppConfigLoadStatus Status { get; }
+    public AppConfig? Config { get; }
+    public string? BackupPath { get; }
+    public string? Error { get; }
+
+    public static AppConfigLoadResult Missing() =>
+        new(AppConfigLoadStatus.Missing, null, null, null);
+
+    public static AppConfigLoadResult Loaded(AppConfig config) =>
+        new(AppConfigLoadStatus.Loaded, config, null, null);
+
+    public static AppConfigLoadResult Unusable(string? backupPath, string error) =>
+        new(AppConfigLoadStatus.Unusable, null, backupPath, error);
+}
+
+public sealed class AppConfigProtectionException : Exception
+{
+    public AppConfigProtectionException(string message, Exception innerException)
+        : base(message, innerException)
+    {
     }
 }

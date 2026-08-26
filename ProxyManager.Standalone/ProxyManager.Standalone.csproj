@@ -5,12 +5,13 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AssemblyName>IntentRouteAI</AssemblyName>
     <RootNamespace>ProxyManager.Standalone</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Lucas-Xi and contributors</Authors>
     <Company>IntentRoute AI contributors</Company>
     <Product>IntentRoute AI</Product>

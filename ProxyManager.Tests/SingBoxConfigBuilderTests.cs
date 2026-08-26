@@ -115,6 +115,48 @@ public sealed class SingBoxConfigBuilderTests
         Assert.Contains("invalid IP/CIDR", cidrResult.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("192.168.1.10")]
+    [InlineData("8.8.8.8")]
+    public void Build_RejectsNonLiteralOrNonLoopbackProxyHosts(string host)
+    {
+        var config = BaseConfig();
+        config.ProxyServers[0].Host = host;
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.False(result.Success);
+        Assert.Contains("loopback", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("127.0.0.2")]
+    [InlineData("::1")]
+    public void Build_AcceptsLiteralLoopbackProxyHosts(string host)
+    {
+        var config = BaseConfig();
+        config.ProxyServers[0].Host = host;
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.True(result.Success, result.Error);
+    }
+
+    [Fact]
+    public void Build_EmitsCanonicalIpv6LoopbackAddress()
+    {
+        var config = BaseConfig();
+        config.ProxyServers[0].Host = "0:0:0:0:0:0:0:1";
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.True(result.Success, result.Error);
+        var root = JObject.Parse(result.ConfigJson!);
+        Assert.Equal("::1", root["outbounds"]![1]!["server"]!.Value<string>());
+    }
+
     private static AppConfig BaseConfig() => new()
     {
         GlobalMode = GlobalMode.DirectAll,

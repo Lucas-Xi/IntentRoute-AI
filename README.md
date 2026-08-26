@@ -8,6 +8,8 @@ IntentRoute AI is an open-source Windows control plane that turns plain-language
 
 > **Project status: v0.2.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
+The `main` branch contains the unreleased v0.3.0 maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, and authenticated loopback-proxy editing. Tagged v0.2.0 archives do not contain these unreleased changes.
+
 ## Why this project exists
 
 Many Windows applications do not expose useful proxy controls, while hand-authoring process/domain/IP routing rules is error-prone. IntentRoute AI provides two complementary paths:
@@ -81,6 +83,9 @@ OpenAI API data handling is governed by the user's OpenAI account and current AP
 - Exclusive runtime ownership plus PID/start-time orphan recovery.
 - Passwords protected at rest with Windows DPAPI `CurrentUser`.
 - Password-free profile exports and bounded/redacted runtime logs.
+- Literal-loopback-only upstream proxy endpoints with an optional bounded TCP-listener check.
+- A recognized sing-box v1.13+ version gate before configuration check or launch.
+- Save-blocked recovery when `config.json` or a DPAPI-protected password cannot be read safely.
 
 IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bundled AI model, OpenAI API key, or sing-box binary.
 
@@ -89,8 +94,8 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 1. Download `IntentRoute-AI-v0.2.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
-4. Put `sing-box.exe` beside `IntentRouteAI.exe`, add it to `PATH`, or set `INTENTROUTE_SING_BOX` to its full path. The legacy `PROXYMANAGER_SING_BOX` variable remains supported for upgrades.
-5. Ensure an existing local SOCKS5 service is listening on `127.0.0.1:10808`, or configure another local port.
+4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse**. `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: because IntentRoute AI runs elevated, an automatically discovered candidate is displayed but never executed until you approve that exact file.
+5. Ensure an existing proxy service is listening on a literal loopback IP such as `127.0.0.1` or `::1`. The unreleased Settings page can save SOCKS5/HTTP/HTTPS username and password values and can check whether the local TCP port accepts a connection.
 6. Run `IntentRouteAI.exe` as administrator. TUN creation requires elevation.
 
 The self-contained release targets Windows x64 and does not require a separate .NET runtime.
@@ -100,6 +105,10 @@ The self-contained release targets Windows x64 and does not require a separate .
 Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. Copying holds a per-directory exclusive migration lock and uses an in-progress marker plus atomic per-file moves, so an interrupted migration retries only missing known files on the next launch and never overwrites a completed copy. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
 
 Proxy passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\IntentRouteAI\sing-box.generated.json` necessarily contains any configured credential in plaintext while sing-box is running. The application removes it on stop, clean exit, and unexpected child exit; the next launch performs bounded orphan recovery and stale-artifact cleanup. Cleanup remains best effort under disk, ACL, administrator, or abrupt-crash interference.
+
+On the unreleased `main` branch, malformed JSON or a `dpapi:` password that cannot be decrypted for the current Windows user makes the configuration **unusable**, not empty. IntentRoute AI leaves the original file untouched, attempts to create a timestamped `config.json.corrupt-*.bak` copy, blocks all save and runtime-apply paths, and shows explicit import/reset recovery controls. Import validates the supported endpoint and routing semantics before replacement. Both import replacement and reset are disabled unless the recovery copy still exists. If the copy could not be created, the user must first make a manual copy and restart the application so preservation can be verified before replacement.
+
+The local proxy **Test port** action only performs a TCP connection to the entered literal loopback IP with a five-second bound. It sends no username or password and does not prove SOCKS/HTTP negotiation, authentication, upstream reachability, DNS behavior, or routed application traffic.
 
 ## Build and test
 
@@ -131,6 +140,7 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 ## Known limitations
 
 - Preview quality; compatibility varies by Windows, firewall, endpoint-security, and sing-box versions.
+- Version readiness recognizes the standard `sing-box version X.Y.Z` output and fails closed on unrecognized vendor output; it does not verify a third-party binary signature or checksum.
 - AI suggestions are not authoritative and may omit service domains or misunderstand intent.
 - No autonomous activation, traffic self-healing, live connection attribution, arbitrary executable wildcards, or remote Ollama endpoints.
 - No proxy node distribution or connectivity guarantee.

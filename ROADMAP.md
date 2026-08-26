@@ -25,14 +25,14 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 ## Candidate next work
 
-- [ ] Guided sing-box discovery with version reporting
-- [ ] Authenticated local proxy editing in the UI
+- [x] Guided sing-box discovery with version reporting
+- [x] Authenticated local proxy editing in the UI
 - [ ] Automated CI integration tests against a pinned real sing-box release
 - [ ] Accessible keyboard navigation and high-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
 - [ ] Editable AI draft fields before acceptance, with revalidation after every edit
 - [ ] Provider health diagnostics that remain credential-free
-- [ ] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
+- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 
 ## Explicitly not promised
