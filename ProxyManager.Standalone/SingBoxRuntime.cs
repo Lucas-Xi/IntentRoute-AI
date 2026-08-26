@@ -383,6 +383,11 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
                 return FailApply(startupError + rollbackDetail);
             }
         }
+        catch (OperationCanceledException)
+        {
+            ConvergeCanceledApplyState();
+            throw;
+        }
         finally
         {
             _applyGate.Release();
@@ -810,6 +815,40 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
 
         RaiseStatusChanged();
         return SingBoxApplyResult.Fail(error, GetStatus());
+    }
+
+    private void ConvergeCanceledApplyState()
+    {
+        var changed = false;
+        lock (_gate)
+        {
+            // Replacement-stage cancellation already publishes a precise rollback
+            // outcome, while approval revocation may already have marked the process
+            // stale. Preserve either result instead of overwriting its explanation.
+            if (_state is SingBoxRuntimeState.RunningStale or SingBoxRuntimeState.Failed)
+                return;
+
+            var isRunning = false;
+            try { isRunning = _process is { HasExited: false }; }
+            catch { isRunning = false; }
+
+            if (!isRunning)
+            {
+                KillManagedProcess_NoLock();
+                TryDeleteConfig();
+            }
+
+            _lastError = isRunning
+                ? "The apply was canceled; the previously active sing-box process remains running with an older configuration."
+                : "The apply was canceled before sing-box became active.";
+            _state = isRunning
+                ? SingBoxRuntimeState.RunningStale
+                : SingBoxRuntimeState.Failed;
+            changed = true;
+        }
+
+        if (changed)
+            RaiseStatusChanged();
     }
 
     private void SetState(

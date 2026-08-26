@@ -287,6 +287,118 @@ public sealed class SingBoxRuntimeSecurityTests
     }
 
     [Fact]
+    public async Task Apply_CancellationDuringProbeConvergesToStaleActualRuntimeIdentity()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var executableA = Path.Combine(tempDirectory, "sing-box-a.exe");
+        var executableB = Path.Combine(tempDirectory, "sing-box-b.exe");
+        File.WriteAllBytes(executableA, []);
+        File.WriteAllBytes(executableB, []);
+        var backend = new FakeSingBoxExecutionBackend(_ => null)
+        {
+            VersionProbeForExecutable = async (path, cancellationToken) =>
+            {
+                if (PathsEqual(path, executableB))
+                    await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                return SingBoxVersionProbeResult.Ok("sing-box version 1.13.1");
+            }
+        };
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(20),
+                executionBackend: backend,
+                executableOverride: null);
+            var configA = CreateConfig("127.0.0.1");
+            configA.SingBoxExecutablePath = executableA;
+            var configB = CreateConfig("127.0.0.2");
+            configB.SingBoxExecutablePath = executableB;
+
+            var first = await runtime.ApplyAsync(configA);
+            Assert.True(first.Success, first.Error);
+            var firstProcessId = first.Status.ProcessId;
+
+            using var cancellation = new CancellationTokenSource();
+            var replacement = runtime.ApplyAsync(configB, cancellation.Token);
+            await WaitUntilAsync(() =>
+                backend.VersionCount >= 2 &&
+                runtime.GetStatus().State == SingBoxRuntimeState.Probing);
+            cancellation.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => replacement);
+
+            var status = runtime.GetStatus();
+            Assert.Equal(SingBoxRuntimeState.RunningStale, status.State);
+            Assert.True(status.IsRunning);
+            Assert.Equal(firstProcessId, status.ProcessId);
+            Assert.Equal(Path.GetFullPath(executableA), status.ExecutablePath);
+            Assert.Equal("1.13.1", status.Version);
+            Assert.Contains("apply was canceled", status.LastError, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal([Path.GetFullPath(executableA)], backend.StartedExecutablePaths);
+            Assert.Contains("127.0.0.1", File.ReadAllText(runtime.ConfigPath), StringComparison.Ordinal);
+            Assert.DoesNotContain("127.0.0.2", File.ReadAllText(runtime.ConfigPath), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Apply_CancellationDuringInitialProbeConvergesToFailedWithoutArtifacts()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var executable = Path.Combine(tempDirectory, "sing-box.exe");
+        File.WriteAllBytes(executable, []);
+        var backend = new FakeSingBoxExecutionBackend(_ => null)
+        {
+            VersionProbeForExecutable = async (_, cancellationToken) =>
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                return SingBoxVersionProbeResult.Ok("sing-box version 1.13.1");
+            }
+        };
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(20),
+                executionBackend: backend,
+                executableOverride: null);
+            var config = CreateConfig("127.0.0.1");
+            config.SingBoxExecutablePath = executable;
+
+            using var cancellation = new CancellationTokenSource();
+            var apply = runtime.ApplyAsync(config, cancellation.Token);
+            await WaitUntilAsync(() => runtime.GetStatus().State == SingBoxRuntimeState.Probing);
+            cancellation.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => apply);
+
+            var status = runtime.GetStatus();
+            Assert.Equal(SingBoxRuntimeState.Failed, status.State);
+            Assert.False(status.IsRunning);
+            Assert.Null(status.ProcessId);
+            Assert.Null(status.ExecutablePath);
+            Assert.Null(status.Version);
+            Assert.Contains("canceled before", status.LastError, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(0, backend.StartCount);
+            Assert.False(File.Exists(runtime.ConfigPath));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task MarkRunningConfigurationStale_PreservesProcessAndRaisesWarningState()
     {
         var tempDirectory = CreateTempDirectory();
@@ -595,6 +707,7 @@ public sealed class SingBoxRuntimeSecurityTests
         public int CheckCount { get; private set; }
         public int StartCount => Volatile.Read(ref _startCount);
         public string VersionOutput { get; set; } = versionOutput;
+        public Func<string, CancellationToken, Task<SingBoxVersionProbeResult>>? VersionProbeForExecutable { get; init; }
         public Func<string, string>? VersionOutputForExecutable { get; init; }
         public Func<string, string, SingBoxCheckResult>? CheckResultForExecutable { get; init; }
         public IReadOnlyList<string> StartedExecutablePaths => _startedExecutablePaths.ToArray();
@@ -606,6 +719,8 @@ public sealed class SingBoxRuntimeSecurityTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             VersionCount++;
+            if (VersionProbeForExecutable != null)
+                return VersionProbeForExecutable(executablePath, cancellationToken);
             var output = VersionOutputForExecutable?.Invoke(executablePath) ?? VersionOutput;
             return Task.FromResult(SingBoxVersionProbeResult.Ok(output));
         }

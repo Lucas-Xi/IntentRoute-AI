@@ -115,6 +115,8 @@ Normal edits, rule imports, AI-draft acceptance, Profile replacement, recovery, 
 
 Candidate path/version probe results remain local to the attempted Apply. Runtime status changes its executable path and version only when that executable is actually started, and clears them when no managed process remains. A rejected candidate therefore leaves the old PID/path/version aligned; failed-start and cancellation rollback restart the prior configuration with the prior executable rather than the rejected candidate.
 
+Cancellation before candidate promotion (including version probe, candidate write, and external `check`) also converges to a terminal runtime status: `RunningStale` when the prior process remains active, or `Failed` when no managed process exists. Direct runtime callers therefore cannot leave status indefinitely in `Starting`, `Probing`, or `Checking` after cancellation.
+
 The local proxy **Test port** action only performs a TCP connection to the entered literal loopback IP with a five-second bound. It sends no username or password and does not prove SOCKS/HTTP negotiation, authentication, upstream reachability, DNS behavior, or routed application traffic.
 
 ## Build and test

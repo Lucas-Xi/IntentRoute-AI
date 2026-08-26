@@ -67,7 +67,7 @@ Authenticated proxy settings are limited to literal loopback IP addresses and DP
 
 TUN and strict routing can disrupt connectivity when a rule or upstream proxy is wrong. IntentRoute AI uses IPv4 and IPv6 TUN addresses and checks configuration schema/syntax before replacing its managed process, but `sing-box check` cannot prove adapter creation, firewall compatibility, or upstream reachability. Candidate identity is not published over a still-running process when build/check fails. If a checked replacement exits or is canceled during startup, IntentRoute AI attempts to restore and restart the previous checked configuration with its previous executable path/version. Closing IntentRoute AI normally stops its child process. Users should retain an administrative recovery path because rollback and orphan recovery are best effort.
 
-Version/check helper processes are killed on timeout and caller cancellation. WPF shutdown cancels readiness and apply work, then asynchronously waits for runtime cleanup so the UI dispatcher does not deadlock against status callbacks while a child process is being stopped.
+Version/check helper processes are killed on timeout and caller cancellation. Cancellation before candidate promotion publishes a terminal `RunningStale` or `Failed` outcome rather than leaving a transient status, while cancellation after promotion uses the rollback behavior above. WPF shutdown cancels readiness and apply work, then asynchronously waits for runtime cleanup so the UI dispatcher does not deadlock against status callbacks while a child process is being stopped.
 
 ### Log manipulation
 
