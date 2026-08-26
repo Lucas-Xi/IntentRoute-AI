@@ -33,11 +33,13 @@ All notable changes are documented here. The project follows semantic versioning
 - Never execute a sing-box candidate found through environment variables, the application directory, or `PATH` until the user explicitly approves the exact file with the Settings file picker.
 - Treat saved, migrated, and imported sing-box paths as unapproved on every elevated launch; only a file reselected in the current session may run `version`, `check`, or `run`.
 - Validate rule imports against the complete candidate configuration before atomically replacing the current config; unsupported semantics no longer persist before runtime rejection.
+- Treat null entries inside rules, proxy servers, or proxy chains as an unusable configuration instead of allowing a startup `NullReferenceException` outside the recovery path.
 
 ### Tests
 
 - Added coverage for corrupt JSON preservation, DPAPI failure, save blocking, explicit reset, loopback-only endpoint validation, local TCP checks, sing-box version compatibility, and prevention of check/start on unsupported versions.
 - Added invalid UTF-8 preservation and unapproved discovery tests, plus a build-time package-content gate that rejects bundled sing-box and generated runtime files.
+- Added null-collection-entry recovery coverage for rules, proxy servers, and proxy chains.
 
 ## [0.2.0] - 2026-08-26
 

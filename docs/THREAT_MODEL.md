@@ -25,7 +25,7 @@ IntentRoute AI constructs JSON through typed objects and invokes sing-box with `
 
 ### Corrupted or undecryptable persisted configuration
 
-Malformed JSON and proxy passwords whose `dpapi:` value cannot be decoded for the current Windows user are treated as an unusable configuration. The original `config.json` is left untouched, a timestamped recovery copy is attempted, every save path is blocked, and no sing-box apply is queued. Recovery import is semantically validated before replacement; import and reset are unavailable unless the recovery copy still exists. Filesystem or ACL failures can prevent creation of the additional recovery copy, but they do not authorize overwriting the original.
+Malformed JSON, invalid UTF-8, null documents or collection entries, and proxy passwords whose `dpapi:` value cannot be decoded for the current Windows user are treated as an unusable configuration. The original `config.json` is left untouched, a timestamped recovery copy is attempted, every save path is blocked, and no sing-box apply is queued. Recovery import is semantically validated before replacement; import and reset are unavailable unless the recovery copy still exists. Filesystem or ACL failures can prevent creation of the additional recovery copy, but they do not authorize overwriting the original.
 
 ### Malicious or incorrect AI output
 

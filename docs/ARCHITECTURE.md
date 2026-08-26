@@ -47,7 +47,7 @@ Invalid replacement configuration does not intentionally terminate a healthy man
 
 Cancellation or shutdown kills any in-flight `sing-box version` or `sing-box check` process tree before propagating cancellation. Window shutdown cancels outstanding readiness/apply work and asynchronously waits for runtime ownership and secret-bearing generated files to be released instead of synchronously blocking the WPF dispatcher.
 
-An unreadable persisted configuration does not fall back to an active empty/default configuration. The UI remains available in a recovery state, while configuration mutations and sing-box application are blocked. The original file is not rewritten until the user explicitly imports a valid replacement or confirms reset.
+An unreadable persisted configuration does not fall back to an active empty/default configuration. Malformed or invalid-UTF-8 input, null documents or collection entries, and unavailable DPAPI credentials all enter the same fail-closed recovery state. The UI remains available while configuration mutations and sing-box application are blocked. The original file is not rewritten until the user explicitly imports a valid replacement or confirms reset.
 
 On stop, normal shutdown, or an unexpected managed-child exit, IntentRoute AI removes the generated configuration. On the next launch after an application or OS crash, it verifies a recorded orphan by PID and start time, checks the executable path when Windows permits it, terminates that process tree, and removes stale configs/candidates. Recovery and deletion remain best effort under administrator interference, filesystem failure, or corrupted state.
 

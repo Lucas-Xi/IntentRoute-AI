@@ -166,6 +166,32 @@ public sealed class AppConfigStoreTests
         }
     }
 
+    [Theory]
+    [InlineData("Rules")]
+    [InlineData("ProxyServers")]
+    [InlineData("ProxyChains")]
+    public void LoadPreservingInvalidFile_RejectsNullCollectionEntriesWithoutStartupCrash(string collectionName)
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "config.json");
+        var json = $"{{ \"{collectionName}\": [null] }}";
+        File.WriteAllText(path, json);
+        try
+        {
+            var result = AppConfigStore.LoadPreservingInvalidFile(path);
+
+            Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
+            Assert.Null(result.Config);
+            Assert.Equal(json, File.ReadAllText(path));
+            Assert.NotNull(result.BackupPath);
+            Assert.Equal(json, File.ReadAllText(result.BackupPath!));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static AppConfig ConfigWithPassword(string password) => new()
     {
         ProxyServers =

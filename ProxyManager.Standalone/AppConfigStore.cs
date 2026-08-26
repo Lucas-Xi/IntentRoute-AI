@@ -165,6 +165,14 @@ public static class AppConfigStore
         config.Rules ??= [];
         config.ProxyServers ??= [];
         config.ProxyChains ??= [];
+
+        if (config.Rules.Any(rule => rule is null) ||
+            config.ProxyServers.Any(server => server is null) ||
+            config.ProxyChains.Any(chain => chain is null))
+        {
+            throw new JsonSerializationException(
+                "Configuration collections cannot contain null entries.");
+        }
     }
 }
 
