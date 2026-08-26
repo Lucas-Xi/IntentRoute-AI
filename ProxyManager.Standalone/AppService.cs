@@ -171,26 +171,29 @@ public class AppService : IDisposable, IAsyncDisposable
 {
     private readonly string _configDir;
     private readonly string _configPath;
+    private readonly ConfigurationWorkspace _workspace;
     private readonly SingBoxRuntime _runtime;
     private readonly object _runtimeApplyGate = new();
-    private AppConfig _config = new();
     private System.Threading.Timer? _monitorTimer;
     private CancellationTokenSource? _runtimeApplyCts;
     private HashSet<string> _runningProcesses = new();
-    private bool _configurationWritable = true;
     private string? _approvedSingBoxExecutablePath;
-    private string? _configurationRecoveryBackupPath;
-    private string? _configurationError;
-    public AppConfig Config => _config;
-    public bool IsConfigurationWritable => _configurationWritable;
+    public AppConfig Config => _workspace.Snapshot();
+    public bool IsConfigurationWritable => _workspace.IsWritable;
     public string ConfigPath => _configPath;
     public string ConfigDirectory => _configDir;
-    public string? ConfigurationRecoveryBackupPath => _configurationRecoveryBackupPath;
-    public string? ConfigurationError => _configurationError;
-    internal bool IsSingBoxExecutableApprovedForSession =>
-        !string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) &&
-        !string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) &&
-        PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath);
+    public string? ConfigurationRecoveryBackupPath => _workspace.RecoveryBackupPath;
+    public string? ConfigurationError => _workspace.Error;
+    internal bool IsSingBoxExecutableApprovedForSession
+    {
+        get
+        {
+            var current = _workspace.Snapshot();
+            return !string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) &&
+                !string.IsNullOrWhiteSpace(current.SingBoxExecutablePath) &&
+                PathsEqual(_approvedSingBoxExecutablePath, current.SingBoxExecutablePath);
+        }
+    }
     public event Action<string>? StatusChanged;
     public event Action<string>? RuntimeLogReceived;
     public event Action<SingBoxRuntimeStatus>? RuntimeStatusChanged;
@@ -209,82 +212,27 @@ public class AppService : IDisposable, IAsyncDisposable
         _configDir = AppDataMigration.PrepareConfigDirectory(appDataRoot);
         _configPath = Path.Combine(_configDir, "config.json");
         _runtime = new SingBoxRuntime(_configDir);
+        _workspace = ConfigurationWorkspace.Load(_configPath);
         _runtime.StatusChanged += OnRuntimeStatusChanged;
         _runtime.LogReceived += line => RuntimeLogReceived?.Invoke(line);
-        LoadConfig();
         if (startMonitor) StartMonitor();
-        if (_configurationWritable && applyOnStart)
+        if (_workspace.IsWritable && applyOnStart)
             ApplyRules();
-    }
-
-    private void LoadConfig()
-    {
-        var load = AppConfigStore.LoadPreservingInvalidFile(_configPath);
-        if (load.Status == AppConfigLoadStatus.Unusable)
-        {
-            _config = new AppConfig();
-            _configurationWritable = false;
-            _configurationRecoveryBackupPath = load.BackupPath;
-            _configurationError = load.Error;
-            return;
-        }
-
-        _config = load.Config ?? new AppConfig();
-        _configurationWritable = true;
-        _configurationRecoveryBackupPath = null;
-        _configurationError = null;
-
-        // Ensure defaults for new fields
-        _config.ProxyServers ??= new();
-        _config.ProxyChains ??= new();
-        if (_config.ProxyServers.Count == 0)
-        {
-            _config.ProxyServers.Add(new ProxyServer { Name = "默认 SOCKS5", Host = "127.0.0.1", Port = 10808, ProxyType = ProxyType.Socks5 });
-        }
-    }
-
-    public void SaveConfig()
-    {
-        EnsureConfigurationWritable();
-        AppConfigStore.SaveAtomic(_configPath, _config);
-        ApplyRules();
     }
 
     public void ResetUnusableConfiguration()
     {
-        if (_configurationWritable)
-            throw new InvalidOperationException("Configuration recovery is not required.");
-        if (string.IsNullOrWhiteSpace(_configurationRecoveryBackupPath) ||
-            !File.Exists(_configurationRecoveryBackupPath))
-        {
-            throw new InvalidOperationException(
-                "恢复副本不可用，已阻止重置以避免覆盖唯一的原始配置。请先手动复制原文件或导入有效配置。");
-        }
-
-        var replacement = CreateDefaultConfig();
-        AppConfigStore.SaveAtomic(_configPath, replacement);
-        _config = replacement;
-        MarkConfigurationRecovered();
+        _workspace.ResetProtectedConfiguration();
+        _approvedSingBoxExecutablePath = null;
+        ConfigurationStateChanged?.Invoke();
         ApplyRules();
     }
 
     public void RecoverConfigurationFromFile(string sourcePath)
     {
-        if (_configurationWritable)
-            throw new InvalidOperationException("Configuration recovery is not required.");
-        EnsureRecoveryCopyAvailable();
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        var recovered = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(sourcePath));
-        NormalizeConfig(recovered, addDefaultProxy: recovered.ProxyServers.Count == 0);
-        foreach (var server in recovered.ProxyServers)
-            ValidateLocalServer(server);
-        var build = SingBoxConfigBuilder.Build(recovered);
-        if (!build.Success)
-            throw new InvalidDataException("导入配置不符合当前支持的安全语义: " + build.Error);
-        AppConfigStore.SaveAtomic(_configPath, recovered);
-        _config = recovered;
+        _workspace.RecoverFromFile(sourcePath);
         _approvedSingBoxExecutablePath = null;
-        MarkConfigurationRecovered();
+        ConfigurationStateChanged?.Invoke();
         ApplyRules();
     }
 
@@ -292,91 +240,140 @@ public class AppService : IDisposable, IAsyncDisposable
 
     public ProxyRule AddRule(string exePath, ProxyMode mode = ProxyMode.Proxy)
     {
-        EnsureConfigurationWritable();
         var exeName = Path.GetFileName(exePath);
-        if (_config.Rules.Any(r => r.ExeName.Equals(exeName, StringComparison.OrdinalIgnoreCase)))
+        var current = _workspace.Snapshot();
+        if (current.Rules.Any(r => r.ExeName.Equals(exeName, StringComparison.OrdinalIgnoreCase)))
             return null!;
 
-        var rule = new ProxyRule { ExeName = exeName, ExePath = exePath, Mode = mode, IsEnabled = true, Priority = (_config.Rules.Count + 1) * 10 };
-        _config.Rules.Add(rule);
-        SaveConfig();
-        return rule;
+        var rule = new ProxyRule
+        {
+            ExeName = exeName,
+            ExePath = exePath,
+            Mode = mode,
+            IsEnabled = true,
+            Priority = (current.Rules.Count + 1) * 10
+        };
+        var committed = CommitConfiguration(candidate => candidate.Rules.Add(rule));
+        return committed.Rules.Single(candidate => candidate.Id == rule.Id);
     }
 
     public void ClearRules()
     {
-        EnsureConfigurationWritable();
-        var candidate = CloneConfig(_config);
-        candidate.Rules.Clear();
-        ReplaceWithValidatedConfig(candidate, preserveRuntimeApproval: true);
+        if (_workspace.Snapshot().Rules.Count == 0) return;
+        CommitConfiguration(candidate => candidate.Rules.Clear());
     }
 
     public int ImportRules(IReadOnlyList<ProxyRule> rules)
     {
-        EnsureConfigurationWritable();
         ArgumentNullException.ThrowIfNull(rules);
-        var candidate = CloneConfig(_config);
-        var added = 0;
+        var current = _workspace.Snapshot();
+        var imported = new List<ProxyRule>();
         foreach (var rule in rules)
         {
             if (rule == null)
                 throw new InvalidDataException("导入文件包含空规则。");
-            if (candidate.Rules.Any(existing =>
+            if (current.Rules.Concat(imported).Any(existing =>
                 string.Equals(existing.ExeName, rule.ExeName, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
 
-            var importedRule = JsonConvert.DeserializeObject<ProxyRule>(
-                JsonConvert.SerializeObject(rule))
-                ?? throw new InvalidDataException("导入规则无法解析。");
+            var importedRule = CloneRule(rule);
             importedRule.Id = Guid.NewGuid().ToString();
-            candidate.Rules.Add(importedRule);
-            added++;
+            imported.Add(importedRule);
         }
 
-        if (added > 0)
-            ReplaceWithValidatedConfig(candidate, preserveRuntimeApproval: true);
-        return added;
+        if (imported.Count == 0) return 0;
+        CommitConfiguration(candidate => candidate.Rules.AddRange(imported));
+        return imported.Count;
     }
 
     internal void AcceptDisabledAiRules(IReadOnlyList<ProxyRule> rules)
     {
-        EnsureConfigurationWritable();
-        // Disabled AI drafts do not change the active routing graph. Persist once without
-        // queueing a needless sing-box replacement; enabling remains a separate user action.
-        AiRuleAcceptance.PersistDisabledRules(_config, _configPath, rules);
+        ArgumentNullException.ThrowIfNull(rules);
+        if (rules.Count == 0)
+            throw new ArgumentException("No AI rules were supplied.", nameof(rules));
+        if (rules.Any(rule => rule == null || rule.IsEnabled))
+            throw new ArgumentException("AI rules must be complete and disabled before acceptance.", nameof(rules));
+
+        CommitConfiguration(candidate =>
+        {
+            foreach (var source in rules)
+            {
+                var rule = CloneRule(source);
+                rule.Id = Guid.NewGuid().ToString();
+                rule.IsEnabled = false;
+                rule.Priority = (candidate.Rules.Count + 1) * 10;
+                candidate.Rules.Add(rule);
+            }
+        }, applyRuntime: false);
     }
 
-    public void RemoveRule(string id) { EnsureConfigurationWritable(); _config.Rules.RemoveAll(r => r.Id == id); SaveConfig(); }
-    public void ToggleRule(string id) { EnsureConfigurationWritable(); var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.IsEnabled = !r.IsEnabled; SaveConfig(); } }
-    public void UpdateRuleMode(string id, ProxyMode mode) { EnsureConfigurationWritable(); var r = _config.Rules.FirstOrDefault(r => r.Id == id); if (r != null) { r.Mode = mode; SaveConfig(); } }
+    public void RemoveRule(string id)
+    {
+        if (_workspace.Snapshot().Rules.All(rule => rule.Id != id)) return;
+        CommitConfiguration(candidate => candidate.Rules.RemoveAll(rule => rule.Id == id));
+    }
+
+    public void ToggleRule(string id)
+    {
+        if (_workspace.Snapshot().Rules.All(rule => rule.Id != id)) return;
+        CommitConfiguration(candidate =>
+        {
+            var rule = candidate.Rules.First(item => item.Id == id);
+            rule.IsEnabled = !rule.IsEnabled;
+        });
+    }
+
+    public void UpdateRuleMode(string id, ProxyMode mode)
+    {
+        if (_workspace.Snapshot().Rules.All(rule => rule.Id != id)) return;
+        CommitConfiguration(candidate => candidate.Rules.First(rule => rule.Id == id).Mode = mode);
+    }
+
     public void MoveRule(string id, int delta)
     {
-        EnsureConfigurationWritable();
-        var idx = _config.Rules.FindIndex(r => r.Id == id);
+        var current = _workspace.Snapshot();
+        var idx = current.Rules.FindIndex(r => r.Id == id);
         if (idx < 0) return;
         int newIdx = idx + delta;
-        if (newIdx < 0 || newIdx >= _config.Rules.Count) return;
-        (_config.Rules[idx], _config.Rules[newIdx]) = (_config.Rules[newIdx], _config.Rules[idx]);
-        for (int i = 0; i < _config.Rules.Count; i++) _config.Rules[i].Priority = (i + 1) * 10;
-        SaveConfig();
+        if (newIdx < 0 || newIdx >= current.Rules.Count) return;
+        CommitConfiguration(candidate =>
+        {
+            (candidate.Rules[idx], candidate.Rules[newIdx]) = (candidate.Rules[newIdx], candidate.Rules[idx]);
+            for (int i = 0; i < candidate.Rules.Count; i++)
+                candidate.Rules[i].Priority = (i + 1) * 10;
+        });
     }
 
     // ── Proxy Servers ───────────────────────────
 
-    public ProxyServer AddServer(ProxyServer s) { EnsureConfigurationWritable(); ValidateLocalServer(s); _config.ProxyServers.Add(s); SaveConfig(); return s; }
-    public void RemoveServer(string id) { EnsureConfigurationWritable(); _config.ProxyServers.RemoveAll(s => s.Id == id); SaveConfig(); }
+    public ProxyServer AddServer(ProxyServer server)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        var committed = CommitConfiguration(candidate => candidate.ProxyServers.Add(server));
+        return committed.ProxyServers.Single(candidate => candidate.Id == server.Id);
+    }
+
+    public void RemoveServer(string id)
+    {
+        if (_workspace.Snapshot().ProxyServers.All(server => server.Id != id)) return;
+        CommitConfiguration(candidate => candidate.ProxyServers.RemoveAll(server => server.Id == id));
+    }
+
     public void UpdateServer(ProxyServer s)
     {
-        EnsureConfigurationWritable();
-        ValidateLocalServer(s);
-        var idx = _config.ProxyServers.FindIndex(x => x.Id == s.Id);
-        if (idx >= 0) { _config.ProxyServers[idx] = s; SaveConfig(); }
+        ArgumentNullException.ThrowIfNull(s);
+        if (_workspace.Snapshot().ProxyServers.All(server => server.Id != s.Id)) return;
+        CommitConfiguration(candidate =>
+        {
+            var idx = candidate.ProxyServers.FindIndex(server => server.Id == s.Id);
+            candidate.ProxyServers[idx] = s;
+        });
     }
     public async Task<bool> TestServerAsync(string id)
     {
-        var s = _config.ProxyServers.FirstOrDefault(x => x.Id == id);
+        var s = _workspace.Snapshot().ProxyServers.FirstOrDefault(x => x.Id == id);
         if (s == null) return false;
         return await TestLocalProxyAsync(s.Host, s.Port);
     }
@@ -403,8 +400,18 @@ public class AppService : IDisposable, IAsyncDisposable
 
     // ── Proxy Chains ─────────────────────────────
 
-    public ProxyChain AddChain(ProxyChain c) { EnsureConfigurationWritable(); _config.ProxyChains.Add(c); SaveConfig(); return c; }
-    public void RemoveChain(string id) { EnsureConfigurationWritable(); _config.ProxyChains.RemoveAll(c => c.Id == id); SaveConfig(); }
+    public ProxyChain AddChain(ProxyChain chain)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        var committed = CommitConfiguration(candidate => candidate.ProxyChains.Add(chain));
+        return committed.ProxyChains.Single(candidate => candidate.Id == chain.Id);
+    }
+
+    public void RemoveChain(string id)
+    {
+        if (_workspace.Snapshot().ProxyChains.All(chain => chain.Id != id)) return;
+        CommitConfiguration(candidate => candidate.ProxyChains.RemoveAll(chain => chain.Id == id));
+    }
 
     // ── Runtime Logs ─────────────────────────────
 
@@ -415,8 +422,17 @@ public class AppService : IDisposable, IAsyncDisposable
 
     // ── Global Settings ──────────────────────────
 
-    public void SetGlobalMode(GlobalMode mode) { EnsureConfigurationWritable(); _config.GlobalMode = mode; SaveConfig(); }
-    public void SetDnsMode(DnsMode mode) { EnsureConfigurationWritable(); _config.DnsMode = mode; SaveConfig(); }
+    public void SetGlobalMode(GlobalMode mode)
+    {
+        if (_workspace.Snapshot().GlobalMode == mode) return;
+        CommitConfiguration(candidate => candidate.GlobalMode = mode);
+    }
+
+    public void SetDnsMode(DnsMode mode)
+    {
+        if (_workspace.Snapshot().DnsMode == mode) return;
+        CommitConfiguration(candidate => candidate.DnsMode = mode);
+    }
     public void UpdatePrimaryProxy(
         ProxyType proxyType,
         string host,
@@ -424,91 +440,71 @@ public class AppService : IDisposable, IAsyncDisposable
         string username,
         string password)
     {
-        EnsureConfigurationWritable();
         var normalizedHost = LocalProxyEndpoint.NormalizeOrThrow(host, port);
-        _config.SocksHost = normalizedHost;
-        _config.SocksPort = port;
-        var socks = GetPrimaryProxy();
-        if (socks == null)
+        CommitConfiguration(candidate =>
         {
-            socks = new ProxyServer
+            candidate.SocksHost = normalizedHost;
+            candidate.SocksPort = port;
+            var primary = FindPrimaryProxy(candidate);
+            if (primary == null)
             {
-                Name = "默认 SOCKS5",
-                ProxyType = ProxyType.Socks5,
-                Enabled = true
-            };
-            _config.ProxyServers.Insert(0, socks);
-        }
-        socks.ProxyType = proxyType;
-        socks.Host = normalizedHost;
-        socks.Port = port;
-        socks.Username = username?.Trim() ?? string.Empty;
-        socks.Password = password ?? string.Empty;
-        socks.Enabled = true;
-        SaveConfig();
+                primary = new ProxyServer
+                {
+                    Name = "默认 SOCKS5",
+                    ProxyType = ProxyType.Socks5,
+                    Enabled = true
+                };
+                candidate.ProxyServers.Insert(0, primary);
+            }
+            primary.ProxyType = proxyType;
+            primary.Host = normalizedHost;
+            primary.Port = port;
+            primary.Username = username?.Trim() ?? string.Empty;
+            primary.Password = password ?? string.Empty;
+            primary.Enabled = true;
+        });
     }
 
     public ProxyServer? GetPrimaryProxy() =>
-        _config.ProxyServers.FirstOrDefault(server => server.Enabled) ?? _config.ProxyServers.FirstOrDefault();
+        FindPrimaryProxy(_workspace.Snapshot());
 
     public void SetSingBoxExecutablePath(string path)
     {
-        EnsureConfigurationWritable();
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (!File.Exists(path))
             throw new FileNotFoundException("The selected sing-box executable does not exist.", path);
 
         var approvedPath = Path.GetFullPath(path);
-        var previousPath = _config.SingBoxExecutablePath;
-        var previousApproval = _approvedSingBoxExecutablePath;
-        _config.SingBoxExecutablePath = approvedPath;
-        _approvedSingBoxExecutablePath = approvedPath;
-        try
-        {
-            SaveConfig();
-        }
-        catch
-        {
-            _config.SingBoxExecutablePath = previousPath;
-            _approvedSingBoxExecutablePath = previousApproval;
-            throw;
-        }
+        var committed = _workspace.Commit(candidate => candidate.SingBoxExecutablePath = approvedPath);
+        _approvedSingBoxExecutablePath = PathsEqual(approvedPath, committed.SingBoxExecutablePath)
+            ? approvedPath
+            : null;
+        ApplyRules();
     }
 
     public void ClearSingBoxExecutablePath()
     {
-        EnsureConfigurationWritable();
-        var previousPath = _config.SingBoxExecutablePath;
-        var previousApproval = _approvedSingBoxExecutablePath;
-        _config.SingBoxExecutablePath = string.Empty;
+        _workspace.Commit(candidate => candidate.SingBoxExecutablePath = string.Empty);
         _approvedSingBoxExecutablePath = null;
-        try
-        {
-            SaveConfig();
-        }
-        catch
-        {
-            _config.SingBoxExecutablePath = previousPath;
-            _approvedSingBoxExecutablePath = previousApproval;
-            throw;
-        }
+        ApplyRules();
     }
 
     public Task<SingBoxReadinessResult> ProbeRuntimeReadinessAsync(CancellationToken cancellationToken = default)
     {
+        var current = _workspace.Snapshot();
         if (!string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) &&
-            !string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) &&
-            PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath))
+            !string.IsNullOrWhiteSpace(current.SingBoxExecutablePath) &&
+            PathsEqual(_approvedSingBoxExecutablePath, current.SingBoxExecutablePath))
         {
             return _runtime.ProbeReadinessAsync(_approvedSingBoxExecutablePath, cancellationToken);
         }
 
         string? candidate;
-        if (!string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath))
+        if (!string.IsNullOrWhiteSpace(current.SingBoxExecutablePath))
         {
             try
             {
-                candidate = Path.GetFullPath(_config.SingBoxExecutablePath);
+                candidate = Path.GetFullPath(current.SingBoxExecutablePath);
             }
             catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
             {
@@ -552,27 +548,26 @@ public class AppService : IDisposable, IAsyncDisposable
         var path = Path.Combine(_configDir, $"{name}.profile.json");
         if (File.Exists(path))
         {
-            EnsureConfigurationWritable();
             var cfg = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(path));
-            ReplaceWithValidatedConfig(cfg);
+            ReplaceConfiguration(cfg, preserveRuntimeApproval: false);
         }
     }
 
     public void SaveProfile(string name)
     {
-        EnsureConfigurationWritable();
         var path = Path.Combine(_configDir, $"{name}.profile.json");
-        AppConfigStore.SaveAtomic(path, _config);
+        _workspace.SaveCopy(path, redactPasswords: false);
     }
 
-    public void ExportProfile(string filePath) { EnsureConfigurationWritable(); AppConfigStore.SaveAtomic(filePath, _config, redactPasswords: true); }
+    public void ExportProfile(string filePath) =>
+        _workspace.SaveCopy(filePath, redactPasswords: true);
+
     public void ImportProfile(string filePath)
     {
-        EnsureConfigurationWritable();
         if (File.Exists(filePath))
         {
             var cfg = AppConfigStore.Deserialize(AppConfigStore.ReadStrictUtf8(filePath));
-            ReplaceWithValidatedConfig(cfg);
+            ReplaceConfiguration(cfg, preserveRuntimeApproval: false);
         }
     }
 
@@ -589,23 +584,24 @@ public class AppService : IDisposable, IAsyncDisposable
 
     public void ApplyRules()
     {
-        if (!_configurationWritable)
+        if (!_workspace.IsWritable)
         {
             StatusChanged?.Invoke("配置文件不可安全读取；已阻止保存和 sing-box 启动。请先完成恢复。");
             return;
         }
-        var proxyApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Proxy).Select(r => r.ExeName).ToList();
-        var directApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Direct).Select(r => r.ExeName).ToList();
-        var blockApps = _config.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Block).Select(r => r.ExeName).ToList();
+        var current = _workspace.Snapshot();
+        var proxyApps = current.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Proxy).Select(r => r.ExeName).ToList();
+        var directApps = current.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Direct).Select(r => r.ExeName).ToList();
+        var blockApps = current.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Block).Select(r => r.ExeName).ToList();
 
         StatusChanged?.Invoke($"代理:{proxyApps.Count} 直连:{directApps.Count} 阻止:{blockApps.Count}");
         QueueRuntimeApply();
     }
 
     public HashSet<string> GetRunningProcesses() => _runningProcesses;
-    public List<ProxyRule> GetRules() => _config.Rules;
-    public List<ProxyServer> GetServers() => _config.ProxyServers;
-    public List<ProxyChain> GetChains() => _config.ProxyChains;
+    public List<ProxyRule> GetRules() => _workspace.Snapshot().Rules;
+    public List<ProxyServer> GetServers() => _workspace.Snapshot().ProxyServers;
+    public List<ProxyChain> GetChains() => _workspace.Snapshot().ProxyChains;
     public SingBoxRuntimeStatus GetRuntimeStatus() => _runtime.GetStatus();
     public IReadOnlyList<string> GetRuntimeLogs() => _runtime.GetRecentLogs();
 
@@ -631,12 +627,13 @@ public class AppService : IDisposable, IAsyncDisposable
 
     private void QueueRuntimeApply()
     {
-        if (!_configurationWritable) return;
+        if (!_workspace.IsWritable) return;
+        var current = _workspace.Snapshot();
         if (string.IsNullOrWhiteSpace(_approvedSingBoxExecutablePath) ||
-            string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath) ||
-            !PathsEqual(_approvedSingBoxExecutablePath, _config.SingBoxExecutablePath))
+            string.IsNullOrWhiteSpace(current.SingBoxExecutablePath) ||
+            !PathsEqual(_approvedSingBoxExecutablePath, current.SingBoxExecutablePath))
         {
-            StatusChanged?.Invoke(string.IsNullOrWhiteSpace(_config.SingBoxExecutablePath)
+            StatusChanged?.Invoke(string.IsNullOrWhiteSpace(current.SingBoxExecutablePath)
                 ? "sing-box 尚未选择；配置已保存，但未启动运行时。"
                 : "sing-box 路径尚未在本次启动中批准；配置已保存，但未执行该文件。请在设置中通过“浏览…”重新选择。");
             return;
@@ -644,8 +641,7 @@ public class AppService : IDisposable, IAsyncDisposable
         AppConfig snapshot;
         try
         {
-            snapshot = JsonConvert.DeserializeObject<AppConfig>(
-                JsonConvert.SerializeObject(_config)) ?? new AppConfig();
+            snapshot = current;
             snapshot.SingBoxExecutablePath = _approvedSingBoxExecutablePath;
         }
         catch (Exception ex)
@@ -700,38 +696,46 @@ public class AppService : IDisposable, IAsyncDisposable
         StatusChanged?.Invoke(text);
     }
 
-    private void EnsureConfigurationWritable()
+    private AppConfig CommitConfiguration(
+        Action<AppConfig> mutate,
+        bool preserveRuntimeApproval = true,
+        bool applyRuntime = true)
     {
-        if (!_configurationWritable)
-        {
-            throw new InvalidOperationException(
-                "配置文件不可安全读取，已阻止覆盖保存。请先导入有效配置或明确重置。");
-        }
+        var previousApproval = preserveRuntimeApproval ? _approvedSingBoxExecutablePath : null;
+        var committed = _workspace.Commit(mutate);
+        ReconcileRuntimeApproval(previousApproval, committed);
+        if (applyRuntime) ApplyRules();
+        return committed;
     }
 
-    private void ReplaceWithValidatedConfig(AppConfig candidate, bool preserveRuntimeApproval = false)
+    private AppConfig ReplaceConfiguration(
+        AppConfig candidate,
+        bool preserveRuntimeApproval,
+        bool applyRuntime = true)
     {
-        NormalizeConfig(candidate, addDefaultProxy: candidate.ProxyServers.Count == 0);
-        foreach (var server in candidate.ProxyServers)
-            ValidateLocalServer(server);
-        var build = SingBoxConfigBuilder.Build(candidate);
-        if (!build.Success)
-            throw new InvalidDataException("配置不符合当前支持的安全语义: " + build.Error);
-
-        AppConfigStore.SaveAtomic(_configPath, candidate);
         var previousApproval = preserveRuntimeApproval ? _approvedSingBoxExecutablePath : null;
-        _config = candidate;
+        var committed = _workspace.Replace(candidate);
+        ReconcileRuntimeApproval(previousApproval, committed);
+        if (applyRuntime) ApplyRules();
+        return committed;
+    }
+
+    private void ReconcileRuntimeApproval(string? previousApproval, AppConfig committed)
+    {
         _approvedSingBoxExecutablePath = previousApproval != null &&
-            !string.IsNullOrWhiteSpace(candidate.SingBoxExecutablePath) &&
-            PathsEqual(previousApproval, candidate.SingBoxExecutablePath)
+            !string.IsNullOrWhiteSpace(committed.SingBoxExecutablePath) &&
+            PathsEqual(previousApproval, committed.SingBoxExecutablePath)
                 ? previousApproval
                 : null;
-        ApplyRules();
     }
 
-    private static AppConfig CloneConfig(AppConfig config) =>
-        JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(config))
-        ?? throw new InvalidDataException("无法创建配置候选副本。");
+    private static ProxyServer? FindPrimaryProxy(AppConfig config) =>
+        config.ProxyServers.FirstOrDefault(server => server.Enabled) ??
+        config.ProxyServers.FirstOrDefault();
+
+    private static ProxyRule CloneRule(ProxyRule rule) =>
+        JsonConvert.DeserializeObject<ProxyRule>(JsonConvert.SerializeObject(rule))
+        ?? throw new InvalidDataException("无法创建规则候选副本。");
 
     private static bool PathsEqual(string left, string right)
     {
@@ -748,53 +752,6 @@ public class AppService : IDisposable, IAsyncDisposable
         }
     }
 
-    private void MarkConfigurationRecovered()
-    {
-        _configurationWritable = true;
-        _configurationError = null;
-        _configurationRecoveryBackupPath = null;
-        ConfigurationStateChanged?.Invoke();
-    }
-
-    private void EnsureRecoveryCopyAvailable()
-    {
-        if (string.IsNullOrWhiteSpace(_configurationRecoveryBackupPath) ||
-            !File.Exists(_configurationRecoveryBackupPath))
-        {
-            throw new InvalidOperationException(
-                "恢复副本不可用，已阻止替换唯一的原始配置。请先手动复制原文件并重新启动应用。");
-        }
-    }
-
-    private static AppConfig CreateDefaultConfig()
-    {
-        var config = new AppConfig();
-        NormalizeConfig(config, addDefaultProxy: true);
-        return config;
-    }
-
-    private static void NormalizeConfig(AppConfig config, bool addDefaultProxy)
-    {
-        config.Rules ??= [];
-        config.ProxyServers ??= [];
-        config.ProxyChains ??= [];
-        if (addDefaultProxy && config.ProxyServers.Count == 0)
-        {
-            config.ProxyServers.Add(new ProxyServer
-            {
-                Name = "默认 SOCKS5",
-                Host = "127.0.0.1",
-                Port = 10808,
-                ProxyType = ProxyType.Socks5
-            });
-        }
-    }
-
-    private static void ValidateLocalServer(ProxyServer server)
-    {
-        ArgumentNullException.ThrowIfNull(server);
-        server.Host = LocalProxyEndpoint.NormalizeOrThrow(server.Host, server.Port);
-    }
 }
 
 #endregion

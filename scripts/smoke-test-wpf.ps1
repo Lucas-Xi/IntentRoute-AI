@@ -56,7 +56,13 @@ try {
         throw "Published IntentRouteAI.exe did not create a main window within $LaunchTimeoutSeconds seconds."
     }
     if ($process.MainWindowTitle -ne $expectedTitle) {
-        throw "Published IntentRouteAI.exe created an unexpected main-window title: '$($process.MainWindowTitle)'."
+        $diagnostic = if (Test-Path -LiteralPath $diagnosticPath -PathType Leaf) {
+            Get-Content -Raw -LiteralPath $diagnosticPath
+        }
+        else {
+            'No redacted managed-exception diagnostic was produced.'
+        }
+        throw "Published IntentRouteAI.exe created an unexpected main-window title: '$($process.MainWindowTitle)'.`n$diagnostic"
     }
 
     if (-not $process.CloseMainWindow()) {

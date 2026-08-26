@@ -23,9 +23,13 @@
 
 IntentRoute AI constructs JSON through typed objects and invokes sing-box with `ProcessStartInfo.ArgumentList`, `UseShellExecute=false`, and no command shell. Host, port, CIDR, protocol, process wildcard, and proxy references are validated. Upstream proxy hosts must be literal loopback IP addresses; hostnames, LAN/public addresses, and IPv4-mapped IPv6 forms are rejected.
 
+The active configuration is owned by a Configuration Workspace. UI and validation callers receive detached snapshots, so changing a returned object cannot mutate active routing state. Every supported edit is applied to a cloned complete candidate, normalized, validated through the supported sing-box construction semantics, and atomically persisted before publication. A validation, DPAPI, or filesystem failure leaves both the active in-memory state and persisted bytes unchanged and does not queue a runtime apply.
+
 ### Corrupted or undecryptable persisted configuration
 
 Malformed JSON, invalid UTF-8, null documents or collection entries, and proxy passwords whose `dpapi:` value cannot be decoded for the current Windows user are treated as an unusable configuration. The original `config.json` is left untouched, a timestamped recovery copy is attempted, every save path is blocked, and no sing-box apply is queued. Recovery import is semantically validated before replacement; import and reset are unavailable unless the recovery copy still exists. Filesystem or ACL failures can prevent creation of the additional recovery copy, but they do not authorize overwriting the original.
+
+Rule, proxy, mode, AI acceptance, and profile changes share the same candidate commit path. Local edits retain an in-session sing-box approval only if the committed executable path is unchanged. Profile replacement, recovery import, and reset always clear approval, preventing imported configuration data from acquiring execution authority.
 
 ### Malicious or incorrect AI output
 
@@ -47,7 +51,7 @@ Legacy migration holds a per-directory exclusive lock, copies only top-level `co
 
 Stored passwords are DPAPI-protected. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
 
-The packaged-WPF CI smoke process can opt into a one-shot unhandled-exception diagnostic path through `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH`. The file contains only the exception text after the standard secret redactor; it does not include configuration JSON, provider prompts, credentials, or runtime logs, and the smoke script removes it after the process exits.
+The packaged-WPF CI smoke process can opt into a one-shot managed-exception diagnostic path through `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH`. It covers unhandled failures and exceptions caught by the startup safety dialog, including an unexpected startup-window title. The file contains only the exception text after the standard secret redactor; it does not include configuration JSON, provider prompts, credentials, or runtime logs, and the smoke script removes it after the process exits or fails validation.
 
 The generated sing-box configuration necessarily contains a usable password while running. It lives under the current user's application-data directory and is removed on stop, clean shutdown, and unexpected child exit. A per-directory lock prevents two IntentRoute AI instances from owning the same runtime. After an application or OS crash, the next launch uses a credential-free PID/start-time lease to recover a recorded orphan and removes stale generated configs and candidates. Abrupt termination can still leave files present until that next launch, and cleanup can fail under filesystem or administrator interference.
 

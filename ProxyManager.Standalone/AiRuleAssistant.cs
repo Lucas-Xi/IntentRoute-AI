@@ -529,38 +529,6 @@ public sealed class AiRuleValidationResult
     public static AiRuleValidationResult Fail(IReadOnlyList<string> errors) => new(false, [], errors);
 }
 
-public static class AiRuleAcceptance
-{
-    public static void PersistDisabledRules(AppConfig config, string configPath, IReadOnlyList<ProxyRule> rules)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-        ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
-        ArgumentNullException.ThrowIfNull(rules);
-        if (rules.Count == 0) throw new ArgumentException("No AI rules were supplied.", nameof(rules));
-        if (rules.Any(rule => rule == null || rule.IsEnabled))
-            throw new ArgumentException("AI rules must be complete and disabled before acceptance.", nameof(rules));
-
-        var originalCount = config.Rules.Count;
-        try
-        {
-            foreach (var rule in rules)
-            {
-                rule.Id = Guid.NewGuid().ToString();
-                rule.IsEnabled = false;
-                rule.Priority = (config.Rules.Count + 1) * 10;
-                config.Rules.Add(rule);
-            }
-            AppConfigStore.SaveAtomic(configPath, config);
-        }
-        catch
-        {
-            if (config.Rules.Count > originalCount)
-                config.Rules.RemoveRange(originalCount, config.Rules.Count - originalCount);
-            throw;
-        }
-    }
-}
-
 public static class AiRuleDraftValidator
 {
     private static readonly char[] Separators = [',', ';', '|', '\n', '\r', '\t', ' '];

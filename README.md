@@ -86,6 +86,8 @@ OpenAI API data handling is governed by the user's OpenAI account and current AP
 - Literal-loopback-only upstream proxy endpoints with an optional bounded TCP-listener check.
 - A recognized sing-box v1.13+ version gate before configuration check or launch.
 - Save-blocked recovery when `config.json` or a DPAPI-protected password cannot be read safely.
+- Transactional configuration edits that validate and atomically persist a complete candidate before publishing it to application state or queueing a runtime apply.
+- Detached configuration snapshots, so UI or validation code cannot mutate active routing state outside the supported commit path.
 
 IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bundled AI model, OpenAI API key, or sing-box binary.
 
@@ -107,6 +109,8 @@ Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, 
 Proxy passwords are protected at rest with DPAPI `CurrentUser`. The generated `%APPDATA%\IntentRouteAI\sing-box.generated.json` necessarily contains any configured credential in plaintext while sing-box is running. The application removes it on stop, clean exit, and unexpected child exit; the next launch performs bounded orphan recovery and stale-artifact cleanup. Cleanup remains best effort under disk, ACL, administrator, or abrupt-crash interference.
 
 On the unreleased `main` branch, malformed JSON, invalid UTF-8, a null document or collection entry, or a `dpapi:` password that cannot be decrypted for the current Windows user makes the configuration **unusable**, not empty. IntentRoute AI leaves the original file untouched, attempts to create a timestamped `config.json.corrupt-*.bak` copy, blocks all save and runtime-apply paths, and shows explicit import/reset recovery controls. Import validates the supported endpoint and routing semantics before replacement. Both import replacement and reset are disabled unless the recovery copy still exists. If the copy could not be created, the user must first make a manual copy and restart the application so preservation can be verified before replacement.
+
+Normal edits, rule imports, AI-draft acceptance, Profile replacement, recovery, and reset use one Configuration Workspace transaction. The application clones the active configuration, applies and validates the complete candidate, atomically saves it, and only then publishes a new detached snapshot. A validation or save failure leaves memory and disk unchanged. Local edits preserve a current-session sing-box approval only while the executable path is unchanged; Profile replacement, recovery, and reset always clear it.
 
 The local proxy **Test port** action only performs a TCP connection to the entered literal loopback IP with a five-second bound. It sends no username or password and does not prove SOCKS/HTTP negotiation, authentication, upstream reachability, DNS behavior, or routed application traffic.
 

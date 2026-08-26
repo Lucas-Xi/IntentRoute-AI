@@ -27,8 +27,9 @@ public sealed class AppServiceRecoveryTests
             Assert.Equal(original, File.ReadAllBytes(configPath));
             Assert.Equal(original, File.ReadAllBytes(service.ConfigurationRecoveryBackupPath!));
 
-            service.Config.Rules.Add(new ProxyRule { ExeName = "must-not-save.exe" });
-            Assert.Throws<InvalidOperationException>(() => service.SaveConfig());
+            Assert.Throws<InvalidOperationException>(() =>
+                service.AddRule("must-not-save.exe", ProxyMode.Direct));
+            Assert.Empty(service.Config.Rules);
             Assert.Equal(original, File.ReadAllBytes(configPath));
         }
         finally
@@ -352,6 +353,118 @@ public sealed class AppServiceRecoveryTests
 
             Assert.Empty(service.Config.Rules);
             Assert.Equal(original, File.ReadAllBytes(configPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ConfigurationSnapshot_CannotMutateTheWorkspace()
+    {
+        var appDataRoot = CreateTempDirectory();
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+
+            var snapshot = service.Config;
+            snapshot.Rules.Add(new ProxyRule { ExeName = "snapshot-only.exe" });
+            snapshot.ProxyServers[0].Host = "::1";
+
+            var nextSnapshot = service.Config;
+            Assert.Empty(nextSnapshot.Rules);
+            Assert.Equal("127.0.0.1", nextSnapshot.ProxyServers[0].Host);
+            Assert.False(File.Exists(service.ConfigPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void PersistenceFailure_DoesNotPublishCandidateOrChangeDisk()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        AppConfigStore.SaveAtomic(configPath, new AppConfig
+        {
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+        var original = File.ReadAllBytes(configPath);
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+            var statuses = new List<string>();
+            service.StatusChanged += statuses.Add;
+            Exception? error;
+            using (new FileStream(configPath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                error = Record.Exception(() => service.AddRule("rollback.exe", ProxyMode.Direct));
+            }
+
+            Assert.True(error is IOException or UnauthorizedAccessException, error?.ToString());
+            Assert.Empty(service.Config.Rules);
+            Assert.Equal(original, File.ReadAllBytes(configPath));
+            Assert.Empty(statuses);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void UnsupportedMutation_DoesNotPublishCandidateOrChangeDisk()
+    {
+        var appDataRoot = CreateTempDirectory();
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+            var rule = service.AddRule("safe.exe", ProxyMode.Direct);
+            var original = File.ReadAllBytes(service.ConfigPath);
+
+            Assert.Throws<InvalidDataException>(() =>
+                service.UpdateRuleMode(rule.Id, (ProxyMode)999));
+
+            Assert.Equal(ProxyMode.Direct, Assert.Single(service.Config.Rules).Mode);
+            Assert.Equal(original, File.ReadAllBytes(service.ConfigPath));
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LocalMutationPreservesApprovalButProfileReplacementClearsIt()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var executablePath = Path.Combine(appDataRoot, "selected-sing-box.exe");
+        var profilePath = Path.Combine(appDataRoot, "replacement.profile.json");
+        File.WriteAllBytes(executablePath, []);
+        AppConfigStore.SaveAtomic(profilePath, new AppConfig
+        {
+            SingBoxExecutablePath = executablePath,
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }]
+        });
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
+
+            service.SetSingBoxExecutablePath(executablePath);
+            Assert.True(service.IsSingBoxExecutableApprovedForSession);
+
+            service.AddRule("preserve-approval.exe", ProxyMode.Direct);
+            Assert.True(service.IsSingBoxExecutableApprovedForSession);
+
+            service.ImportProfile(profilePath);
+            Assert.False(service.IsSingBoxExecutableApprovedForSession);
         }
         finally
         {

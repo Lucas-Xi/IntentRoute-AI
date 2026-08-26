@@ -327,18 +327,20 @@ public sealed class AiRuleAssistantTests
         var directory = CreateTempDirectory();
         try
         {
-            var path = Path.Combine(directory, "config.json");
-            var config = ConfigWithEnabledProxy();
+            using var service = new AppService(directory, startMonitor: false, applyOnStart: false);
             var rules = AiRuleDraftValidator.Validate(
                 AiRuleContract.ParseSuggestion(ValidSuggestionJson()),
-                config).Rules;
+                service.Config).Rules;
+            var statuses = new List<string>();
+            service.StatusChanged += statuses.Add;
 
-            AiRuleAcceptance.PersistDisabledRules(config, path, rules);
+            service.AcceptDisabledAiRules(rules);
 
-            var persisted = AppConfigStore.Deserialize(File.ReadAllText(path));
+            var persisted = AppConfigStore.Deserialize(File.ReadAllText(service.ConfigPath));
             var rule = Assert.Single(persisted.Rules);
             Assert.False(rule.IsEnabled);
             Assert.False(string.IsNullOrWhiteSpace(rule.Id));
+            Assert.Empty(statuses);
         }
         finally
         {

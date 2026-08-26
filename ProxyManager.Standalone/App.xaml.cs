@@ -28,6 +28,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            WriteConfiguredSmokeDiagnostic(ex);
             MessageBox.Show(
                 "IntentRoute AI 无法安全启动。\n\n" + SingBoxRuntime.RedactSecrets(ex.Message),
                 "启动失败",
@@ -35,6 +36,13 @@ public partial class App : Application
                 MessageBoxImage.Error);
             Shutdown(1);
         }
+    }
+
+    private static void WriteConfiguredSmokeDiagnostic(Exception exception)
+    {
+        var diagnosticPath = Environment.GetEnvironmentVariable(SmokeDiagnosticPathVariable);
+        if (!string.IsNullOrWhiteSpace(diagnosticPath))
+            WriteSmokeDiagnostic(diagnosticPath, exception);
     }
 
     private void ConfigureSmokeDiagnostics()
