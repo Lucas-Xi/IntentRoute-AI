@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <PublishSingleFile>true</PublishSingleFile>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>ProxyManager</AssemblyName>
+    <RootNamespace>ProxyManager.Standalone</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>Lucas-Xi and contributors</Authors>
+    <Company>ProxyManager contributors</Company>
+    <Product>ProxyManager</Product>
+    <Description>Open-source per-application proxy routing for Windows, powered by sing-box TUN.</Description>
+    <Copyright>Copyright (c) 2026 Lucas-Xi and contributors</Copyright>
+    <RepositoryUrl>https://github.com/Lucas-Xi/ProxyManager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+</Project>

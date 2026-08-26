@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible ProxyManager defect
+title: "[Bug]: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private configuration files, or identifying network data. Report vulnerabilities through private vulnerability reporting.
+  - type: input
+    id: version
+    attributes:
+      label: ProxyManager version
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2, build ...
+    validations:
+      required: true
+  - type: input
+    id: singbox
+    attributes:
+      label: sing-box version
+      placeholder: 1.13.x
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe sequence that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and redacted logs
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, private paths, and identifying network data.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

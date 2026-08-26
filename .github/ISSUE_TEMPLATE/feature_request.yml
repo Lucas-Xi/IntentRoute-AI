@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a focused, maintainable improvement
+title: "[Feature]: "
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem cannot be solved by the current supported behavior?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include compatibility and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and maintenance impact
+      description: Consider administrator rights, process execution, secret storage, routing, dependencies, and test burden.
+    validations:
+      required: true

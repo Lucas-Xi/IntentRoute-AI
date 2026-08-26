@@ -1,0 +1,57 @@
+# .NET build output
+**/[Bb]in/
+**/[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
+
+# Rust build output
+**/[Tt]arget/
+
+# Superseded local prototypes (the supported open-source app is ProxyManager.Standalone)
+/proxy-core/
+/ProxyManager.GUI/
+/scripts/*.bat
+
+# Local release output
+/build/
+/build2/
+/build_final/
+/build_out/
+/pub/
+/pub2/
+/artifacts/
+
+# IDE and OS state
+/.vs/
+/.vscode/
+/.idea/
+/.cursor/
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local.json
+*.secrets.json
+sing-box.generated.json
+proxy-manager.generated.json
+
+# Packaged binaries are produced by GitHub Releases
+*.exe
+*.dll
+*.zip
+*.msi
+*.nupkg
+
+# Logs and coverage
+*.log
+/coverage/
+/TestResults/
+*.trx
+*.coverage
+*.coveragexml

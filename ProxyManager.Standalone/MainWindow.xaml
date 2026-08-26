@@ -1,0 +1,502 @@
+<Window x:Class="ProxyManager.Standalone.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ProxyManager - Windows 网络分流" Height="680" Width="960"
+        MinHeight="500" MinWidth="750"
+        Background="#0F0F0F"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip"
+        WindowStyle="None"
+        AllowsTransparency="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- 颜色定义 -->
+        <Color x:Key="BgColor">#0F0F0F</Color>
+        <Color x:Key="SurfaceColor">#161616</Color>
+        <Color x:Key="CardColor">#1C1C1C</Color>
+        <Color x:Key="HoverColor">#222222</Color>
+        <Color x:Key="AccentColor">#3B82F6</Color>
+        <Color x:Key="AccentHoverColor">#2563EB</Color>
+        <Color x:Key="SuccessColor">#22C55E</Color>
+        <Color x:Key="WarningColor">#EAB308</Color>
+        <Color x:Key="DangerColor">#EF4444</Color>
+        <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
+        <Color x:Key="TextSecondaryColor">#A1A1AA</Color>
+        <Color x:Key="TextMutedColor">#71717A</Color>
+        <Color x:Key="BorderColor">#27272A</Color>
+
+        <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+        <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
+        <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimaryColor}"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+
+        <!-- 导航按钮样式 -->
+        <Style x:Key="NavButton" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="14,10" Margin="0,2">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                <Setter Property="FontWeight" Value="Medium"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource CardBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 主按钮样式 -->
+        <Style x:Key="PrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 次要按钮样式 -->
+        <Style x:Key="SecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 输入框样式 -->
+        <Style x:Key="InputBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 右键菜单 -->
+        <ContextMenu x:Key="RuleMenu" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}">
+            <MenuItem Header="切换启用" Click="ToggleRule_Click" Foreground="{StaticResource TextBrush}"/>
+            <Separator Background="{StaticResource BorderBrush}"/>
+            <MenuItem Header="🔵 强制代理" Click="SetProxy_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="🟢 强制直连" Click="SetDirect_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="🔴 阻止联网" Click="SetBlock_Click" Foreground="{StaticResource TextBrush}"/>
+            <Separator Background="{StaticResource BorderBrush}"/>
+            <MenuItem Header="⬆ 上移" Click="MoveUp_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="⬇ 下移" Click="MoveDown_Click" Foreground="{StaticResource TextBrush}"/>
+            <Separator Background="{StaticResource BorderBrush}"/>
+            <MenuItem Header="❌ 删除" Click="DeleteRule_Click" Foreground="{StaticResource DangerBrush}"/>
+        </ContextMenu>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BgBrush}" CornerRadius="8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ═══ 左侧导航栏 ═══ -->
+            <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" CornerRadius="8,0,0,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Logo区域 -->
+                    <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <TextBlock Text="⚡ ProxyManager" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock Text="v0.1.0 开源预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 导航菜单 -->
+                    <StackPanel Grid.Row="1" Margin="10,16,10,0">
+                        <RadioButton x:Name="NavRules" Content="📋  规则管理" GroupName="Nav" IsChecked="True"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                        <RadioButton x:Name="NavMonitor" Content="📋  运行日志" GroupName="Nav"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                        <RadioButton x:Name="NavProcess" Content="⚙️  进程列表" GroupName="Nav"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                        <RadioButton x:Name="NavSettings" Content="🔧  设置" GroupName="Nav"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="8,16,8,12"/>
+
+                        <RadioButton x:Name="NavAbout" Content="ℹ️  关于" GroupName="Nav"
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                    </StackPanel>
+
+                    <!-- 底部状态 -->
+                    <Border Grid.Row="2" Padding="14,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="StatusLabel" Text="运行状态" FontSize="12" Foreground="{StaticResource TextBrush}"/>
+                            </StackPanel>
+                            <TextBlock x:Name="StatusDetail" Text="正在检查 sing-box…" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- ═══ 右侧内容区 ═══ -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 顶部标题栏 -->
+                <Border Grid.Row="0" Background="{StaticResource BgBrush}" Padding="20,12,20,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 标题 -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock x:Name="PageTitle" Text="规则管理" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock x:Name="PageSubtitle" Text=" - 拖拽 .exe 添加规则" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,0,6"/>
+                        </StackPanel>
+
+                        <!-- 全局模式切换 -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="2">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="ModeDirect" Content="默认直连" GroupName="Mode" IsChecked="True"
+                                                 Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
+                                    <RadioButton x:Name="ModeProxy" Content="默认代理" GroupName="Mode"
+                                                 Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- 窗口控制 -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Button Content="—" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
+                                    BorderThickness="0" FontSize="16" Width="32" Height="28" Cursor="Hand"
+                                    Click="Minimize_Click"/>
+                            <Button Content="□" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
+                                    BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                                    Click="Maximize_Click"/>
+                            <Button Content="✕" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
+                                    BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                                    Click="Close_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 主内容区 -->
+                <Grid Grid.Row="1" Margin="16,8,16,16">
+                    <!-- 页面: 规则管理 -->
+                    <Grid x:Name="PageRules" Visibility="Visible" AllowDrop="True"
+                          Drop="Window_Drop" DragOver="Window_DragOver" DragLeave="Window_DragLeave">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 工具栏 -->
+                        <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="8"
+                                Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 搜索框 -->
+                                <Grid Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBox x:Name="SearchBox" Width="200"
+                                             Style="{StaticResource InputBox}" FontSize="12"
+                                             TextChanged="Search_Changed"/>
+                                    <TextBlock x:Name="SearchPlaceholder" Text="🔍 搜索规则..."
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               FontSize="12" Margin="11,0,0,0"
+                                               IsHitTestVisible="False" VerticalAlignment="Center"
+                                               Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+
+                                <!-- 统计信息 -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="#1A3B82F6" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
+                                        <TextBlock x:Name="ProxyCount" Text="代理: 0" FontSize="11" Foreground="{StaticResource AccentBrush}"/>
+                                    </Border>
+                                    <Border Background="#1A22C55E" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
+                                        <TextBlock x:Name="DirectCount" Text="直连: 0" FontSize="11" Foreground="{StaticResource SuccessBrush}"/>
+                                    </Border>
+                                    <Border Background="#1AEF4444" CornerRadius="4" Padding="8,3">
+                                        <TextBlock x:Name="BlockCount" Text="阻止: 0" FontSize="11" Foreground="{StaticResource DangerBrush}"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- 操作按钮 -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Button Content="➕ 添加规则" Style="{StaticResource PrimaryBtn}"
+                                            Click="AddRule_Click" Margin="0,0,8,0"/>
+                                    <Button Content="📥 导入" Style="{StaticResource SecondaryBtn}"
+                                            Click="Import_Click" Margin="0,0,8,0"/>
+                                    <Button Content="📤 导出" Style="{StaticResource SecondaryBtn}"
+                                            Click="Export_Click" Margin="0,0,8,0"/>
+                                    <Button Content="🗑 清空" Style="{StaticResource SecondaryBtn}"
+                                            Click="Clear_Click" Foreground="{StaticResource DangerBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 规则列表 -->
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <Grid>
+                                <!-- 表头 -->
+                                <Border VerticalAlignment="Top" BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1" Padding="12,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="90"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="30"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="#" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="1" Text="应用程序" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="2" Text="模式" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="状态" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="4" Text="添加时间" FontSize="11" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="5" Text="" FontSize="11"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 列表内容 -->
+                                <ListBox x:Name="RulesList" Margin="0,38,0,0" Background="Transparent"
+                                         BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ContextMenu="{StaticResource RuleMenu}"/>
+
+                                <!-- 空状态 -->
+                                <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="📂" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                    <TextBlock Text="拖拽 .exe 文件到此处" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="或点击上方「添加规则」按钮" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                </StackPanel>
+
+                                <!-- 拖拽覆盖层 -->
+                                <Border x:Name="DropOverlay" Background="#990F0F0F" Visibility="Collapsed">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="📥" FontSize="48" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="释放以添加规则" FontSize="16" Foreground="{StaticResource TextBrush}" Margin="0,12,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- 页面: sing-box 运行日志 -->
+                    <Grid x:Name="PageMonitor" Visibility="Collapsed">
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Padding="16,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="sing-box 运行日志" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <Button Content="清空" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="ClearLogs_Click"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <ListView Grid.Row="1" x:Name="LogsList" Background="Transparent" BorderThickness="0">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="时间" Width="90" DisplayMemberBinding="{Binding Time}"/>
+                                            <GridViewColumn Header="消息" Width="620" DisplayMemberBinding="{Binding Message}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- 页面: 进程列表 -->
+                    <Grid x:Name="PageProcess" Visibility="Collapsed">
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Padding="16,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="运行中的进程" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock x:Name="ProcessCount" Text="0 个进程" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <Button Content="刷新" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="RefreshProcess_Click"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <ListView Grid.Row="1" x:Name="ProcessList" Background="Transparent" BorderThickness="0">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="PID" Width="80" DisplayMemberBinding="{Binding Pid}"/>
+                                            <GridViewColumn Header="进程名" Width="200" DisplayMemberBinding="{Binding Name}"/>
+                                            <GridViewColumn Header="路径" Width="300" DisplayMemberBinding="{Binding Path}"/>
+                                            <GridViewColumn Header="状态" Width="80" DisplayMemberBinding="{Binding Status}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- 页面: 设置 -->
+                    <Grid x:Name="PageSettings" Visibility="Collapsed">
+                        <ScrollViewer>
+                            <StackPanel>
+                                <!-- 代理设置 -->
+                                <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="代理设置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16"/>
+                                        <TextBlock Text="本地 SOCKS5 端口" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                        <TextBox x:Name="SocksPort" Text="10808" Style="{StaticResource InputBox}"/>
+                                        <TextBlock Text="v0.1.0 连接到 127.0.0.1 上已有的 SOCKS5 服务；不包含代理服务。" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                        <Button Content="保存代理设置" Style="{StaticResource PrimaryBtn}"
+                                                HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveProxy_Click"/>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- 页面: 关于 -->
+                    <Grid x:Name="PageAbout" Visibility="Collapsed">
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="32">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="⚡" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="ProxyManager" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="网络分流工具 v0.1.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+
+                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="功能特性" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"/>
+                                        <TextBlock Text="• 拖拽添加应用程序规则" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• 支持代理/直连/阻止三种模式" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• 实时进程监控" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• 规则导入导出" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="• sing-box TUN 数据面（需单独安装）" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="基于 .NET 8 + WPF 构建" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
