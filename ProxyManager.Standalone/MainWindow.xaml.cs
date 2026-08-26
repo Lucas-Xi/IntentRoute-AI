@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<AiRulePreviewLine> _aiDrafts = new();
     private readonly OpenAiRuleProvider _openAiProvider = new();
     private readonly OllamaRuleProvider _ollamaProvider = new();
+    private readonly CancellationTokenSource _lifetimeCts = new();
+    private readonly SemaphoreSlim _aiProviderGate = new(1, 1);
     private List<ProxyRule> _allRules = new();
     private string _searchFilter = "";
     private bool _isMaximized = false;
@@ -57,13 +59,25 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        UpdateConfigurationUi();
-        LoadRules();
-        LoadSettings();
-        RefreshProcessList();
-        await RefreshRuntimeReadinessAsync();
-        UpdateRuntimeStatusUi(_service.GetRuntimeStatus());
-        await RefreshAiModelsAsync();
+        try
+        {
+            UpdateConfigurationUi();
+            LoadRules();
+            LoadSettings();
+            RefreshProcessList();
+            await RefreshRuntimeReadinessAsync();
+            _lifetimeCts.Token.ThrowIfCancellationRequested();
+            UpdateRuntimeStatusUi(_service.GetRuntimeStatus());
+            await RefreshAiModelsAsync(_lifetimeCts.Token);
+        }
+        catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
+        {
+            // Normal window shutdown can overlap asynchronous first-load work.
+        }
+        catch (ObjectDisposedException) when (_shutdownStarted || _shutdownComplete)
+        {
+            // A provider/runtime may finish disposal while a queued UI continuation unwinds.
+        }
     }
 
     #region 窗口控制
@@ -140,17 +154,17 @@ public partial class MainWindow : Window
 
     private async void AiProvider_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (!IsLoaded || _aiGenerationCts != null) return;
-        await RefreshAiModelsAsync();
+        if (!IsLoaded || _aiGenerationCts != null || _shutdownStarted) return;
+        await RefreshAiModelsAsync(_lifetimeCts.Token);
     }
 
     private async void RefreshAiModels_Click(object sender, RoutedEventArgs e)
     {
-        if (_aiGenerationCts != null) return;
-        await RefreshAiModelsAsync();
+        if (_aiGenerationCts != null || _shutdownStarted) return;
+        await RefreshAiModelsAsync(_lifetimeCts.Token);
     }
 
-    private async Task RefreshAiModelsAsync()
+    private async Task RefreshAiModelsAsync(CancellationToken cancellationToken = default)
     {
         var refreshVersion = ++_aiModelRefreshVersion;
         var provider = GetSelectedAiProvider();
@@ -166,7 +180,9 @@ public partial class MainWindow : Window
 
         try
         {
-            var models = await provider.ListModelsAsync();
+            var models = await RunAiProviderOperationAsync(
+                token => provider.ListModelsAsync(token),
+                cancellationToken);
             if (refreshVersion != _aiModelRefreshVersion || !ReferenceEquals(provider, GetSelectedAiProvider()))
                 return;
             AiModelCombo.ItemsSource = models;
@@ -188,9 +204,13 @@ public partial class MainWindow : Window
             if (refreshVersion == _aiModelRefreshVersion)
                 AiStatusText.Text = ex.Message;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Model discovery cancellation is expected during shutdown or a newer request.
+        }
         finally
         {
-            if (refreshVersion == _aiModelRefreshVersion)
+            if (refreshVersion == _aiModelRefreshVersion && !cancellationToken.IsCancellationRequested)
                 AiModelCombo.IsEnabled = true;
         }
     }
@@ -208,6 +228,9 @@ public partial class MainWindow : Window
 
         ResetAiDraft();
         var cts = new CancellationTokenSource();
+        using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cts.Token,
+            _lifetimeCts.Token);
         _aiGenerationCts = cts;
         AiProviderCombo.IsEnabled = false;
         AiModelCombo.IsEnabled = false;
@@ -218,9 +241,10 @@ public partial class MainWindow : Window
 
         try
         {
-            var suggestion = await GetSelectedAiProvider().GenerateDraftAsync(
-                new AiRuleRequest(intent, model),
-                cts.Token);
+            var provider = GetSelectedAiProvider();
+            var suggestion = await RunAiProviderOperationAsync(
+                token => provider.GenerateDraftAsync(new AiRuleRequest(intent, model), token),
+                requestCts.Token);
             var validation = AiRuleDraftValidator.Validate(suggestion, _service.Config);
             _currentAiSuggestion = suggestion;
             _currentAiValidation = validation;
@@ -261,11 +285,29 @@ public partial class MainWindow : Window
                 _aiGenerationCts = null;
                 cts.Dispose();
             }
-            AiProviderCombo.IsEnabled = true;
-            AiModelCombo.IsEnabled = true;
-            AiIntentBox.IsEnabled = true;
-            AiCancelButton.IsEnabled = false;
-            AiGenerateButton.IsEnabled = AiModelCombo.SelectedItem is string;
+            if (!_shutdownStarted)
+            {
+                AiProviderCombo.IsEnabled = true;
+                AiModelCombo.IsEnabled = true;
+                AiIntentBox.IsEnabled = true;
+                AiCancelButton.IsEnabled = false;
+                AiGenerateButton.IsEnabled = AiModelCombo.SelectedItem is string;
+            }
+        }
+    }
+
+    private async Task<T> RunAiProviderOperationAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken)
+    {
+        await _aiProviderGate.WaitAsync(cancellationToken);
+        try
+        {
+            return await operation(cancellationToken);
+        }
+        finally
+        {
+            _aiProviderGate.Release();
         }
     }
 
@@ -910,6 +952,8 @@ public partial class MainWindow : Window
         _shutdownStarted = true;
         IsEnabled = false;
         StatusDetail.Text = "正在安全停止 sing-box…";
+        _lifetimeCts.Cancel();
+        _aiModelRefreshVersion++;
         _aiGenerationCts?.Cancel();
         _runtimeReadinessCts?.Cancel();
         try
@@ -918,14 +962,32 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Debug.WriteLine("IntentRoute AI shutdown cleanup failed: " + SingBoxRuntime.RedactSecrets(ex.Message));
+            Debug.WriteLine("IntentRoute AI runtime shutdown failed: " + SingBoxRuntime.RedactSecrets(ex.Message));
+        }
+
+        try
+        {
+            await _aiProviderGate.WaitAsync();
+            try
+            {
+                _openAiProvider.Dispose();
+                _ollamaProvider.Dispose();
+            }
+            finally
+            {
+                _aiProviderGate.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("IntentRoute AI provider shutdown failed: " + SingBoxRuntime.RedactSecrets(ex.Message));
         }
         finally
         {
             _aiGenerationCts?.Dispose();
             _runtimeReadinessCts?.Dispose();
-            _openAiProvider.Dispose();
-            _ollamaProvider.Dispose();
+            _lifetimeCts.Dispose();
+            _aiProviderGate.Dispose();
             _shutdownComplete = true;
             _shutdownStarted = false;
             Close();

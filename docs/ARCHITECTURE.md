@@ -45,7 +45,7 @@
 
 Invalid replacement configuration does not intentionally terminate a healthy managed process. A checked replacement that immediately fails to run triggers a best-effort rollback to the prior generated configuration and process. Process output is bounded in memory.
 
-Cancellation or shutdown kills any in-flight `sing-box version` or `sing-box check` process tree before propagating cancellation. Window shutdown cancels outstanding readiness/apply work and asynchronously waits for runtime ownership and secret-bearing generated files to be released instead of synchronously blocking the WPF dispatcher.
+Cancellation or shutdown kills any in-flight `sing-box version` or `sing-box check` process tree before propagating cancellation. Window shutdown cancels outstanding readiness/apply work, cancels and drains in-flight AI provider operations before disposing their clients, and asynchronously waits for runtime ownership and secret-bearing generated files to be released instead of synchronously blocking the WPF dispatcher.
 
 An unreadable persisted configuration does not fall back to an active empty/default configuration. Malformed or invalid-UTF-8 input, null documents or collection entries, and unavailable DPAPI credentials all enter the same fail-closed recovery state. The UI remains available while configuration mutations and sing-box application are blocked. The original file is not rewritten until the user explicitly imports a valid replacement or confirms reset.
 
