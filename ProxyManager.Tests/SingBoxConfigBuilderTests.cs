@@ -134,6 +134,24 @@ public sealed class SingBoxConfigBuilderTests
         Assert.Contains("invalid IP/CIDR", cidrResult.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Build_RejectsStandaloneProxyChainDefinitions()
+    {
+        var config = BaseConfig();
+        config.ProxyChains.Add(new ProxyChain
+        {
+            Id = "chain-1",
+            Name = "Unsupported chain",
+            Servers = ["server-1"]
+        });
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.False(result.Success);
+        Assert.Contains("not supported", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(result.RedactedJson);
+    }
+
     [Theory]
     [InlineData("localhost")]
     [InlineData("192.168.1.10")]

@@ -1,5 +1,6 @@
 using System.IO;
 using ProxyManager.Standalone;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace ProxyManager.Tests;
@@ -203,6 +204,15 @@ public sealed class AppConfigStoreTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Theory]
+    [InlineData("{ \"Rules\": [ { \"ExeName\": \"safe.exe\", \"IsEnabled\": false } ] }")]
+    [InlineData("{ \"ProxyServers\": [ { \"Host\": \"127.0.0.1\", \"Port\": 1080 } ] }")]
+    [InlineData("{ \"ProxyChains\": [ { \"Name\": \"legacy\", \"Servers\": [] } ] }")]
+    public void Deserialize_RejectsObjectsWhoseIdPropertyIsOmitted(string json)
+    {
+        Assert.Throws<JsonSerializationException>(() => AppConfigStore.Deserialize(json));
     }
 
     private static AppConfig ConfigWithPassword(string password) => new()

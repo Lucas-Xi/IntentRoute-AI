@@ -168,18 +168,8 @@ internal sealed class ConfigurationWorkspace
         if (HasDuplicateIds(candidate.ProxyServers.Select(server => server.Id)))
             throw new InvalidDataException("代理服务器 ID 不能重复。");
 
-        foreach (var chain in candidate.ProxyChains)
-        {
-            if (string.IsNullOrWhiteSpace(chain.Id))
-                throw new InvalidDataException("代理链必须包含非空 ID。");
-            if (!Enum.IsDefined(chain.ChainType))
-                throw new InvalidDataException("配置包含不支持的代理链类型。");
-            if (chain.Servers.Any(string.IsNullOrWhiteSpace))
-                throw new InvalidDataException("代理链不能包含空服务器引用。");
-        }
-
-        if (HasDuplicateIds(candidate.ProxyChains.Select(chain => chain.Id)))
-            throw new InvalidDataException("代理链 ID 不能重复。");
+        if (candidate.ProxyChains.Count > 0)
+            throw new InvalidDataException("当前版本尚未实现代理链运行时映射，因此拒绝保存代理链定义。");
 
         var build = SingBoxConfigBuilder.Build(candidate);
         if (!build.Success)

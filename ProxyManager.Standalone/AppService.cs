@@ -25,6 +25,7 @@ public enum ConnectionAction { Proxy, Direct, Block }
 
 public class ProxyServer : INotifyPropertyChanged
 {
+    [JsonProperty(Required = Required.Always)]
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = "";
     public ProxyType ProxyType { get; set; } = ProxyType.Socks5;
@@ -45,6 +46,7 @@ public class ProxyServer : INotifyPropertyChanged
 
 public class ProxyChain : INotifyPropertyChanged
 {
+    [JsonProperty(Required = Required.Always)]
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = "";
     public ProxyChainType ChainType { get; set; } = ProxyChainType.Sequential;
@@ -58,6 +60,7 @@ public class ProxyChain : INotifyPropertyChanged
 
 public class ProxyRule : INotifyPropertyChanged
 {
+    [JsonProperty(Required = Required.Always)]
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string ExeName { get; set; } = "";
     public string ExePath { get; set; } = "";
@@ -402,21 +405,6 @@ public class AppService : IDisposable, IAsyncDisposable
         catch { return false; }
     }
 
-    // ── Proxy Chains ─────────────────────────────
-
-    public ProxyChain AddChain(ProxyChain chain)
-    {
-        ArgumentNullException.ThrowIfNull(chain);
-        var committed = CommitConfiguration(candidate => candidate.ProxyChains.Add(chain));
-        return committed.ProxyChains.Single(candidate => candidate.Id == chain.Id);
-    }
-
-    public void RemoveChain(string id)
-    {
-        if (_workspace.Snapshot().ProxyChains.All(chain => chain.Id != id)) return;
-        CommitConfiguration(candidate => candidate.ProxyChains.RemoveAll(chain => chain.Id == id));
-    }
-
     // ── Runtime Logs ─────────────────────────────
 
     public void ClearLogs()
@@ -605,7 +593,6 @@ public class AppService : IDisposable, IAsyncDisposable
     public HashSet<string> GetRunningProcesses() => _runningProcesses;
     public List<ProxyRule> GetRules() => _workspace.Snapshot().Rules;
     public List<ProxyServer> GetServers() => _workspace.Snapshot().ProxyServers;
-    public List<ProxyChain> GetChains() => _workspace.Snapshot().ProxyChains;
     public SingBoxRuntimeStatus GetRuntimeStatus() => _runtime.GetStatus();
     public IReadOnlyList<string> GetRuntimeLogs() => _runtime.GetRecentLogs();
 

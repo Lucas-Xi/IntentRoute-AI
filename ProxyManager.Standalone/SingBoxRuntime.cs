@@ -264,9 +264,9 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
 
-            SetState(SingBoxRuntimeState.Starting, clearError: true);
+            SetState(SingBoxRuntimeState.Starting, cancellationToken, clearError: true);
 
-            SetState(SingBoxRuntimeState.Probing);
+            SetState(SingBoxRuntimeState.Probing, cancellationToken);
             var readiness = await ProbeReadinessAsync(config.SingBoxExecutablePath, cancellationToken)
                 .ConfigureAwait(false);
             if (!readiness.IsReady || readiness.ExecutablePath == null)
@@ -277,8 +277,7 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
             }
 
             var exe = readiness.ExecutablePath;
-            _executablePath = exe;
-            _version = readiness.Version;
+            var version = readiness.Version;
 
             var build = SingBoxConfigBuilder.Build(config);
             if (!build.Success || string.IsNullOrEmpty(build.ConfigJson))
@@ -288,20 +287,28 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
                     preserveRunningProcess: true);
             }
 
+            var previousStatus = GetStatus();
             var previousConfig = TryReadConfigBytes();
-            if (GetStatus().IsRunning && previousConfig == null)
+            if (previousStatus.IsRunning && previousConfig == null)
             {
                 return FailApply(
                     "The managed sing-box process is running, but its previous generated config is unavailable; stop it before applying a replacement.",
                     preserveRunningProcess: true);
             }
 
+            var previousExecutablePath = previousStatus.IsRunning
+                ? previousStatus.ExecutablePath
+                : null;
+            var previousVersion = previousStatus.IsRunning
+                ? previousStatus.Version
+                : null;
+
             string? candidatePath = null;
             try
             {
                 candidatePath = await WriteCandidateConfigAsync(build.ConfigJson, cancellationToken).ConfigureAwait(false);
 
-                SetState(SingBoxRuntimeState.Checking);
+                SetState(SingBoxRuntimeState.Checking, cancellationToken);
 
                 var check = await _executionBackend
                     .CheckAsync(exe, candidatePath, _checkTimeout, cancellationToken)
@@ -329,17 +336,39 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
 
             try
             {
-                await ReplaceProcessAsync(exe, _configPath, cancellationToken).ConfigureAwait(false);
+                await ReplaceProcessAsync(exe, version, _configPath, cancellationToken).ConfigureAwait(false);
+                var runningStatus = CompleteSuccessfulApply(cancellationToken);
+                return SingBoxApplyResult.Ok(runningStatus);
             }
             catch (OperationCanceledException)
             {
-                try { RestoreConfig(previousConfig); } catch { /* preserve cancellation */ }
+                var rollback = await TryRollbackAsync(
+                    previousExecutablePath,
+                    previousVersion,
+                    previousConfig).ConfigureAwait(false);
+                if (rollback.Success)
+                {
+                    FailApply(
+                        "The replacement was canceled. The previous configuration was restored and restarted.",
+                        preserveRunningProcess: true);
+                }
+                else
+                {
+                    var rollbackDetail = string.IsNullOrWhiteSpace(rollback.Error)
+                        ? " No previous running configuration was available."
+                        : " Rollback also failed: " + RedactSecrets(rollback.Error);
+                    FailApply("The replacement was canceled." + rollbackDetail);
+                }
+
                 throw;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 var startupError = "Failed to start replacement sing-box: " + RedactSecrets(ex.Message);
-                var rollback = await TryRollbackAsync(exe, previousConfig).ConfigureAwait(false);
+                var rollback = await TryRollbackAsync(
+                    previousExecutablePath,
+                    previousVersion,
+                    previousConfig).ConfigureAwait(false);
                 if (rollback.Success)
                 {
                     return FailApply(
@@ -353,9 +382,6 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
                     : " Rollback also failed: " + RedactSecrets(rollback.Error);
                 return FailApply(startupError + rollbackDetail);
             }
-
-            SetState(SingBoxRuntimeState.Running, clearError: true);
-            return SingBoxApplyResult.Ok(GetStatus());
         }
         finally
         {
@@ -443,15 +469,24 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
             File.Move(candidatePath, _configPath);
     }
 
-    private async Task<RollbackResult> TryRollbackAsync(string executablePath, byte[]? previousConfig)
+    private async Task<RollbackResult> TryRollbackAsync(
+        string? executablePath,
+        string? version,
+        byte[]? previousConfig)
     {
         if (previousConfig == null)
             return RollbackResult.Fail(null);
+        if (string.IsNullOrWhiteSpace(executablePath))
+            return RollbackResult.Fail("The previous sing-box executable identity is unavailable.");
 
         try
         {
             RestoreConfig(previousConfig);
-            await ReplaceProcessAsync(executablePath, _configPath, CancellationToken.None).ConfigureAwait(false);
+            await ReplaceProcessAsync(
+                executablePath,
+                version,
+                _configPath,
+                CancellationToken.None).ConfigureAwait(false);
             return RollbackResult.Ok();
         }
         catch (Exception ex)
@@ -490,7 +525,11 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
         }
     }
 
-    private async Task ReplaceProcessAsync(string exe, string configPath, CancellationToken cancellationToken)
+    private async Task ReplaceProcessAsync(
+        string exe,
+        string? version,
+        string configPath,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -500,11 +539,13 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
             KillManagedProcess_NoLock();
             process = _executionBackend.Start(exe, configPath, OnProcessOutput, OnProcessExited);
             _process = process;
+            _executablePath = exe;
+            _version = version;
             WriteProcessState_NoLock(process, exe);
         }
 
         // Brief settle so immediate crash is visible to callers.
-        await Task.Delay(_startupSettleTime).ConfigureAwait(false);
+        await Task.Delay(_startupSettleTime, cancellationToken).ConfigureAwait(false);
 
         lock (_gate)
         {
@@ -521,6 +562,31 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
                 throw new InvalidOperationException($"sing-box exited during startup with code {code}.");
             }
         }
+    }
+
+    private SingBoxRuntimeStatus CompleteSuccessfulApply(CancellationToken cancellationToken)
+    {
+        SingBoxRuntimeStatus status;
+        lock (_gate)
+        {
+            // The cancellation check and green-state publication must be atomic with
+            // MarkRunningConfigurationStale. Whichever takes the lock second owns the
+            // final state, so revoked approval cannot be overwritten by a late Apply.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var isRunning = false;
+            try { isRunning = _process is { HasExited: false }; }
+            catch { isRunning = false; }
+            if (!isRunning)
+                throw new InvalidOperationException("sing-box exited before startup completed.");
+
+            _state = SingBoxRuntimeState.Running;
+            _lastError = null;
+            status = SnapshotStatus_NoLock();
+        }
+
+        RaiseStatusChanged();
+        return status;
     }
 
     private void OnProcessOutput(string output)
@@ -544,6 +610,8 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
                 _state = SingBoxRuntimeState.Failed;
                 try { _process.Dispose(); } catch { /* ignore */ }
                 _process = null;
+                _executablePath = null;
+                _version = null;
                 TryDeleteFile(_processStatePath);
                 TryDeleteConfig();
                 changed = true;
@@ -558,6 +626,8 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
     {
         var process = _process;
         _process = null;
+        _executablePath = null;
+        _version = null;
         TryDeleteFile(_processStatePath);
         if (process == null) return;
 
@@ -742,10 +812,17 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
         return SingBoxApplyResult.Fail(error, GetStatus());
     }
 
-    private void SetState(SingBoxRuntimeState state, bool clearError = false)
+    private void SetState(
+        SingBoxRuntimeState state,
+        CancellationToken cancellationToken,
+        bool clearError = false)
     {
         lock (_gate)
         {
+            // Transient Apply states must obey the same ordering as Running. Once
+            // approval revocation cancels the token, a late continuation cannot
+            // overwrite RunningStale with Probing, Checking, or Starting.
+            cancellationToken.ThrowIfCancellationRequested();
             _state = state;
             if (clearError) _lastError = null;
         }

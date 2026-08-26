@@ -31,3 +31,7 @@ _Avoid_: Trusted config path, remembered approval
 **Stale Runtime**:
 A preserved sing-box process that still runs an older accepted configuration after the Active Configuration changes but cannot yet be applied.
 _Avoid_: Running, healthy current config
+
+**Runtime Identity**:
+The executable path and version attached to the currently managed sing-box process. Candidate probe results do not become Runtime Identity until that candidate process actually starts; rollback restores the previous executable identity as well as its generated configuration.
+_Avoid_: Selected path, candidate identity

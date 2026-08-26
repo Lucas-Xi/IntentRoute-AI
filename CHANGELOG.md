@@ -39,9 +39,13 @@ All notable changes are documented here. The project follows semantic versioning
 - Validate and atomically persist complete configuration candidates before publishing in-memory state or queueing runtime replacement; validation, DPAPI, and filesystem failures now leave both memory and disk unchanged.
 - Preserve current-session sing-box approval only for local transactions whose committed executable path is unchanged; Profile replacement, recovery import, and reset always clear approval.
 - When approval is cleared, cancel any queued replacement apply and mark a preserved running process as `RunningStale` instead of leaving a green status for an older configuration.
+- Make the startup-settle window cancellation-aware; cancellation after candidate promotion restores and restarts the previous generated configuration, and green-state publication is atomic with stale marking so a late Apply cannot overwrite revoked approval.
+- Keep candidate probe identity separate from the managed process identity; failed checks leave the old PID/path/version aligned, while startup failure and cancellation rollback use the previous executable and version instead of the rejected candidate.
 - Treat every in-memory proxy password as plaintext at the persistence and builder boundaries, so legitimate values beginning with `dpapi:` are encrypted and round-trip instead of being misread as stored ciphertext.
 - Reject rules with null, empty, or whitespace-only process names at both the workspace and builder boundaries; only an explicit `*` represents a global rule. Persisted semantic failures now enter the same preservation-first recovery state as malformed JSON.
-- Normalize optional imported strings defensively and reject missing or duplicate rule, proxy-server, and proxy-chain IDs before publication; UI matching remains null-safe as a second line of defense.
+- Normalize optional imported strings defensively and reject missing or duplicate rule and proxy-server IDs before publication; UI matching remains null-safe as a second line of defense.
+- Reject every non-empty proxy-chain collection at both workspace and direct-builder boundaries until a real sing-box runtime mapping exists; removed the unused service methods that implied chain support.
+- Require `Id` to be present in serialized rule, proxy-server, and proxy-chain objects, preventing Json.NET property initializers from silently repairing omitted IDs with random GUIDs.
 
 ### Tests
 
@@ -54,6 +58,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Added Configuration Workspace coverage for detached snapshots, filesystem-failure rollback, unsupported-mutation rollback, AI disabled-rule commits without runtime apply, and approval preservation/clearing semantics.
 - Added regression coverage for approval-clearing while an older runtime remains active, plus DPAPI-marker-prefixed password round trips.
 - Added builder, import-rollback, and startup-recovery coverage for null, empty, and whitespace-only executable names.
+- Added deterministic cancellation-during-startup coverage at both runtime and AppService boundaries, plus direct-builder and persisted-recovery coverage for standalone proxy-chain definitions.
+- Added two-executable runtime tests for candidate-check identity and rollback identity, plus deserialization and preservation-first startup tests for omitted `Id` properties.
 
 ## [0.2.0] - 2026-08-26
 

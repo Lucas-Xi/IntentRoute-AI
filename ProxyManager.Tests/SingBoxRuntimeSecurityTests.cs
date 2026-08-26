@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProxyManager.Standalone;
@@ -135,6 +136,149 @@ public sealed class SingBoxRuntimeSecurityTests
             Assert.Contains("127.0.0.1", activeConfig, StringComparison.Ordinal);
             Assert.DoesNotContain("127.0.0.2", activeConfig, StringComparison.Ordinal);
             Assert.Empty(Directory.EnumerateFiles(tempDirectory, "*.candidate"));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Apply_CheckFailurePreservesActualExecutableIdentity()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var executableA = Path.Combine(tempDirectory, "sing-box-a.exe");
+        var executableB = Path.Combine(tempDirectory, "sing-box-b.exe");
+        File.WriteAllBytes(executableA, []);
+        File.WriteAllBytes(executableB, []);
+        var backend = new FakeSingBoxExecutionBackend(_ => null)
+        {
+            VersionOutputForExecutable = path => PathsEqual(path, executableA)
+                ? "sing-box version 1.13.1"
+                : "sing-box version 1.14.0",
+            CheckResultForExecutable = (path, _) => PathsEqual(path, executableB)
+                ? SingBoxCheckResult.Fail("candidate check failed")
+                : SingBoxCheckResult.Ok()
+        };
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(20),
+                executionBackend: backend,
+                executableOverride: null);
+            var configA = CreateConfig("127.0.0.1");
+            configA.SingBoxExecutablePath = executableA;
+            var configB = CreateConfig("127.0.0.2");
+            configB.SingBoxExecutablePath = executableB;
+
+            var first = await runtime.ApplyAsync(configA);
+            Assert.True(first.Success, first.Error);
+            var firstProcessId = first.Status.ProcessId;
+
+            var rejected = await runtime.ApplyAsync(configB);
+
+            Assert.False(rejected.Success);
+            Assert.Equal(SingBoxRuntimeState.RunningStale, rejected.Status.State);
+            Assert.True(rejected.Status.IsRunning);
+            Assert.Equal(firstProcessId, rejected.Status.ProcessId);
+            Assert.Equal(Path.GetFullPath(executableA), rejected.Status.ExecutablePath);
+            Assert.Equal("1.13.1", rejected.Status.Version);
+            Assert.Equal([Path.GetFullPath(executableA)], backend.StartedExecutablePaths);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Apply_StartupFailureRollsBackWithPreviousExecutableIdentity()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var executableA = Path.Combine(tempDirectory, "sing-box-a.exe");
+        var executableB = Path.Combine(tempDirectory, "sing-box-b.exe");
+        File.WriteAllBytes(executableA, []);
+        File.WriteAllBytes(executableB, []);
+        var backend = new FakeSingBoxExecutionBackend(configJson =>
+            configJson.Contains("127.0.0.2", StringComparison.Ordinal) ? 42 : null)
+        {
+            VersionOutputForExecutable = path => PathsEqual(path, executableA)
+                ? "sing-box version 1.13.1"
+                : "sing-box version 1.14.0"
+        };
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(60),
+                executionBackend: backend,
+                executableOverride: null);
+            var configA = CreateConfig("127.0.0.1");
+            configA.SingBoxExecutablePath = executableA;
+            var configB = CreateConfig("127.0.0.2");
+            configB.SingBoxExecutablePath = executableB;
+
+            var first = await runtime.ApplyAsync(configA);
+            Assert.True(first.Success, first.Error);
+
+            var replacement = await runtime.ApplyAsync(configB);
+
+            Assert.False(replacement.Success);
+            Assert.Equal(SingBoxRuntimeState.RunningStale, replacement.Status.State);
+            Assert.Equal(Path.GetFullPath(executableA), replacement.Status.ExecutablePath);
+            Assert.Equal("1.13.1", replacement.Status.Version);
+            Assert.Equal(
+                [Path.GetFullPath(executableA), Path.GetFullPath(executableB), Path.GetFullPath(executableA)],
+                backend.StartedExecutablePaths);
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Apply_CancellationDuringStartupRestoresPreviousProcessAndCannotReturnToRunning()
+    {
+        var tempDirectory = CreateTempDirectory();
+        var fakeExecutable = Path.Combine(tempDirectory, "fake-sing-box.exe");
+        File.WriteAllBytes(fakeExecutable, []);
+        var backend = new FakeSingBoxExecutionBackend(_ => null);
+
+        try
+        {
+            using var runtime = new SingBoxRuntime(
+                tempDirectory,
+                maxLogLines: 64,
+                checkTimeout: TimeSpan.FromSeconds(1),
+                startupSettleTime: TimeSpan.FromMilliseconds(200),
+                executionBackend: backend,
+                executableOverride: fakeExecutable);
+
+            var first = await runtime.ApplyAsync(CreateConfig("127.0.0.1"));
+            Assert.True(first.Success, first.Error);
+
+            using var cancellation = new CancellationTokenSource();
+            var replacement = runtime.ApplyAsync(CreateConfig("127.0.0.2"), cancellation.Token);
+            await WaitUntilAsync(() => backend.StartCount >= 2);
+            cancellation.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => replacement);
+
+            var status = runtime.GetStatus();
+            Assert.Equal(3, backend.StartCount);
+            Assert.Equal(SingBoxRuntimeState.RunningStale, status.State);
+            Assert.True(status.IsRunning);
+            Assert.Contains("restored and restarted", status.LastError, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("127.0.0.1", File.ReadAllText(runtime.ConfigPath), StringComparison.Ordinal);
+            Assert.DoesNotContain("127.0.0.2", File.ReadAllText(runtime.ConfigPath), StringComparison.Ordinal);
         }
         finally
         {
@@ -425,16 +569,35 @@ public sealed class SingBoxRuntimeSecurityTests
         ]
     };
 
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        for (var attempt = 0; attempt < 200; attempt++)
+        {
+            if (condition()) return;
+            await Task.Delay(10);
+        }
+
+        Assert.Fail("Timed out waiting for the expected runtime transition.");
+    }
+
+    private static bool PathsEqual(string left, string right) =>
+        Path.GetFullPath(left).Equals(Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase);
+
     internal sealed class FakeSingBoxExecutionBackend(
         Func<string, int?> startupExitCode,
         string versionOutput = "sing-box version 1.13.0")
         : ISingBoxExecutionBackend
     {
         private int _nextProcessId = 41000;
+        private int _startCount;
+        private readonly ConcurrentQueue<string> _startedExecutablePaths = new();
         public int VersionCount { get; private set; }
         public int CheckCount { get; private set; }
-        public int StartCount { get; private set; }
+        public int StartCount => Volatile.Read(ref _startCount);
         public string VersionOutput { get; set; } = versionOutput;
+        public Func<string, string>? VersionOutputForExecutable { get; init; }
+        public Func<string, string, SingBoxCheckResult>? CheckResultForExecutable { get; init; }
+        public IReadOnlyList<string> StartedExecutablePaths => _startedExecutablePaths.ToArray();
 
         public Task<SingBoxVersionProbeResult> GetVersionAsync(
             string executablePath,
@@ -443,7 +606,8 @@ public sealed class SingBoxRuntimeSecurityTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             VersionCount++;
-            return Task.FromResult(SingBoxVersionProbeResult.Ok(VersionOutput));
+            var output = VersionOutputForExecutable?.Invoke(executablePath) ?? VersionOutput;
+            return Task.FromResult(SingBoxVersionProbeResult.Ok(output));
         }
 
         public Task<SingBoxCheckResult> CheckAsync(
@@ -454,7 +618,9 @@ public sealed class SingBoxRuntimeSecurityTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             CheckCount++;
-            return Task.FromResult(SingBoxCheckResult.Ok());
+            return Task.FromResult(
+                CheckResultForExecutable?.Invoke(executablePath, configPath) ??
+                SingBoxCheckResult.Ok());
         }
 
         public ISingBoxManagedProcess Start(
@@ -463,7 +629,8 @@ public sealed class SingBoxRuntimeSecurityTests
             Action<string> outputReceived,
             Action<ISingBoxManagedProcess> exited)
         {
-            StartCount++;
+            Interlocked.Increment(ref _startCount);
+            _startedExecutablePaths.Enqueue(Path.GetFullPath(executablePath));
             var configJson = File.ReadAllText(configPath);
             var process = new FakeManagedProcess(
                 Interlocked.Increment(ref _nextProcessId),

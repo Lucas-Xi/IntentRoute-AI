@@ -517,6 +517,42 @@ public sealed class AppServiceRecoveryTests
     }
 
     [Fact]
+    public void PersistedRuleWithOmittedId_EntersRecoveryProtectionWithoutRewritingSource()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        const string original = """
+        {
+          "Rules": [
+            { "ExeName": "safe.exe", "IsEnabled": false }
+          ],
+          "ProxyServers": [
+            { "Id": "proxy-1", "Host": "127.0.0.1", "Port": 1080 }
+          ],
+          "ProxyChains": []
+        }
+        """;
+        File.WriteAllText(configPath, original);
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: true);
+
+            Assert.False(service.IsConfigurationWritable);
+            Assert.Equal(original, File.ReadAllText(configPath));
+            Assert.NotNull(service.ConfigurationRecoveryBackupPath);
+            Assert.Equal(original, File.ReadAllText(service.ConfigurationRecoveryBackupPath!));
+            Assert.False(service.GetRuntimeStatus().IsRunning);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public void LocalMutationPreservesApprovalButProfileReplacementClearsIt()
     {
         var appDataRoot = CreateTempDirectory();
@@ -594,6 +630,105 @@ public sealed class AppServiceRecoveryTests
             Assert.Contains("approved again", status.LastError, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(SingBoxRuntimeState.RunningStale, runtimeStates);
             Assert.Equal(1, backend.StartCount);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ApprovalClearedDuringStartupSettle_RollsBackAndNeverReturnsToGreen()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var executablePath = Path.Combine(appDataRoot, "selected-sing-box.exe");
+        var profilePath = Path.Combine(appDataRoot, "replacement.profile.json");
+        File.WriteAllBytes(executablePath, []);
+        AppConfigStore.SaveAtomic(profilePath, new AppConfig
+        {
+            GlobalMode = GlobalMode.DirectAll,
+            SingBoxExecutablePath = executablePath,
+            ProxyServers = [new ProxyServer { Host = "127.0.0.3", Port = 1080 }]
+        });
+        var backend = new SingBoxRuntimeSecurityTests.FakeSingBoxExecutionBackend(_ => null);
+
+        try
+        {
+            using var service = new AppService(
+                appDataRoot,
+                startMonitor: false,
+                applyOnStart: false,
+                runtimeFactory: configDirectory => new SingBoxRuntime(
+                    configDirectory,
+                    maxLogLines: 64,
+                    checkTimeout: TimeSpan.FromSeconds(1),
+                    startupSettleTime: TimeSpan.FromMilliseconds(200),
+                    executionBackend: backend,
+                    executableOverride: executablePath));
+
+            service.SetSingBoxExecutablePath(executablePath);
+            await WaitUntilAsync(() => service.GetRuntimeStatus().State == SingBoxRuntimeState.Running);
+
+            service.UpdatePrimaryProxy(ProxyType.Socks5, "127.0.0.2", 1080, string.Empty, string.Empty);
+            await WaitUntilAsync(() => backend.StartCount >= 2);
+
+            var statesAfterApprovalClear = new List<SingBoxRuntimeState>();
+            service.RuntimeStatusChanged += status => statesAfterApprovalClear.Add(status.State);
+            service.ImportProfile(profilePath);
+
+            await WaitUntilAsync(() =>
+                backend.StartCount >= 3 &&
+                service.GetRuntimeStatus().LastError?.Contains(
+                    "restored and restarted",
+                    StringComparison.OrdinalIgnoreCase) == true);
+
+            var status = service.GetRuntimeStatus();
+            Assert.False(service.IsSingBoxExecutableApprovedForSession);
+            Assert.Equal(GlobalMode.DirectAll, service.Config.GlobalMode);
+            Assert.Equal(SingBoxRuntimeState.RunningStale, status.State);
+            Assert.True(status.IsRunning);
+            Assert.Equal(3, backend.StartCount);
+            Assert.DoesNotContain(SingBoxRuntimeState.Running, statesAfterApprovalClear);
+            Assert.Contains("127.0.0.1", File.ReadAllText(status.ConfigPath!), StringComparison.Ordinal);
+            Assert.DoesNotContain("127.0.0.2", File.ReadAllText(status.ConfigPath!), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(appDataRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void PersistedStandaloneProxyChain_EntersRecoveryProtection()
+    {
+        var appDataRoot = CreateTempDirectory();
+        var configDirectory = Path.Combine(appDataRoot, AppDataMigration.CurrentDirectoryName);
+        var configPath = Path.Combine(configDirectory, "config.json");
+        Directory.CreateDirectory(configDirectory);
+        AppConfigStore.SaveAtomic(configPath, new AppConfig
+        {
+            ProxyServers = [new ProxyServer { Host = "127.0.0.1", Port = 1080 }],
+            ProxyChains =
+            [
+                new ProxyChain
+                {
+                    Id = "chain-1",
+                    Name = "Unsupported chain",
+                    Servers = ["server-1"]
+                }
+            ]
+        });
+        var original = File.ReadAllBytes(configPath);
+
+        try
+        {
+            using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: true);
+
+            Assert.False(service.IsConfigurationWritable);
+            Assert.Equal(original, File.ReadAllBytes(configPath));
+            Assert.NotNull(service.ConfigurationRecoveryBackupPath);
+            Assert.True(File.Exists(service.ConfigurationRecoveryBackupPath));
+            Assert.False(service.GetRuntimeStatus().IsRunning);
         }
         finally
         {

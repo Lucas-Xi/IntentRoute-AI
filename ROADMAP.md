@@ -37,4 +37,4 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 ## Explicitly not promised
 
-Autonomous AI rule activation, proxy chains, provider subscriptions, remote node management, remote Ollama endpoints, per-connection traffic attribution, and cross-platform support are not scheduled. They require separate design and security review before implementation.
+Autonomous AI rule activation, proxy chains, provider subscriptions, remote node management, remote Ollama endpoints, per-connection traffic attribution, and cross-platform support are not scheduled. They require separate design and security review before implementation. Until then, non-empty proxy-chain definitions are rejected rather than persisted or silently ignored.

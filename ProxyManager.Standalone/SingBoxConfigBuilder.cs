@@ -27,6 +27,12 @@ public static class SingBoxConfigBuilder
 
         try
         {
+            if ((config.ProxyChains ?? []).Count > 0)
+            {
+                return SingBoxConfigBuildResult.Fail(
+                    "Proxy chains are not supported because no sing-box runtime mapping is implemented.");
+            }
+
             var enabledServers = (config.ProxyServers ?? [])
                 .Where(s => s != null && s.Enabled)
                 .ToList();
