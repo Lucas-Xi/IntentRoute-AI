@@ -318,4 +318,61 @@
   <data name="HealthStateUnreachable" xml:space="preserve"><value>本地服务不可达</value></data>
   <data name="HealthStateUnknown" xml:space="preserve"><value>未知状态</value></data>
   <data name="HealthFailedFormat" xml:space="preserve"><value>诊断未能完成：{0}</value></data>
+  <data name="DialogPickAppTitle" xml:space="preserve"><value>选择应用程序</value></data>
+  <data name="DialogExeFilter" xml:space="preserve"><value>可执行文件 (*.exe)|*.exe</value></data>
+  <data name="DialogConfirmTitle" xml:space="preserve"><value>确认</value></data>
+  <data name="DialogSuccessTitle" xml:space="preserve"><value>成功</value></data>
+  <data name="DialogErrorTitle" xml:space="preserve"><value>错误</value></data>
+  <data name="RulesClearConfirm" xml:space="preserve"><value>确定清空所有规则？</value></data>
+  <data name="RulesDeleteConfirmFormat" xml:space="preserve"><value>删除规则 '{0}'？</value></data>
+  <data name="DialogImportTitle" xml:space="preserve"><value>导入规则</value></data>
+  <data name="DialogExportTitle" xml:space="preserve"><value>导出规则</value></data>
+  <data name="DialogJsonFilter" xml:space="preserve"><value>JSON 文件 (*.json)|*.json</value></data>
+  <data name="ImportDoneFormat" xml:space="preserve"><value>导入完成: 新增 {0} 条规则</value></data>
+  <data name="ImportFailedFormat" xml:space="preserve"><value>导入失败: {0}</value></data>
+  <data name="ExportDoneFormat" xml:space="preserve"><value>导出完成: {0} 条规则</value></data>
+  <data name="ExportFailedFormat" xml:space="preserve"><value>导出失败: {0}</value></data>
+  <data name="ProxyInvalidPort" xml:space="preserve"><value>请输入有效的端口号</value></data>
+  <data name="ProxySavedFormat" xml:space="preserve"><value>本地 {0} 代理已保存: {1}:{2}</value></data>
+  <data name="ProxySavedNote" xml:space="preserve"><value>设置已保存。端口测试仍需单独执行，保存不代表代理可用。</value></data>
+  <data name="ProxySaveFailTitle" xml:space="preserve"><value>无法保存代理设置</value></data>
+  <data name="ProxyTestInvalidPort" xml:space="preserve"><value>请输入有效的本地代理端口。</value></data>
+  <data name="ProxyTestCheckingFormat" xml:space="preserve"><value>正在检查 {0}:{1} 的 TCP 端口…</value></data>
+  <data name="ProxyTestOk" xml:space="preserve"><value>本机端口可以连接。此结果不验证代理协议、账号密码或真实互联网流量。</value></data>
+  <data name="ProxyTestFail" xml:space="preserve"><value>无法连接本机端口。请先确认代理程序正在监听该地址和端口。</value></data>
+  <data name="DialogPickRuntimeTitle" xml:space="preserve"><value>选择已单独安装的 sing-box 可执行文件</value></data>
+  <data name="DialogRuntimeFilter" xml:space="preserve"><value>sing-box 可执行文件 (sing-box.exe)|sing-box.exe|可执行文件 (*.exe)|*.exe</value></data>
+  <data name="RuntimeUseFailTitle" xml:space="preserve"><value>无法使用 sing-box</value></data>
+  <data name="RuntimePathFailTitle" xml:space="preserve"><value>无法更改 sing-box 路径</value></data>
+  <data name="RuntimeReadyProtected" xml:space="preserve"><value>配置保护期间不会检查或启动 sing-box。请先完成配置恢复。</value></data>
+  <data name="RuntimeReadyReading" xml:space="preserve"><value>正在读取实际路径和版本…</value></data>
+  <data name="RuntimeReadyOk" xml:space="preserve"><value>已就绪：版本满足 v1.13+。规则变更仍会先执行 sing-box check。</value></data>
+  <data name="RuntimeReadyWaiting" xml:space="preserve"><value>sing-box 已批准且版本兼容；正在等待或应用当前配置。</value></data>
+  <data name="RuntimeReadyNotReady" xml:space="preserve"><value>sing-box 未就绪。</value></data>
+  <data name="RuntimeReadyCancelled" xml:space="preserve"><value>sing-box 就绪检查已取消。</value></data>
+  <data name="RecoveryResetReady" xml:space="preserve"><value>恢复副本存在；确认后可以重置活动配置。</value></data>
+  <data name="RecoveryResetUnavailable" xml:space="preserve"><value>恢复副本不可用。为避免覆盖唯一原件，重置已禁用；请先手动复制原文件并重新启动应用。</value></data>
+  <data name="RecoveryImportReady" xml:space="preserve"><value>先验证所选配置的安全语义，再替换活动配置。</value></data>
+  <data name="RecoveryImportUnavailable" xml:space="preserve"><value>恢复副本不可用。为避免覆盖唯一原件，导入替换已禁用；请先手动复制原文件并重新启动应用。</value></data>
+  <data name="RecoveryReasonPrefix" xml:space="preserve"><value>原因：</value></data>
+  <data name="RecoveryNoCopy" xml:space="preserve"><value>配置文件不可安全读取，且无法创建恢复副本。原文件仍未被修改；所有保存、导入替换、重置和 sing-box 启动均已阻止。请先手动复制原文件并重新启动应用。</value></data>
+  <data name="RecoveryWithCopyFormat" xml:space="preserve"><value>配置文件不可安全读取。原文件未被修改，恢复副本位于：{0}。所有保存和 sing-box 启动均已阻止。</value></data>
+  <data name="RecoveryActiveStatus" xml:space="preserve"><value>配置保护已启动；等待用户恢复</value></data>
+  <data name="DialogConfigDirTitle" xml:space="preserve"><value>配置目录</value></data>
+  <data name="DialogRecoverTitle" xml:space="preserve"><value>导入有效的 IntentRoute AI 配置</value></data>
+  <data name="RecoveryImportFailTitle" xml:space="preserve"><value>恢复失败</value></data>
+  <data name="RecoveryImportFailBodyFormat" xml:space="preserve"><value>所选文件无法安全读取，现有配置仍保持保护状态。
+
+{0}</value></data>
+  <data name="RecoveryResetConfirmBody" xml:space="preserve"><value>这会用全新的默认配置替换当前损坏的 config.json。恢复副本会保留。是否继续？</value></data>
+  <data name="RecoveryResetConfirmTitle" xml:space="preserve"><value>确认重置配置</value></data>
+  <data name="RecoveryResetFailTitle" xml:space="preserve"><value>重置失败</value></data>
+  <data name="ShutdownStopping" xml:space="preserve"><value>正在安全停止 sing-box…</value></data>
+  <data name="ProcCandProxy" xml:space="preserve"><value>存在代理候选</value></data>
+  <data name="ProcCandDirect" xml:space="preserve"><value>存在直连候选</value></data>
+  <data name="ProcCandBlock" xml:space="preserve"><value>存在阻止候选</value></data>
+  <data name="ProcCandNone" xml:space="preserve"><value>无进程名候选</value></data>
+  <data name="ProcCandUnknown" xml:space="preserve"><value>未知</value></data>
+  <data name="PolicyLineGlobalDefault" xml:space="preserve"><value>全局默认</value></data>
+  <data name="PolicyLineDisabledFormat" xml:space="preserve"><value>禁用 {0}</value></data>
 </root>

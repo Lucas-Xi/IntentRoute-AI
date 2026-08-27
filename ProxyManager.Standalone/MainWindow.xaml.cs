@@ -1130,8 +1130,8 @@ public partial class MainWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "选择应用程序",
-            Filter = "可执行文件 (*.exe)|*.exe",
+            Title = Strings.DialogPickAppTitle,
+            Filter = Strings.DialogExeFilter,
             Multiselect = true
         };
 
@@ -1145,7 +1145,7 @@ public partial class MainWindow : Window
 
     private void Clear_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show("确定清空所有规则？", "确认",
+        if (MessageBox.Show(Strings.RulesClearConfirm, Strings.DialogConfirmTitle,
             MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             _service.ClearRules();
@@ -1204,7 +1204,7 @@ public partial class MainWindow : Window
         var rule = GetSelectedRule();
         if (rule != null)
         {
-            if (MessageBox.Show($"删除规则 '{rule.ExeName}'？", "确认",
+            if (MessageBox.Show(string.Format(Strings.RulesDeleteConfirmFormat, rule.ExeName), Strings.DialogConfirmTitle,
                 MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 _service.RemoveRule(rule.Id);
@@ -1217,8 +1217,8 @@ public partial class MainWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "导入规则",
-            Filter = "JSON 文件 (*.json)|*.json"
+            Title = Strings.DialogImportTitle,
+            Filter = Strings.DialogJsonFilter
         };
 
         if (dialog.ShowDialog() == true)
@@ -1231,12 +1231,12 @@ public partial class MainWindow : Window
                 {
                     var added = _service.ImportRules(import.Rules);
                     LoadRules();
-                    MessageBox.Show($"导入完成: 新增 {added} 条规则", "成功");
+                    MessageBox.Show(string.Format(Strings.ImportDoneFormat, added), Strings.DialogSuccessTitle);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"导入失败: {ex.Message}", "错误");
+                MessageBox.Show(string.Format(Strings.ImportFailedFormat, ex.Message), Strings.DialogErrorTitle);
             }
         }
     }
@@ -1245,8 +1245,8 @@ public partial class MainWindow : Window
     {
         var dialog = new SaveFileDialog
         {
-            Title = "导出规则",
-            Filter = "JSON 文件 (*.json)|*.json",
+            Title = Strings.DialogExportTitle,
+            Filter = Strings.DialogJsonFilter,
             FileName = $"rules_{DateTime.Now:yyyyMMdd}.json"
         };
 
@@ -1262,11 +1262,11 @@ public partial class MainWindow : Window
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(export, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(dialog.FileName, json);
-                MessageBox.Show($"导出完成: {_service.Config.Rules.Count} 条规则", "成功");
+                MessageBox.Show(string.Format(Strings.ExportDoneFormat, _service.Config.Rules.Count), Strings.DialogSuccessTitle);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"导出失败: {ex.Message}", "错误");
+                MessageBox.Show(string.Format(Strings.ExportFailedFormat, ex.Message), Strings.DialogErrorTitle);
             }
         }
     }
@@ -1378,7 +1378,7 @@ public partial class MainWindow : Window
     {
         if (!int.TryParse(ProxyPort.Text, out var port))
         {
-            MessageBox.Show("请输入有效的端口号", "错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(Strings.ProxyInvalidPort, Strings.DialogErrorTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -1394,12 +1394,12 @@ public partial class MainWindow : Window
             InvalidateRouteDecision(Strings.RouteMsgProxyChanged);
             _ = RefreshPolicyAnalysisAsync();
             ProxyHost.Text = LocalProxyEndpoint.NormalizeOrThrow(ProxyHost.Text, port);
-            StatusDetail.Text = $"本地 {proxyType} 代理已保存: {ProxyHost.Text}:{port}";
-            ProxyTestStatus.Text = "设置已保存。端口测试仍需单独执行，保存不代表代理可用。";
+            StatusDetail.Text = string.Format(Strings.ProxySavedFormat, proxyType, ProxyHost.Text, port);
+            ProxyTestStatus.Text = Strings.ProxySavedNote;
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
-            MessageBox.Show(ex.Message, "无法保存代理设置", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(ex.Message, Strings.ProxySaveFailTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1407,7 +1407,7 @@ public partial class MainWindow : Window
     {
         if (!int.TryParse(ProxyPort.Text, out var port))
         {
-            ProxyTestStatus.Text = "请输入有效的本地代理端口。";
+            ProxyTestStatus.Text = Strings.ProxyTestInvalidPort;
             return;
         }
 
@@ -1418,13 +1418,13 @@ public partial class MainWindow : Window
         }
 
         TestProxyButton.IsEnabled = false;
-        ProxyTestStatus.Text = $"正在检查 {normalizedHost}:{port} 的 TCP 端口…";
+        ProxyTestStatus.Text = string.Format(Strings.ProxyTestCheckingFormat, normalizedHost, port);
         try
         {
             var connected = await _service.TestLocalProxyAsync(normalizedHost, port);
             ProxyTestStatus.Text = connected
-                ? "本机端口可以连接。此结果不验证代理协议、账号密码或真实互联网流量。"
-                : "无法连接本机端口。请先确认代理程序正在监听该地址和端口。";
+                ? Strings.ProxyTestOk
+                : Strings.ProxyTestFail;
         }
         finally
         {
@@ -1436,8 +1436,8 @@ public partial class MainWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "选择已单独安装的 sing-box 可执行文件",
-            Filter = "sing-box 可执行文件 (sing-box.exe)|sing-box.exe|可执行文件 (*.exe)|*.exe"
+            Title = Strings.DialogPickRuntimeTitle,
+            Filter = Strings.DialogRuntimeFilter
         };
         if (dialog.ShowDialog() != true) return;
 
@@ -1449,7 +1449,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
         {
-            MessageBox.Show(ex.Message, "无法使用 sing-box", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(ex.Message, Strings.RuntimeUseFailTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1466,7 +1466,7 @@ public partial class MainWindow : Window
         }
         catch (InvalidOperationException ex)
         {
-            MessageBox.Show(ex.Message, "无法更改 sing-box 路径", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(ex.Message, Strings.RuntimePathFailTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -1514,13 +1514,13 @@ public partial class MainWindow : Window
     {
         if (!_service.IsConfigurationWritable)
         {
-            RuntimeReadinessText.Text = "配置保护期间不会检查或启动 sing-box。请先完成配置恢复。";
+            RuntimeReadinessText.Text = Strings.RuntimeReadyProtected;
             RuntimeVersionText.Text = Localization.Strings.VersionPrefix + Localization.Strings.VersionCheckBlocked;
             return;
         }
 
         RefreshRuntimeButton.IsEnabled = false;
-        RuntimeReadinessText.Text = "正在读取实际路径和版本…";
+        RuntimeReadinessText.Text = Strings.RuntimeReadyReading;
         _runtimeReadinessCts?.Cancel();
         _runtimeReadinessCts?.Dispose();
         var cts = new CancellationTokenSource();
@@ -1532,18 +1532,18 @@ public partial class MainWindow : Window
             RuntimeVersionText.Text = Localization.Strings.VersionPrefix +
                 (readiness.Version ?? Localization.Strings.VersionUnrecognized);
             RuntimeReadinessText.Text = readiness.IsReady
-                ? "已就绪：版本满足 v1.13+。规则变更仍会先执行 sing-box check。"
-                : readiness.Error ?? "sing-box 未就绪。";
+                ? Strings.RuntimeReadyOk
+                : readiness.Error ?? Strings.RuntimeReadyNotReady;
             if (!_service.GetRuntimeStatus().IsRunning)
             {
                 StatusDetail.Text = readiness.IsReady
-                    ? "sing-box 已批准且版本兼容；正在等待或应用当前配置。"
-                    : readiness.Error ?? "sing-box 未就绪。";
+                    ? Strings.RuntimeReadyWaiting
+                    : readiness.Error ?? Strings.RuntimeReadyNotReady;
             }
         }
         catch (OperationCanceledException)
         {
-            RuntimeReadinessText.Text = "sing-box 就绪检查已取消。";
+            RuntimeReadinessText.Text = Strings.RuntimeReadyCancelled;
         }
         finally
         {
@@ -1584,18 +1584,18 @@ public partial class MainWindow : Window
             ResetConfigButton.IsEnabled = recoveryCopyAvailable;
             RecoverConfigButton.IsEnabled = recoveryCopyAvailable;
             ResetConfigButton.ToolTip = ResetConfigButton.IsEnabled
-                ? "恢复副本存在；确认后可以重置活动配置。"
-                : "恢复副本不可用。为避免覆盖唯一原件，重置已禁用；请先手动复制原文件并重新启动应用。";
+                ? Strings.RecoveryResetReady
+                : Strings.RecoveryResetUnavailable;
             RecoverConfigButton.ToolTip = RecoverConfigButton.IsEnabled
-                ? "先验证所选配置的安全语义，再替换活动配置。"
-                : "恢复副本不可用。为避免覆盖唯一原件，导入替换已禁用；请先手动复制原文件并重新启动应用。";
+                ? Strings.RecoveryImportReady
+                : Strings.RecoveryImportUnavailable;
             var reason = string.IsNullOrWhiteSpace(_service.ConfigurationError)
                 ? string.Empty
-                : "原因：" + _service.ConfigurationError + " ";
+                : Strings.RecoveryReasonPrefix + _service.ConfigurationError + " ";
             ConfigRecoveryText.Text = string.IsNullOrWhiteSpace(backup)
-                ? reason + "配置文件不可安全读取，且无法创建恢复副本。原文件仍未被修改；所有保存、导入替换、重置和 sing-box 启动均已阻止。请先手动复制原文件并重新启动应用。"
-                : reason + $"配置文件不可安全读取。原文件未被修改，恢复副本位于：{backup}。所有保存和 sing-box 启动均已阻止。";
-            StatusDetail.Text = "配置保护已启动；等待用户恢复";
+                ? reason + Strings.RecoveryNoCopy
+                : reason + string.Format(Strings.RecoveryWithCopyFormat, backup);
+            StatusDetail.Text = Strings.RecoveryActiveStatus;
         }
         else
         {
@@ -1621,7 +1621,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            MessageBox.Show(_service.ConfigDirectory, "配置目录", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(_service.ConfigDirectory, Strings.DialogConfigDirTitle, MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -1629,8 +1629,8 @@ public partial class MainWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "导入有效的 IntentRoute AI 配置",
-            Filter = "JSON 文件 (*.json)|*.json"
+            Title = Strings.DialogRecoverTitle,
+            Filter = Strings.DialogJsonFilter
         };
         if (dialog.ShowDialog() != true) return;
 
@@ -1644,16 +1644,16 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or Newtonsoft.Json.JsonException or AppConfigProtectionException)
         {
-            MessageBox.Show("所选文件无法安全读取，现有配置仍保持保护状态。\n\n" + ex.Message,
-                "恢复失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(string.Format(Strings.RecoveryImportFailBodyFormat, ex.Message),
+                Strings.RecoveryImportFailTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
     private async void ResetConfig_Click(object sender, RoutedEventArgs e)
     {
         var answer = MessageBox.Show(
-            "这会用全新的默认配置替换当前损坏的 config.json。恢复副本会保留。是否继续？",
-            "确认重置配置",
+            Strings.RecoveryResetConfirmBody,
+            Strings.RecoveryResetConfirmTitle,
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         if (answer != MessageBoxResult.Yes) return;
@@ -1668,7 +1668,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "重置失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, Strings.RecoveryResetFailTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -1751,7 +1751,7 @@ public partial class MainWindow : Window
         if (_shutdownStarted) return;
         _shutdownStarted = true;
         IsEnabled = false;
-        StatusDetail.Text = "正在安全停止 sing-box…";
+        StatusDetail.Text = Strings.ShutdownStopping;
         _lifetimeCts.Cancel();
         _draftRevalidationTimer?.Stop();
         _draftRevalidationTimer = null;
@@ -1834,10 +1834,10 @@ public partial class MainWindow : Window
             string.Equals(r.ExeName, processName, StringComparison.OrdinalIgnoreCase));
         return rule?.Mode switch
         {
-            ProxyMode.Proxy => "存在代理候选",
-            ProxyMode.Direct => "存在直连候选",
-            ProxyMode.Block => "存在阻止候选",
-            _ => "无进程名候选"
+            ProxyMode.Proxy => Strings.ProcCandProxy,
+            ProxyMode.Direct => Strings.ProcCandDirect,
+            ProxyMode.Block => Strings.ProcCandBlock,
+            _ => Strings.ProcCandNone
         };
     }
 
@@ -1857,7 +1857,7 @@ public partial class MainWindow : Window
                 RouteRuleEvaluation.ProvenMatch => Localization.Strings.TraceVerdictMatch,
                 RouteRuleEvaluation.ProvenMiss => Localization.Strings.TraceVerdictMiss,
                 RouteRuleEvaluation.Indeterminate => Localization.Strings.TraceVerdictIndeterminate,
-                _ => "未知"
+                _ => Strings.ProcCandUnknown
             },
             GetRouteDecisionReasonText(step.Reason));
     }
@@ -1938,11 +1938,11 @@ public partial class MainWindow : Window
                 _ => Localization.Strings.SeverityInfo
             };
             var affected = finding.Rules.Count == 0
-                ? "全局默认"
+                ? Strings.PolicyLineGlobalDefault
                 : string.Join(" → ", finding.Rules.Select(rule =>
                     rule.EvaluationOrder.HasValue
                         ? $"#{rule.EvaluationOrder} {rule.DisplayName}"
-                        : $"禁用 {rule.DisplayName}"));
+                        : string.Format(Strings.PolicyLineDisabledFormat, rule.DisplayName)));
             return new PolicyFindingPreviewLine(
                 severity,
                 finding.Code,

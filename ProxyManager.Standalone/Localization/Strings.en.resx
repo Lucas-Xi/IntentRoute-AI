@@ -318,4 +318,61 @@
   <data name="HealthStateUnreachable" xml:space="preserve"><value>Local service unreachable</value></data>
   <data name="HealthStateUnknown" xml:space="preserve"><value>Unknown state</value></data>
   <data name="HealthFailedFormat" xml:space="preserve"><value>Diagnostics could not complete: {0}</value></data>
+  <data name="DialogPickAppTitle" xml:space="preserve"><value>Select application</value></data>
+  <data name="DialogExeFilter" xml:space="preserve"><value>Executable files (*.exe)|*.exe</value></data>
+  <data name="DialogConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
+  <data name="DialogSuccessTitle" xml:space="preserve"><value>Success</value></data>
+  <data name="DialogErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="RulesClearConfirm" xml:space="preserve"><value>Clear all rules?</value></data>
+  <data name="RulesDeleteConfirmFormat" xml:space="preserve"><value>Delete rule '{0}'?</value></data>
+  <data name="DialogImportTitle" xml:space="preserve"><value>Import rules</value></data>
+  <data name="DialogExportTitle" xml:space="preserve"><value>Export rules</value></data>
+  <data name="DialogJsonFilter" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>
+  <data name="ImportDoneFormat" xml:space="preserve"><value>Import finished: {0} rules added</value></data>
+  <data name="ImportFailedFormat" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="ExportDoneFormat" xml:space="preserve"><value>Export finished: {0} rules</value></data>
+  <data name="ExportFailedFormat" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="ProxyInvalidPort" xml:space="preserve"><value>Enter a valid port number</value></data>
+  <data name="ProxySavedFormat" xml:space="preserve"><value>Local {0} proxy saved: {1}:{2}</value></data>
+  <data name="ProxySavedNote" xml:space="preserve"><value>Settings saved. The port test is still separate; saving does not imply the proxy works.</value></data>
+  <data name="ProxySaveFailTitle" xml:space="preserve"><value>Cannot save proxy settings</value></data>
+  <data name="ProxyTestInvalidPort" xml:space="preserve"><value>Enter a valid local proxy port.</value></data>
+  <data name="ProxyTestCheckingFormat" xml:space="preserve"><value>Checking TCP port {0}:{1}…</value></data>
+  <data name="ProxyTestOk" xml:space="preserve"><value>The local port accepts connections. This does not verify the proxy protocol, credentials, or real internet traffic.</value></data>
+  <data name="ProxyTestFail" xml:space="preserve"><value>Cannot connect to the local port. Confirm the proxy program is listening on that address and port.</value></data>
+  <data name="DialogPickRuntimeTitle" xml:space="preserve"><value>Select your separately installed sing-box executable</value></data>
+  <data name="DialogRuntimeFilter" xml:space="preserve"><value>sing-box executable (sing-box.exe)|sing-box.exe|Executable files (*.exe)|*.exe</value></data>
+  <data name="RuntimeUseFailTitle" xml:space="preserve"><value>Cannot use sing-box</value></data>
+  <data name="RuntimePathFailTitle" xml:space="preserve"><value>Cannot change the sing-box path</value></data>
+  <data name="RuntimeReadyProtected" xml:space="preserve"><value>sing-box is not checked or started during configuration protection. Complete recovery first.</value></data>
+  <data name="RuntimeReadyReading" xml:space="preserve"><value>Reading the actual path and version…</value></data>
+  <data name="RuntimeReadyOk" xml:space="preserve"><value>Ready: the version satisfies v1.13+. Rule changes still run sing-box check first.</value></data>
+  <data name="RuntimeReadyWaiting" xml:space="preserve"><value>sing-box is approved and version-compatible; waiting for or applying the current configuration.</value></data>
+  <data name="RuntimeReadyNotReady" xml:space="preserve"><value>sing-box is not ready.</value></data>
+  <data name="RuntimeReadyCancelled" xml:space="preserve"><value>sing-box readiness check cancelled.</value></data>
+  <data name="RecoveryResetReady" xml:space="preserve"><value>A recovery copy exists; the active configuration can be reset after confirmation.</value></data>
+  <data name="RecoveryResetUnavailable" xml:space="preserve"><value>No recovery copy is available. Reset is disabled to avoid overwriting the only original; copy the file manually and restart the app.</value></data>
+  <data name="RecoveryImportReady" xml:space="preserve"><value>The selected configuration's safety semantics are validated before replacing the active one.</value></data>
+  <data name="RecoveryImportUnavailable" xml:space="preserve"><value>No recovery copy is available. Import replacement is disabled to avoid overwriting the only original; copy the file manually and restart the app.</value></data>
+  <data name="RecoveryReasonPrefix" xml:space="preserve"><value>Reason: </value></data>
+  <data name="RecoveryNoCopy" xml:space="preserve"><value>The configuration file cannot be read safely and no recovery copy could be created. The original is unmodified; all saving, import replacement, reset, and sing-box startup are blocked. Copy the file manually and restart the app.</value></data>
+  <data name="RecoveryWithCopyFormat" xml:space="preserve"><value>The configuration file cannot be read safely. The original is unmodified; the recovery copy is at {0}. All saving and sing-box startup are blocked.</value></data>
+  <data name="RecoveryActiveStatus" xml:space="preserve"><value>Configuration protection active; waiting for user recovery</value></data>
+  <data name="DialogConfigDirTitle" xml:space="preserve"><value>Configuration directory</value></data>
+  <data name="DialogRecoverTitle" xml:space="preserve"><value>Import a valid IntentRoute AI configuration</value></data>
+  <data name="RecoveryImportFailTitle" xml:space="preserve"><value>Recovery failed</value></data>
+  <data name="RecoveryImportFailBodyFormat" xml:space="preserve"><value>The selected file cannot be read safely; the existing configuration remains protected.
+
+{0}</value></data>
+  <data name="RecoveryResetConfirmBody" xml:space="preserve"><value>This replaces the current damaged config.json with a fresh default configuration. The recovery copy is kept. Continue?</value></data>
+  <data name="RecoveryResetConfirmTitle" xml:space="preserve"><value>Confirm configuration reset</value></data>
+  <data name="RecoveryResetFailTitle" xml:space="preserve"><value>Reset failed</value></data>
+  <data name="ShutdownStopping" xml:space="preserve"><value>Stopping sing-box safely…</value></data>
+  <data name="ProcCandProxy" xml:space="preserve"><value>Has proxy candidate</value></data>
+  <data name="ProcCandDirect" xml:space="preserve"><value>Has direct candidate</value></data>
+  <data name="ProcCandBlock" xml:space="preserve"><value>Has block candidate</value></data>
+  <data name="ProcCandNone" xml:space="preserve"><value>No process-name candidate</value></data>
+  <data name="ProcCandUnknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="PolicyLineGlobalDefault" xml:space="preserve"><value>Global default</value></data>
+  <data name="PolicyLineDisabledFormat" xml:space="preserve"><value>Disabled {0}</value></data>
 </root>

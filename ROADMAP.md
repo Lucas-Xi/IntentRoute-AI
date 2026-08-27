@@ -54,8 +54,8 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [ ] Visual layout validation across mixed-DPI displays
 - [x] Localize dynamic display values (rule rows, counts, severities, verdicts, badges)
-- [x] Localize AI-page status messages (assistant, policy check, simulator, provider health)
-- [ ] Localize rules/settings dialogs and runtime-error text
+- [x] Localize all window-layer strings (statics, display values, status messages, dialogs)
+- [ ] Localize AppService and runtime-error text
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 

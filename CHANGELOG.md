@@ -7,7 +7,8 @@ All notable changes are documented here. The project follows semantic versioning
 ### Added
 
 - Localized dynamic display values: rule-row mode/status/condition text, proxy-server status, count badges, policy severities, the route simulator's verdicts and decision badges, and version strings now follow the language preference.
-- Localized AI-page status messages: the rule assistant's generation/validation lifecycle, every policy-check status and empty state, the disclosure confirmation dialog, all simulator decision sources, reasons, statuses, and invalidation notices, and the provider-health states. Rules/settings dialogs and runtime-error text remain Chinese.
+- Localized AI-page status messages: the rule assistant's generation/validation lifecycle, every policy-check status and empty state, the disclosure confirmation dialog, all simulator decision sources, reasons, statuses, and invalidation notices, and the provider-health states.
+- Localized the remaining window-layer dialogs and notices: rules add/clear/delete/import/export, proxy save and port-test feedback, sing-box browse/readiness, the configuration-recovery banner and its reset/import confirmations, shutdown notice, and process-page candidates. `MainWindow` now contains no hard-coded UI strings; AppService and runtime-error text remain Chinese.
 
 ## [0.5.0] - 2026-08-27
 
