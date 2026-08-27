@@ -15,7 +15,7 @@ public partial class MainWindow : Window
     private readonly AppService _service;
     private readonly ObservableCollection<ProxyRule> _rules = new();
     private readonly ObservableCollection<RuntimeLogLine> _runtimeLogs = new();
-    private readonly ObservableCollection<AiRulePreviewLine> _aiDrafts = new();
+    private readonly ObservableCollection<AiRuleEditLine> _aiDrafts = new();
     private readonly ObservableCollection<PolicyFindingPreviewLine> _policyFindings = new();
     private readonly ObservableCollection<AiPolicyAdviceLine> _policyAdvice = new();
     private readonly ObservableCollection<RouteDecisionTraceLine> _routeDecisionTrace = new();
@@ -39,6 +39,7 @@ public partial class MainWindow : Window
     private int _routeSimulationVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
+    private System.Windows.Threading.DispatcherTimer? _draftRevalidationTimer;
     private PolicyAnalysisReport? _currentPolicyReport;
     private RouteDecisionReport? _currentRouteDecisionReport;
     private RouteDecisionQuery? _currentRouteDecisionQuery;
@@ -280,7 +281,11 @@ public partial class MainWindow : Window
             _currentAiValidation = validation;
 
             foreach (var draft in suggestion.Rules)
-                _aiDrafts.Add(AiRulePreviewLine.FromDraft(draft));
+            {
+                var line = AiRuleEditLine.FromDraft(draft);
+                line.PropertyChanged += (_, _) => ScheduleDraftRevalidation();
+                _aiDrafts.Add(line);
+            }
             AiDraftCount.Text = $"{_aiDrafts.Count} 条规则";
 
             if (validation.Success)
@@ -374,10 +379,57 @@ public partial class MainWindow : Window
     {
         _currentAiSuggestion = null;
         _currentAiValidation = null;
+        _draftRevalidationTimer?.Stop();
         _aiDrafts.Clear();
         AiDraftCount.Text = "0 条规则";
         AiAcceptButton.IsEnabled = false;
     }
+
+    private void ScheduleDraftRevalidation()
+    {
+        if (_currentAiSuggestion == null || _shutdownStarted) return;
+        if (_draftRevalidationTimer == null)
+        {
+            _draftRevalidationTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(300)
+            };
+            _draftRevalidationTimer.Tick += (_, _) =>
+            {
+                _draftRevalidationTimer!.Stop();
+                RevalidateDraftNow();
+            };
+        }
+        _draftRevalidationTimer.Stop();
+        _draftRevalidationTimer.Start();
+    }
+
+    private void RevalidateDraftNow()
+    {
+        if (_currentAiSuggestion == null || _shutdownStarted) return;
+        var suggestion = BuildSuggestionFromEdits();
+        var validation = AiRuleDraftValidator.Validate(suggestion, _service.Config);
+        _currentAiSuggestion = suggestion;
+        _currentAiValidation = validation;
+
+        if (validation.Success)
+        {
+            AiAcceptButton.IsEnabled = true;
+            AiStatusText.Text = "编辑后的草案已重新通过本地校验。添加后规则仍为禁用状态，需手动启用。";
+        }
+        else
+        {
+            AiAcceptButton.IsEnabled = false;
+            AiStatusText.Text = "编辑后本地校验未通过: " + string.Join("；", validation.Errors);
+        }
+    }
+
+    private AiRuleSuggestion BuildSuggestionFromEdits() => new()
+    {
+        Summary = _currentAiSuggestion?.Summary ?? string.Empty,
+        Warnings = _currentAiSuggestion?.Warnings ?? [],
+        Rules = _aiDrafts.Select(line => line.ToDraft()).ToList()
+    };
 
     #endregion
 
@@ -1675,6 +1727,8 @@ public partial class MainWindow : Window
         IsEnabled = false;
         StatusDetail.Text = "正在安全停止 sing-box…";
         _lifetimeCts.Cancel();
+        _draftRevalidationTimer?.Stop();
+        _draftRevalidationTimer = null;
         _aiModelRefreshVersion++;
         _policyModelRefreshVersion++;
         _policyAnalysisVersion++;
@@ -1782,26 +1836,62 @@ public partial class MainWindow : Window
             GetRouteDecisionReasonText(step.Reason));
     }
 
-    private sealed record AiRulePreviewLine(
-        string ProcessName,
-        string Action,
-        string Conditions,
-        string Rationale,
-        string Confidence)
+    private sealed class AiRuleEditLine : INotifyPropertyChanged
     {
-        public static AiRulePreviewLine FromDraft(AiRuleDraft draft)
+        public static readonly IReadOnlyList<string> ActionOptions = ["Proxy", "Direct", "Block"];
+        public static readonly IReadOnlyList<string> ProtocolOptions = ["TCP", "UDP", "Both"];
+
+        private string _processName = string.Empty;
+        private string _action = "Direct";
+        private string _targetHosts = string.Empty;
+        private string _targetIps = string.Empty;
+        private string _targetPorts = string.Empty;
+        private string _protocol = "Both";
+        private string _rationale = string.Empty;
+
+        public string ProcessName { get => _processName; set => Set(ref _processName, value); }
+        public string Action { get => _action; set => Set(ref _action, value); }
+        public string TargetHosts { get => _targetHosts; set => Set(ref _targetHosts, value); }
+        public string TargetIps { get => _targetIps; set => Set(ref _targetIps, value); }
+        public string TargetPorts { get => _targetPorts; set => Set(ref _targetPorts, value); }
+        public string Protocol { get => _protocol; set => Set(ref _protocol, value); }
+        public string Rationale { get => _rationale; set => Set(ref _rationale, value); }
+        public IReadOnlyList<string> Actions => ActionOptions;
+        public IReadOnlyList<string> Protocols => ProtocolOptions;
+        public double Confidence { get; init; }
+        public string ConfidenceDisplay => Confidence.ToString("P0");
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public static AiRuleEditLine FromDraft(AiRuleDraft draft) => new()
         {
-            var conditions = new List<string>();
-            if (!string.IsNullOrWhiteSpace(draft.TargetHosts)) conditions.Add("域名: " + draft.TargetHosts);
-            if (!string.IsNullOrWhiteSpace(draft.TargetIps)) conditions.Add("IP: " + draft.TargetIps);
-            if (!string.IsNullOrWhiteSpace(draft.TargetPorts)) conditions.Add("端口: " + draft.TargetPorts);
-            conditions.Add("协议: " + draft.Protocol);
-            return new AiRulePreviewLine(
-                draft.ProcessName,
-                draft.Action,
-                string.Join(" | ", conditions),
-                draft.Rationale,
-                draft.Confidence.ToString("P0"));
+            ProcessName = draft.ProcessName,
+            Action = draft.Action,
+            TargetHosts = draft.TargetHosts,
+            TargetIps = draft.TargetIps,
+            TargetPorts = draft.TargetPorts,
+            Protocol = draft.Protocol,
+            Rationale = draft.Rationale,
+            Confidence = draft.Confidence
+        };
+
+        public AiRuleDraft ToDraft() => new()
+        {
+            ProcessName = ProcessName,
+            TargetHosts = TargetHosts,
+            TargetIps = TargetIps,
+            TargetPorts = TargetPorts,
+            Protocol = Protocol,
+            Action = Action,
+            Rationale = Rationale,
+            Confidence = Confidence
+        };
+
+        private void Set<T>(ref T field, T value)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return;
+            field = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         }
     }
 

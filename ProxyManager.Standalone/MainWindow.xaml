@@ -553,19 +553,82 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <Border Grid.Row="0" Padding="14,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                                    <Grid>
-                                        <TextBlock Text="AI 草案预览（未写入、未启用）" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                                        <TextBlock x:Name="AiDraftCount" Text="0 条规则" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                                    </Grid>
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="AI 草案预览（未写入、未启用；字段可直接编辑）" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                            <TextBlock x:Name="AiDraftCount" Text="0 条规则" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                        </Grid>
+                                        <TextBlock Text="每次编辑后会自动重新执行同一套本地确定性校验（含 sing-box 候选干跑）；未通过时无法接纳。"
+                                                   FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
                                 </Border>
                                 <ListView Grid.Row="1" x:Name="AiDraftList" Background="Transparent" BorderThickness="0">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Padding" Value="1"/>
+                                            <Setter Property="Margin" Value="0"/>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
                                     <ListView.View>
                                         <GridView>
-                                            <GridViewColumn Header="进程" Width="115" DisplayMemberBinding="{Binding ProcessName}"/>
-                                            <GridViewColumn Header="动作" Width="60" DisplayMemberBinding="{Binding Action}"/>
-                                            <GridViewColumn Header="条件" Width="260" DisplayMemberBinding="{Binding Conditions}"/>
-                                            <GridViewColumn Header="理由" Width="235" DisplayMemberBinding="{Binding Rationale}"/>
-                                            <GridViewColumn Header="置信度" Width="65" DisplayMemberBinding="{Binding Confidence}"/>
+                                            <GridViewColumn Header="进程" Width="120">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0" Background="Transparent" FontSize="11" Padding="2,2"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="动作" Width="80">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding Actions}" SelectedItem="{Binding Action, UpdateSourceTrigger=PropertyChanged}"
+                                                                  FontSize="11" Padding="2,0" BorderThickness="0" Background="Transparent"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="域名" Width="140">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding TargetHosts, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0" Background="Transparent" FontSize="11" Padding="2,2"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="IP/CIDR" Width="120">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding TargetIps, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0" Background="Transparent" FontSize="11" Padding="2,2"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="端口" Width="80">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding TargetPorts, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0" Background="Transparent" FontSize="11" Padding="2,2"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="协议" Width="80">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding Protocols}" SelectedItem="{Binding Protocol, UpdateSourceTrigger=PropertyChanged}"
+                                                                  FontSize="11" Padding="2,0" BorderThickness="0" Background="Transparent"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="理由" Width="170">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Rationale, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0" Background="Transparent" FontSize="11" Padding="2,2"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="置信度" Width="58" DisplayMemberBinding="{Binding ConfidenceDisplay}"/>
                                         </GridView>
                                     </ListView.View>
                                 </ListView>

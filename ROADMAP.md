@@ -42,7 +42,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [ ] Accessible keyboard navigation and high-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
-- [ ] Editable AI draft fields before acceptance, with revalidation after every edit
+- [x] Editable AI draft fields before acceptance, with revalidation after every edit
 - [x] Provider health diagnostics that remain credential-free
 - [x] Conservative partial-overlap hints with an explicit non-proven classification
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore

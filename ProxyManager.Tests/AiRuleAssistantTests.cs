@@ -348,6 +348,24 @@ public sealed class AiRuleAssistantTests
         }
     }
 
+    [Fact]
+    public void Validate_RejectsEditedDraftFieldsAndRecoversWhenFixed()
+    {
+        var config = ConfigWithEnabledProxy();
+        var suggestion = System.Text.Json.JsonSerializer.Deserialize<AiRuleSuggestion>(ValidSuggestionJson())!;
+        var original = AiRuleDraftValidator.Validate(suggestion, config);
+        Assert.True(original.Success, string.Join("；", original.Errors));
+
+        suggestion.Rules[0].ProcessName = "not a valid name";
+        var edited = AiRuleDraftValidator.Validate(suggestion, config);
+        Assert.False(edited.Success);
+        Assert.Contains(edited.Errors, error => error.Contains("进程名无效", StringComparison.Ordinal));
+
+        suggestion.Rules[0].ProcessName = "chrome.exe";
+        var restored = AiRuleDraftValidator.Validate(suggestion, config);
+        Assert.True(restored.Success, string.Join("；", restored.Errors));
+    }
+
     private static AppConfig ConfigWithEnabledProxy() => new()
     {
         ProxyServers =

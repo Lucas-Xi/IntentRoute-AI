@@ -28,7 +28,7 @@ The application does not capture packets itself. It generates a validated [sing-
 3. The provider returns a strict structured draft containing process, host/IP, port, protocol, action, rationale, confidence, and warnings.
 4. IntentRoute AI treats the result as untrusted input and validates field limits, executable names, domains, CIDRs, ports, protocols, actions, duplicates, and proxy availability.
 5. A temporary enabled candidate is passed through `SingBoxConfigBuilder` so disabled-rule filtering cannot make validation a no-op. This preview dry-run is deterministic in-process config construction; it intentionally does not execute an external program.
-6. The user reviews the preview and may add the whole draft as **disabled rules**.
+6. The user reviews the preview and may edit any draft field (process, action, domains, IP/CIDR, ports, protocol, rationale). Every edit re-runs the same deterministic validation — including the enabled-clone dry-run — before the draft can be accepted as **disabled rules**.
 7. Enabling remains a separate user action. That state-changing path writes a candidate file and executes `sing-box check -c` before the managed runtime is replaced.
 
 AI never directly enables rules, invokes commands, selects files, installs models, downloads sing-box, or applies an unreviewed configuration.
