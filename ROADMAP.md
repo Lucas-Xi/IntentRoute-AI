@@ -47,7 +47,8 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Guided sing-box discovery with version reporting
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
-- [ ] High-DPI test coverage
+- [x] Per-Monitor V2 DPI awareness declared in the manifest and asserted in the smoke gate
+- [ ] Visual layout validation across mixed-DPI displays
 - [ ] Localized UI resources instead of hard-coded strings
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists

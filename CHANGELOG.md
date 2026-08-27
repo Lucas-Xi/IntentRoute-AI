@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Declared Per-Monitor V2 DPI awareness in the embedded application manifest and extended the packaged-WPF smoke gate to assert the main window's Per-Monitor V2 context through `AreDpiAwarenessContextsEqual`. Visual layout validation across mixed-DPI displays remains unclaimed.
+
 ## [0.4.0] - 2026-08-27
 
 ### Added

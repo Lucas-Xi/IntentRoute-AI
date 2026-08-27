@@ -29,6 +29,9 @@
 /.vscode/
 /.idea/
 /.cursor/
+/.mimosa/
+/.video_agent/
+/.playwright-mcp/
 .DS_Store
 Thumbs.db
 

@@ -65,15 +65,28 @@ try {
         throw "Published IntentRouteAI.exe created an unexpected main-window title: '$($process.MainWindowTitle)'.`n$diagnostic"
     }
 
+    # High-DPI coverage: the main window must opt into Per-Monitor V2 DPI awareness
+    # through its embedded application manifest. GetWindowDpiAwarenessContext returns
+    # an opaque handle, so equality against the PMv2 context constant must go through
+    # AreDpiAwarenessContextsEqual rather than a raw handle comparison.
+    Add-Type -Namespace Native -Name Win32 -MemberDefinition @'
+[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+[DllImport("user32.dll")] public static extern IntPtr GetWindowDpiAwarenessContext(IntPtr hWnd);
+[DllImport("user32.dll")] public static extern bool AreDpiAwarenessContextsEqual(IntPtr valueA, IntPtr valueB);
+'@
+    $dpiContext = [Native.Win32]::GetWindowDpiAwarenessContext($process.MainWindowHandle)
+    $perMonitorV2 = [IntPtr](-4)
+    $isPerMonitorV2 = [Native.Win32]::AreDpiAwarenessContextsEqual($dpiContext, $perMonitorV2)
+    if (-not $isPerMonitorV2) {
+        throw 'Main window DPI awareness is not Per-Monitor V2.'
+    }
+
     # Keyboard-navigation coverage: the main window must expose an assistive-technology
     # name, a usable set of keyboard-focusable controls, Tab traversal that moves focus,
     # and arrow-key movement within the navigation radio group.
     Add-Type -AssemblyName UIAutomationClient
     Add-Type -AssemblyName UIAutomationTypes
     Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -Namespace Native -Name Win32 -MemberDefinition @'
-[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
-'@
     $null = [Native.Win32]::SetForegroundWindow($process.MainWindowHandle)
     Start-Sleep -Milliseconds 500
 
