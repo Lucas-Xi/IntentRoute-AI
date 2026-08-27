@@ -47,6 +47,89 @@ public sealed class PolicyIntelligenceTests
     }
 
     [Fact]
+    public void Analyze_UsesResolvedProxyIdentityForDuplicateAndConflictSemantics()
+    {
+        var config = BaseConfig();
+        config.ProxyServers.Add(new ProxyServer
+        {
+            Id = "secondary-proxy",
+            Name = "Secondary",
+            Host = "127.0.0.1",
+            Port = 2080,
+            Enabled = true
+        });
+        var defaultProxy = Rule("default-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 10);
+        var explicitDefault = Rule("default-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 20);
+        explicitDefault.ProxyId = "local-proxy";
+        var explicitPrimary = Rule("different-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 30);
+        explicitPrimary.ProxyId = "local-proxy";
+        var explicitSecondary = Rule("different-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 40);
+        explicitSecondary.ProxyId = "secondary-proxy";
+        config.Rules = [defaultProxy, explicitDefault, explicitPrimary, explicitSecondary];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.Contains(report.Findings, finding =>
+            finding.Kind == PolicyFindingKind.Duplicate &&
+            finding.Rules.All(rule => rule.RuleId == defaultProxy.Id || rule.RuleId == explicitDefault.Id));
+        Assert.Contains(report.Findings, finding =>
+            finding.Kind == PolicyFindingKind.Conflict &&
+            finding.Rules.All(rule => rule.RuleId == explicitPrimary.Id || rule.RuleId == explicitSecondary.Id));
+    }
+
+    [Fact]
+    public void Analyze_DefaultProxyOrderChangesResolvedOutcomeAndFingerprint()
+    {
+        var config = BaseConfig();
+        config.ProxyServers.Add(new ProxyServer
+        {
+            Id = "secondary-proxy",
+            Name = "Secondary",
+            Host = "127.0.0.1",
+            Port = 2080,
+            Enabled = true
+        });
+        var implicitDefault = Rule("ordered-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 10);
+        var explicitPrimary = Rule("ordered-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 20);
+        explicitPrimary.ProxyId = "local-proxy";
+        config.Rules = [implicitDefault, explicitPrimary];
+
+        var primaryFirst = PolicyIntelligence.Analyze(config);
+        config.ProxyServers.Reverse();
+        var secondaryFirst = PolicyIntelligence.Analyze(config);
+
+        Assert.Contains(primaryFirst.Findings, finding => finding.Kind == PolicyFindingKind.Duplicate);
+        Assert.DoesNotContain(primaryFirst.Findings, finding => finding.Kind == PolicyFindingKind.Conflict);
+        Assert.Contains(secondaryFirst.Findings, finding => finding.Kind == PolicyFindingKind.Conflict);
+        Assert.DoesNotContain(secondaryFirst.Findings, finding => finding.Kind == PolicyFindingKind.Duplicate);
+        Assert.NotEqual(primaryFirst.Fingerprint, secondaryFirst.Fingerprint);
+    }
+
+    [Fact]
+    public void Analyze_DisabledRuleRetainsExplicitNonDefaultProxyOutcome()
+    {
+        var config = BaseConfig();
+        config.ProxyServers.Add(new ProxyServer
+        {
+            Id = "secondary-proxy",
+            Name = "Secondary",
+            Host = "127.0.0.1",
+            Port = 2080,
+            Enabled = true
+        });
+        var active = Rule("disabled-proxy.exe", ProxyMode.Proxy, hosts: "example.com", priority: 10);
+        active.ProxyId = "secondary-proxy";
+        var disabled = Rule("disabled-proxy.exe", ProxyMode.Proxy, hosts: "example.com", enabled: false, priority: 20);
+        disabled.ProxyId = "secondary-proxy";
+        config.Rules = [active, disabled];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        var finding = Assert.Single(report.Findings, item => item.Kind == PolicyFindingKind.DisabledDuplicate);
+        Assert.Contains(finding.Rules, rule => rule.RuleId == disabled.Id && !rule.IsEnabled);
+    }
+
+    [Fact]
     public void Analyze_GlobalCatchAllIsBroadAndShadowsLaterSpecificRule()
     {
         var config = BaseConfig();
@@ -373,7 +456,7 @@ public sealed class PolicyIntelligenceTests
     public async Task OpenAiPolicyExplainer_UsesStrictStoreFalseDisclosureOnly()
     {
         string? requestBody = null;
-        var disclosure = DisclosureWithConflict();
+        var (disclosure, forbiddenCanaries) = SensitiveDisclosureWithConflict();
         var handler = new RecordingHandler(async request =>
         {
             requestBody = await request.Content!.ReadAsStringAsync();
@@ -405,13 +488,14 @@ public sealed class PolicyIntelligenceTests
         Assert.DoesNotContain("test-key", requestBody, StringComparison.Ordinal);
         Assert.DoesNotContain("processName", requestBody, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("targetHosts", requestBody, StringComparison.OrdinalIgnoreCase);
+        AssertNoSensitiveCanaries(requestBody!, forbiddenCanaries);
     }
 
     [Fact]
     public async Task OllamaPolicyExplainer_UsesNonStreamingStrictDisclosure()
     {
         string? requestBody = null;
-        var disclosure = DisclosureWithConflict();
+        var (disclosure, forbiddenCanaries) = SensitiveDisclosureWithConflict();
         var handler = new RecordingHandler(async request =>
         {
             requestBody = await request.Content!.ReadAsStringAsync();
@@ -435,6 +519,7 @@ public sealed class PolicyIntelligenceTests
         Assert.False((bool)payload["stream"]!);
         Assert.False((bool)payload["format"]?["additionalProperties"]!);
         Assert.Equal(0, (double)payload["options"]?["temperature"]!);
+        AssertNoSensitiveCanaries(requestBody!, forbiddenCanaries);
     }
 
     private static PolicyDisclosure DisclosureWithConflict()
@@ -446,6 +531,69 @@ public sealed class PolicyIntelligenceTests
             Rule("chrome.exe", ProxyMode.Proxy, hosts: "example.com", priority: 20)
         ];
         return PolicyIntelligence.ToDisclosure(PolicyIntelligence.Analyze(config));
+    }
+
+    private static (PolicyDisclosure Disclosure, IReadOnlyList<string> ForbiddenCanaries) SensitiveDisclosureWithConflict()
+    {
+        var config = BaseConfig();
+        config.SingBoxExecutablePath = "C:\\private-runtime\\sing-box-canary.exe";
+        config.ProxyServers[0].Id = "canary-proxy-id";
+        config.ProxyServers[0].Name = "canary-proxy-name";
+        config.ProxyServers[0].Host = "proxy.canary.internal";
+        config.ProxyServers[0].Port = 32109;
+        config.ProxyServers[0].Username = "canary-proxy-user";
+        config.ProxyServers[0].Password = "canary-proxy-password";
+        config.ProxyServers[0].TestUrl = "https://probe.canary.internal/health";
+        var direct = Rule(
+            "canary-process.exe",
+            ProxyMode.Direct,
+            hosts: "secret.canary.example",
+            ips: "10.203.44.55",
+            ports: "54321",
+            priority: 10);
+        direct.Id = "canary-direct-rule-id";
+        direct.ExePath = "C:\\private-apps\\canary-process.exe";
+        direct.Note = "canary-private-note-and-log";
+        var proxy = Rule(
+            "canary-process.exe",
+            ProxyMode.Proxy,
+            hosts: "secret.canary.example",
+            ips: "10.203.44.55",
+            ports: "54321",
+            priority: 20);
+        proxy.Id = "canary-proxy-rule-id";
+        proxy.ProxyId = "canary-proxy-id";
+        config.Rules = [direct, proxy];
+
+        var report = PolicyIntelligence.Analyze(config);
+        var disclosure = PolicyIntelligence.ToDisclosure(report);
+        string[] forbiddenCanaries =
+        [
+            "canary-process.exe",
+            "secret.canary.example",
+            "10.203.44.55",
+            "54321",
+            "C:\\private-apps",
+            "canary-direct-rule-id",
+            "canary-proxy-rule-id",
+            "canary-proxy-id",
+            "canary-proxy-name",
+            "proxy.canary.internal",
+            "32109",
+            "canary-proxy-user",
+            "canary-proxy-password",
+            "probe.canary.internal",
+            "canary-private-note-and-log",
+            "C:\\private-runtime",
+            report.Fingerprint
+        ];
+        return (disclosure, forbiddenCanaries);
+    }
+
+    private static void AssertNoSensitiveCanaries(string requestBody, IEnumerable<string> forbiddenCanaries)
+    {
+        foreach (var forbidden in forbiddenCanaries)
+            Assert.DoesNotContain(forbidden, requestBody, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ValidExplanationJson(string findingCode) => new JObject
