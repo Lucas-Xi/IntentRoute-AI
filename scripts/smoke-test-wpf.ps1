@@ -86,8 +86,10 @@ try {
         [System.Windows.Automation.AutomationElement]::IsKeyboardFocusableProperty, $true)
     $focusableCount = $root.FindAll(
         [System.Windows.Automation.TreeScope]::Descendants, $focusableCondition).Count
-    if ($focusableCount -lt 20) {
-        throw "Main window exposes only $focusableCount keyboard-focusable controls; expected at least 20."
+    # The count depends on first-run state (disabled controls are not keyboard focusable);
+    # a fresh machine exposes about 19, so the floor keeps margin below that.
+    if ($focusableCount -lt 15) {
+        throw "Main window exposes only $focusableCount keyboard-focusable controls; expected at least 15."
     }
 
     $navIdCondition = [System.Windows.Automation.PropertyCondition]::new(
