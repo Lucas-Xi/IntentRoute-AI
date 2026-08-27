@@ -2,7 +2,7 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
-## [Unreleased]
+## [0.3.0] - 2026-08-27
 
 ### Fixed
 
@@ -58,6 +58,7 @@ All notable changes are documented here. The project follows semantic versioning
 - When approval is cleared, cancel any queued replacement apply and mark a preserved running process as `RunningStale` instead of leaving a green status for an older configuration.
 - Make the startup-settle window cancellation-aware; cancellation after candidate promotion restores and restarts the previous generated configuration, and green-state publication is atomic with stale marking so a late Apply cannot overwrite revoked approval.
 - Keep candidate probe identity separate from the managed process identity; failed checks leave the old PID/path/version aligned, while startup failure and cancellation rollback use the previous executable and version instead of the rejected candidate.
+- Honor `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH` only when it names an explicit absolute path without relative-traversal segments; relative or traversal-containing values are ignored.
 - Converge cancellation during version probe, candidate write, or external check to `RunningStale` when the prior process remains active and `Failed` otherwise, instead of leaving a transient runtime state behind.
 - Treat every in-memory proxy password as plaintext at the persistence and builder boundaries, so legitimate values beginning with `dpapi:` are encrypted and round-trip instead of being misread as stored ciphertext.
 - Reject rules with null, empty, or whitespace-only process names at both the workspace and builder boundaries; only an explicit `*` represents a global rule. Persisted semantic failures now enter the same preservation-first recovery state as malformed JSON.

@@ -41,19 +41,38 @@ public partial class App : Application
     private static void WriteConfiguredSmokeDiagnostic(Exception exception)
     {
         var diagnosticPath = Environment.GetEnvironmentVariable(SmokeDiagnosticPathVariable);
-        if (!string.IsNullOrWhiteSpace(diagnosticPath))
-            WriteSmokeDiagnostic(diagnosticPath, exception);
+        if (TryResolveDiagnosticPath(diagnosticPath, out var absolutePath))
+            WriteSmokeDiagnostic(absolutePath, exception);
     }
 
     private void ConfigureSmokeDiagnostics()
     {
         var diagnosticPath = Environment.GetEnvironmentVariable(SmokeDiagnosticPathVariable);
-        if (string.IsNullOrWhiteSpace(diagnosticPath)) return;
+        if (!TryResolveDiagnosticPath(diagnosticPath, out var absolutePath)) return;
 
         DispatcherUnhandledException += (_, eventArgs) =>
-            WriteSmokeDiagnostic(diagnosticPath, eventArgs.Exception);
+            WriteSmokeDiagnostic(absolutePath, eventArgs.Exception);
         AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
-            WriteSmokeDiagnostic(diagnosticPath, eventArgs.ExceptionObject as Exception);
+            WriteSmokeDiagnostic(absolutePath, eventArgs.ExceptionObject as Exception);
+    }
+
+    // The smoke-diagnostic contract accepts exactly one absolute file path supplied by the
+    // machine environment; relative or traversal-containing values are ignored.
+    private static bool TryResolveDiagnosticPath(string? candidate, out string absolutePath)
+    {
+        absolutePath = "";
+        if (string.IsNullOrWhiteSpace(candidate)) return false;
+        try
+        {
+            if (!Path.IsPathRooted(candidate) || candidate.Contains("..", StringComparison.Ordinal))
+                return false;
+            absolutePath = Path.GetFullPath(candidate);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private static void WriteSmokeDiagnostic(string path, Exception? exception)
