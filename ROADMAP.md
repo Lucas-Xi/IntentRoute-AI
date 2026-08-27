@@ -35,17 +35,20 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Privacy canaries, matcher containment, provider payload, and canonical-order tests
 - [x] Static Route Decision Simulator with conservative three-state evaluation, local trace, stale-result rejection, and Recovery Protection
 
+## v0.4 — assistance and accessibility maturity (2026-08-27)
+
+- [x] Conservative partial-overlap hints with an explicit non-proven classification
+- [x] Provider health diagnostics that remain credential-free
+- [x] Editable AI draft fields before acceptance, with revalidation after every edit
+- [x] Accessible keyboard navigation with visible focus states, UIA names, and smoke-level Tab/arrow coverage
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
-- [x] Accessible keyboard navigation with visible focus states, UIA names, and smoke-level Tab/arrow coverage
 - [ ] High-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
-- [x] Editable AI draft fields before acceptance, with revalidation after every edit
-- [x] Provider health diagnostics that remain credential-free
-- [x] Conservative partial-overlap hints with an explicit non-proven classification
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 

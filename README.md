@@ -6,9 +6,9 @@
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.3.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.4.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-v0.3.0 ships the previously unreleased maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, authenticated loopback-proxy editing, local-first Policy Intelligence with optional AI explanation, and a conservative static Route Decision Simulator. Downloadable v0.3.0 archives contain all of these changes.
+v0.4.0 adds conservative partial-overlap Policy Intelligence hints, credential-free provider health diagnostics, editable AI draft fields with automatic revalidation, and keyboard-navigation focus states with smoke-level coverage. Downloadable v0.4.0 archives contain all of these changes.
 
 ## Why this project exists
 
@@ -129,7 +129,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.3.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.4.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.

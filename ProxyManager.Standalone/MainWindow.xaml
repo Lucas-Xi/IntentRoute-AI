@@ -212,7 +212,7 @@
                     <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <StackPanel>
                             <TextBlock Text="✦ IntentRoute AI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="v0.3.0 开发预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="v0.4.0 开发预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -1129,7 +1129,7 @@
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="✦" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="IntentRoute AI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.3.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.4.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
 
                                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                                     <StackPanel>
