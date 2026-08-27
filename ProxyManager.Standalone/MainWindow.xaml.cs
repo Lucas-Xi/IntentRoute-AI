@@ -594,11 +594,18 @@ public partial class MainWindow : Window
     {
         if (!_service.IsConfigurationWritable)
         {
+            _policyExplanationCts?.Cancel();
             _currentPolicyReport = null;
             _policyFindings.Clear();
-            _policyAdvice.Clear();
+            ResetPolicyExplanation();
+            PolicyActiveCount.Text = "0";
+            PolicyCriticalCount.Text = "0";
+            PolicyWarningCount.Text = "0";
+            PolicyDisabledCount.Text = "0";
             PolicyFindingCount.Text = "0 项";
+            PolicyEmptyText.Text = "配置处于恢复保护状态，未执行策略体检。";
             PolicyEmptyText.Visibility = Visibility.Visible;
+            PolicyLocateButton.IsEnabled = false;
             PolicyExplainButton.IsEnabled = false;
             PolicyStatusText.Text = "配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。";
             return;
@@ -622,6 +629,7 @@ public partial class MainWindow : Window
         PolicyWarningCount.Text = latest.WarningCount.ToString();
         PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
         PolicyFindingCount.Text = $"{latest.Findings.Count} 项";
+        PolicyEmptyText.Text = "未发现可确定的问题。策略体检不等同于真实流量验证。";
         PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PolicyLocateButton.IsEnabled = false;
         PolicyExplainButton.IsEnabled = false;

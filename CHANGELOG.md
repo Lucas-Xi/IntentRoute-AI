@@ -10,6 +10,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Render rule rows with their application, condition, routing mode, enabled state, and creation time instead of the model type name.
 - Reject malformed UTF-8 configuration bytes and profile imports instead of accepting replacement characters that could later overwrite the original file.
 - Show a yellow stale-runtime state when a replacement fails but the previously applied sing-box process remains healthy.
+- Clear Policy Intelligence counts and show an explicit not-analyzed state when configuration recovery protection is active.
 
 ### Added
 
