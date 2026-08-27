@@ -396,7 +396,8 @@ public sealed class PolicyIntelligenceTests
         config.ProxyServers[0].Host = "127.0.0.1";
         config.ProxyServers[0].Port = 32109;
         config.ProxyServers[0].Username = "fixture-user";
-        config.ProxyServers[0].Password = "fixture-password";
+        var entryCanary = Guid.NewGuid().ToString("N");
+        config.ProxyServers[0].Password = entryCanary;
         config.Rules =
         [
             Rule("private-browser.exe", ProxyMode.Direct, hosts: "secret.example.com", ips: "10.20.30.40", ports: "54321", priority: 10),
@@ -411,7 +412,7 @@ public sealed class PolicyIntelligenceTests
         foreach (var forbidden in new[]
         {
             "private-browser.exe", "secret.example.com", "10.20.30.40", "54321",
-            "32109", "fixture-user", "fixture-password", "fixture-note", "C:\\sensitive",
+            "32109", "fixture-user", entryCanary, "fixture-note", "C:\\sensitive",
             config.Rules[0].Id, config.ProxyServers[0].Id
         })
         {
@@ -542,7 +543,8 @@ public sealed class PolicyIntelligenceTests
         config.ProxyServers[0].Host = "proxy.canary.internal";
         config.ProxyServers[0].Port = 32109;
         config.ProxyServers[0].Username = "canary-proxy-user";
-        config.ProxyServers[0].Password = "canary-proxy-password";
+        var entryCanary = Guid.NewGuid().ToString("N");
+        config.ProxyServers[0].Password = entryCanary;
         config.ProxyServers[0].TestUrl = "https://probe.canary.internal/health";
         var direct = Rule(
             "canary-process.exe",
@@ -581,7 +583,7 @@ public sealed class PolicyIntelligenceTests
             "proxy.canary.internal",
             "32109",
             "canary-proxy-user",
-            "canary-proxy-password",
+            entryCanary,
             "probe.canary.internal",
             "canary-private-note-and-log",
             "C:\\private-runtime",

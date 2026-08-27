@@ -739,7 +739,7 @@ public sealed class AppServiceRecoveryTests
     [Fact]
     public void DpapiMarkerPrefixedPassword_CommitsAndReloadsThroughWorkspace()
     {
-        const string password = "dpapi:legitimate-plaintext";
+        var markerPrefixedLiteral = "dpapi:" + Guid.NewGuid().ToString("N");
         var appDataRoot = CreateTempDirectory();
         try
         {
@@ -750,13 +750,13 @@ public sealed class AppServiceRecoveryTests
                     "127.0.0.1",
                     1080,
                     "local-user",
-                    password);
+                    markerPrefixedLiteral);
 
-                Assert.Equal(password, service.GetPrimaryProxy()?.Password);
+                Assert.Equal(markerPrefixedLiteral, service.GetPrimaryProxy()?.Password);
             }
 
             using var reloaded = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
-            Assert.Equal(password, reloaded.GetPrimaryProxy()?.Password);
+            Assert.Equal(markerPrefixedLiteral, reloaded.GetPrimaryProxy()?.Password);
         }
         finally
         {

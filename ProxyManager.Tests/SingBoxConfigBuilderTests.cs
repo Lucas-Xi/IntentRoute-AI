@@ -20,7 +20,8 @@ public sealed class SingBoxConfigBuilderTests
     public void Build_MapsProcessDestinationAndProxyWithoutLeakingPassword()
     {
         var config = BaseConfig();
-        config.ProxyServers[0].Password = "top-secret-value";
+        var passwordCanary = Guid.NewGuid().ToString("N");
+        config.ProxyServers[0].Password = passwordCanary;
         config.Rules.Add(new ProxyRule
         {
             ExeName = "chrome.exe",
@@ -36,7 +37,7 @@ public sealed class SingBoxConfigBuilderTests
         var result = SingBoxConfigBuilder.Build(config);
 
         Assert.True(result.Success, result.Error);
-        Assert.DoesNotContain("top-secret-value", result.RedactedJson, StringComparison.Ordinal);
+        Assert.DoesNotContain(passwordCanary, result.RedactedJson, StringComparison.Ordinal);
         var root = JObject.Parse(result.RedactedJson!);
         Assert.Equal("tun", root["inbounds"]![0]!["type"]!.Value<string>());
         Assert.Contains(SingBoxConfigBuilder.TunIpv4Address, root["inbounds"]![0]!["address"]!.Values<string>());

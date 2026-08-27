@@ -23,14 +23,14 @@ public sealed class AppConfigStoreTests
     [Fact]
     public void Serialize_EncryptsLiteralPasswordBeginningWithDpapiMarker()
     {
-        const string password = "dpapi:literal-password";
-        var config = ConfigWithPassword(password);
+        var markerPrefixedLiteral = "dpapi:" + Guid.NewGuid().ToString("N");
+        var config = ConfigWithPassword(markerPrefixedLiteral);
 
         var json = AppConfigStore.Serialize(config);
         var restored = AppConfigStore.Deserialize(json);
 
-        Assert.DoesNotContain(password, json, StringComparison.Ordinal);
-        Assert.Equal(password, restored.ProxyServers[0].Password);
+        Assert.DoesNotContain(markerPrefixedLiteral, json, StringComparison.Ordinal);
+        Assert.Equal(markerPrefixedLiteral, restored.ProxyServers[0].Password);
     }
 
     [Fact]
