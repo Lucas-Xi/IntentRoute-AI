@@ -13,6 +13,9 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
+- Added a local-first AI Policy Intelligence page with deterministic duplicate, conflict, proven shadowing, broad-scope, disabled-invalid, inactive-duplicate, same-priority-overlap, and ProxyAll-posture findings.
+- Added local finding navigation to affected rules plus optional OpenAI/Ollama plain-language explanation for 1–20 user-selected findings.
+- Added a per-request confirmation dialog that displays the exact closed Policy Disclosure JSON before any policy-explanation request is sent.
 - Added a Settings readiness panel that reports the resolved sing-box path, probes `sing-box version`, and requires a recognized v1.13+ release before configuration checking or process launch.
 - Added an explicit file picker for a separately installed sing-box executable without bundling, downloading, or installing it.
 - Added authenticated local proxy editing for SOCKS5, HTTP, and HTTPS listeners with DPAPI-protected passwords.
@@ -21,6 +24,10 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Changed
 
+- Use one Canonical Runtime Order across sing-box generation, the rules page, process-candidate display, and Policy Intelligence: priority ascending, creation timestamp ascending, then persisted source order.
+- Make rule up/down actions move within that same canonical order before priorities are normalized.
+- Emit empty legacy protocol, `Both`, and `TCP/UDP` explicitly as sing-box TCP plus UDP; reject `Any`, `ALL`, and `ICMP` instead of silently including v1.13 ICMP traffic.
+- Label the process page as a process-name configuration candidate rather than a live routing status because destination, port, and protocol conditions are not evaluated there.
 - Restrict supported proxy endpoints to literal loopback IP addresses; hostnames, LAN addresses, public addresses, and IPv4-mapped IPv6 forms are rejected.
 - Drive the runtime status indicator from real probing, checking, starting, running, failed, and stopped states instead of a fixed green indicator.
 - Show a clear dialog when another IntentRoute AI instance already owns the sing-box runtime lock.
@@ -28,6 +35,8 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Security
 
+- Keep local Policy Finding labels/evidence separate from the closed Policy Disclosure type; providers never receive existing process names, domains, IPs, ports, IDs, notes, paths, proxy data, credentials, logs, generated JSON, runtime identity, or process inventory.
+- Require request-scoped selected-finding confirmation for policy explanation, use strict code-referenced output with no tools or mutation interface, and discard a response when the local policy fingerprint changed in flight.
 - Preserve an unreadable `config.json` byte-for-byte, create a timestamped recovery copy when possible, block every configuration save path, and skip sing-box application until the user explicitly recovers or resets.
 - Treat malformed or undecryptable `dpapi:` proxy passwords as an unusable configuration instead of silently replacing them with empty credentials.
 - Fail closed when sing-box version output is missing, unreadable, timed out, or older than v1.13; no candidate configuration is written and no child process is started.
@@ -50,6 +59,8 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Tests
 
+- Added canonical-order, explicit TCP/UDP, unsupported-protocol, domain-suffix, destination-union, CIDR/port/protocol containment, disabled-rule, selected-disclosure, privacy-canary, strict-output, and OpenAI/Ollama policy-payload coverage.
+- Added a regression test proving that rule up/down actions follow the order shown by the UI and used by sing-box.
 - Added coverage for corrupt JSON preservation, DPAPI failure, save blocking, explicit reset, loopback-only endpoint validation, local TCP checks, sing-box version compatibility, and prevention of check/start on unsupported versions.
 - Added invalid UTF-8 preservation and unapproved discovery tests, plus a build-time package-content gate that rejects bundled sing-box and generated runtime files.
 - Added null-collection-entry recovery coverage for rules, proxy servers, and proxy chains.

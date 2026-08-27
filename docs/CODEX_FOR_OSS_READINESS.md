@@ -15,6 +15,8 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 - Honest supported/unsupported feature table.
 - Maintainer instructions that prohibit secrets, fake telemetry, silent semantic fallbacks, and bundled network binaries.
 - Provider-independent AI contracts, mocked provider tests, strict structured-output parsing, and public data-boundary documentation.
+- Local-first Policy Intelligence that separates deterministic facts from optional model explanation, exposes exact per-request disclosure, rejects stale output, and has canary tests for every excluded existing-policy field.
+- One documented Canonical Runtime Order plus explicit TCP/UDP `Both` semantics, reducing the chance that UI, tests, analysis, and generated sing-box behavior drift apart.
 
 ## Facts that must remain honest in a future application
 

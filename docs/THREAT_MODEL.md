@@ -8,6 +8,7 @@
 - Availability of the user's network connection.
 - Confidentiality of local process names and runtime diagnostics.
 - Confidentiality of the OpenAI API key and user-authored AI intent.
+- Confidentiality of existing rule values while requesting an optional policy explanation.
 - Integrity of the boundary between untrusted model output and routing state.
 
 ## Trusted components
@@ -35,13 +36,25 @@ Rule, proxy, mode, AI acceptance, and profile changes share the same candidate c
 
 Model output is untrusted. Provider responses are size-bounded, parsed against a closed schema that rejects unknown properties, and independently checked for executable names, domains, CIDRs, ports, protocols, actions, duplicates, rule counts, and proxy availability. Candidate rules are enabled only in a cloned, in-process construction dry-run so `SingBoxConfigBuilder` actually parses them; preview does not execute the external binary. Accepted rules are saved disabled and require a second explicit action to enable, whose state-changing runtime path performs `sing-box check -c`. Model text is displayed only as plain WPF text and cannot invoke commands or tools.
 
+Policy explanation uses a separate closed schema and interface. The model can reference only finding codes present in the exact confirmed Policy Disclosure; unknown or duplicate codes are rejected. Explanation cannot change a local finding's category/severity/evidence, create a rule, write a note, reorder or enable a rule, commit a configuration, or apply the runtime. A policy fingerprint is compared after the provider returns so a result for an older snapshot is discarded rather than attached to changed rules.
+
 ### AI data disclosure
 
-OpenAI receives only the user-entered intent plus static schema/instructions. The key is read at request time from `OPENAI_API_KEY` and is never stored in application configuration, profiles, logs, exports, or diagnostics. Requests set `store=false`, but provider-side processing remains governed by OpenAI's current policies and the user's account.
+For rule authoring, OpenAI receives only the user-entered intent plus static schema/instructions. For optional policy explanation, it receives only the exact Policy Disclosure shown in a per-request confirmation dialog: aggregate rule/action/proxy counts plus selected finding code, category, severity, relation, and affected-rule count. The disclosure type has no fields for process names, domains, IPs, ports, rule/server IDs, notes, executable paths, proxy addresses, usernames, passwords, logs, generated configuration, runtime identity, or process inventory. Local finding display text and builder redacted JSON are never serialized into this request.
 
-Ollama requests use only literal HTTP `127.0.0.1` or `::1`, with proxy use and redirects disabled. Hostname, other-loopback, LAN/public, and credentialed endpoints are rejected. IntentRoute AI never sends proxy credentials, proxy addresses, existing rules, logs, filesystem paths, or a full process inventory to either provider.
+The OpenAI key is read at request time from `OPENAI_API_KEY` and is never stored in application configuration, profiles, logs, exports, or diagnostics. Requests set `store=false`, but provider-side processing remains governed by OpenAI's current policies and the user's account. There is no persistent policy-disclosure consent; canceling the exact-preview dialog sends nothing.
 
-Another local process can impersonate an Ollama service by binding the selected loopback port. Its output receives no special trust: it is size-bounded, strictly parsed, locally validated, previewed, and can only be accepted as disabled rules.
+Ollama requests use only literal HTTP `127.0.0.1` or `::1`, with proxy use and redirects disabled. Hostname, other-loopback, LAN/public, and credentialed endpoints are rejected. IntentRoute AI never sends proxy credentials, proxy addresses, existing rule values or identifiers, logs, filesystem paths, or a full process inventory to either provider.
+
+Another local process can impersonate an Ollama service by binding the selected loopback port. Its output receives no special trust: it is size-bounded and strictly parsed. Rule-authoring output is locally validated and can only be accepted as disabled rules; policy-explanation output can only become plain text attached to already-local finding codes.
+
+Existing rule values and notes can contain prompt-injection text. They remain on the local side of the Policy Disclosure seam, so neither provider receives or interprets them during policy explanation.
+
+### Policy-analysis overclaim
+
+Policy Intelligence analyzes static supported configuration, not packets, DNS results, proxy authentication, TUN state, or live connections. It shares Canonical Runtime Order with the builder and models the documented sing-box default-rule grouping: destination matcher types are ORed, ports/port ranges are ORed, and the remaining groups are ANDed. Empty legacy protocol, `Both`, and `TCP/UDP` are compiled as TCP plus UDP so sing-box v1.13 ICMP support is not silently included.
+
+Containment findings are conservative: a shadow is reported only when an earlier enabled rule is proven to contain a later enabled rule on every supported matching dimension. Disabled rules are prospective only. Uncertain partial overlap is omitted in v1 rather than described as disjoint or proven. Same-priority overlap is reported because secondary creation/source ordering otherwise decides evaluation. A clean report is explicitly not a connectivity or correctness guarantee.
 
 ### Upgrade migration interference
 

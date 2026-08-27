@@ -30,8 +30,8 @@ $config = @'
   "route": {
     "auto_detect_interface": true,
     "rules": [
-      { "process_name": ["example.exe"], "network": "tcp", "action": "route", "outbound": "proxy-local" },
-      { "process_name": ["blocked.exe"], "action": "reject" }
+      { "process_name": ["example.exe"], "network": ["tcp", "udp"], "action": "route", "outbound": "proxy-local" },
+      { "process_name": ["blocked.exe"], "network": ["tcp", "udp"], "action": "reject" }
     ],
     "final": "direct"
   }

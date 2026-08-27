@@ -63,10 +63,8 @@ public static class SingBoxConfigBuilder
                 return SingBoxConfigBuildResult.Fail("GlobalMode is ProxyAll but no enabled proxy server is available.");
 
             var routeRules = new JArray();
-            var orderedRules = (config.Rules ?? [])
-                .Where(r => r != null && r.IsEnabled)
-                .OrderBy(r => r.Priority)
-                .ThenBy(r => r.CreatedAt, StringComparer.Ordinal)
+            var orderedRules = PolicyRuntimeOrder.Enabled(config.Rules)
+                .Select(item => item.Rule)
                 .ToList();
 
             foreach (var rule in orderedRules)
@@ -341,11 +339,9 @@ public static class SingBoxConfigBuilder
     {
         if (string.IsNullOrWhiteSpace(protocol) ||
             protocol.Equals("Both", StringComparison.OrdinalIgnoreCase) ||
-            protocol.Equals("Any", StringComparison.OrdinalIgnoreCase) ||
-            protocol.Equals("TCP/UDP", StringComparison.OrdinalIgnoreCase) ||
-            protocol.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            protocol.Equals("TCP/UDP", StringComparison.OrdinalIgnoreCase))
         {
-            return NetworkParseResult.Ok([]);
+            return NetworkParseResult.Ok(["tcp", "udp"]);
         }
 
         if (protocol.Equals("TCP", StringComparison.OrdinalIgnoreCase))

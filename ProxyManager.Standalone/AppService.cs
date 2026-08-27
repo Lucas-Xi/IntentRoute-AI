@@ -341,13 +341,19 @@ public class AppService : IDisposable, IAsyncDisposable
     public void MoveRule(string id, int delta)
     {
         var current = _workspace.Snapshot();
-        var idx = current.Rules.FindIndex(r => r.Id == id);
+        var canonicalOrder = PolicyRuntimeOrder.All(current.Rules).ToList();
+        var idx = canonicalOrder.FindIndex(r => r.Id == id);
         if (idx < 0) return;
         int newIdx = idx + delta;
-        if (newIdx < 0 || newIdx >= current.Rules.Count) return;
+        if (newIdx < 0 || newIdx >= canonicalOrder.Count) return;
+
+        (canonicalOrder[idx], canonicalOrder[newIdx]) = (canonicalOrder[newIdx], canonicalOrder[idx]);
+        var orderedIds = canonicalOrder.Select(rule => rule.Id).ToList();
         CommitConfiguration(candidate =>
         {
-            (candidate.Rules[idx], candidate.Rules[newIdx]) = (candidate.Rules[newIdx], candidate.Rules[idx]);
+            var rulesById = candidate.Rules.ToDictionary(rule => rule.Id, StringComparer.Ordinal);
+            candidate.Rules.Clear();
+            candidate.Rules.AddRange(orderedIds.Select(ruleId => rulesById[ruleId]));
             for (int i = 0; i < candidate.Rules.Count; i++)
                 candidate.Rules[i].Priority = (i + 1) * 10;
         });

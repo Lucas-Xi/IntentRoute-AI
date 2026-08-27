@@ -78,6 +78,70 @@ public sealed class SingBoxConfigBuilderTests
     }
 
     [Theory]
+    [InlineData("")]
+    [InlineData("Both")]
+    [InlineData("TCP/UDP")]
+    public void Build_MapsBothToTcpAndUdpWithoutImplicitIcmp(string protocol)
+    {
+        var config = BaseConfig();
+        config.Rules.Add(new ProxyRule
+        {
+            ExeName = "browser.exe",
+            Mode = ProxyMode.Direct,
+            Protocol = protocol
+        });
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.True(result.Success, result.Error);
+        var root = JObject.Parse(result.RedactedJson!);
+        var networks = root["route"]!["rules"]![0]!["network"]!.Values<string>().ToList();
+        Assert.Equal(["tcp", "udp"], networks);
+        Assert.DoesNotContain("icmp", networks);
+    }
+
+    [Theory]
+    [InlineData("Any")]
+    [InlineData("ALL")]
+    [InlineData("ICMP")]
+    public void Build_RejectsProtocolsOutsideTcpUdpContract(string protocol)
+    {
+        var config = BaseConfig();
+        config.Rules.Add(new ProxyRule
+        {
+            ExeName = "browser.exe",
+            Mode = ProxyMode.Direct,
+            Protocol = protocol
+        });
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.False(result.Success);
+        Assert.Contains("unsupported protocol", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Build_UsesCanonicalCreatedAtAndSourceOrderForPriorityTies()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            new ProxyRule { ExeName = "same-time-first.exe", Mode = ProxyMode.Direct, Priority = 10, CreatedAt = "2026-01-02 09:00" },
+            new ProxyRule { ExeName = "older.exe", Mode = ProxyMode.Direct, Priority = 10, CreatedAt = "2026-01-01 09:00" },
+            new ProxyRule { ExeName = "same-time-second.exe", Mode = ProxyMode.Direct, Priority = 10, CreatedAt = "2026-01-02 09:00" }
+        ];
+
+        var result = SingBoxConfigBuilder.Build(config);
+
+        Assert.True(result.Success, result.Error);
+        var root = JObject.Parse(result.RedactedJson!);
+        var names = root["route"]!["rules"]!
+            .Select(rule => rule!["process_name"]![0]!.Value<string>())
+            .ToList();
+        Assert.Equal(["older.exe", "same-time-first.exe", "same-time-second.exe"], names);
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]

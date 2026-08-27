@@ -7,12 +7,13 @@
 1. The UI reads detached configuration snapshots and sends edit intents to `AppService`; it never receives a mutable reference to the active configuration.
 2. `ConfigurationWorkspace` clones the active configuration into a candidate, applies the requested mutation, normalizes and validates the complete candidate, and asks `AppConfigStore` to persist it atomically with DPAPI-protected passwords.
 3. Only after persistence succeeds does `ConfigurationWorkspace` publish the candidate as the new active configuration. Validation or filesystem failure leaves both active memory state and persisted bytes unchanged.
-4. `SingBoxConfigBuilder` validates supported semantics and produces full and redacted JSON representations.
-5. `SingBoxRuntime` discovers a separately installed sing-box candidate, but only an exact path explicitly re-approved in Settings for the current elevated session may run the bounded, no-shell `sing-box version` probe.
-6. Only a recognized v1.13+ result crosses the readiness gate. Missing, old, timed-out, or unrecognized binaries do not receive configuration data and are not started.
-7. A candidate runtime configuration is written atomically and checked with `sing-box check -c`. This validates schema and configuration, not live network reachability.
-8. A checked candidate is promoted and the managed process is replaced. If the replacement exits during its startup-settle window, IntentRoute AI atomically restores and restarts the previous checked configuration when one exists.
-9. sing-box creates dual-stack IPv4/IPv6 Windows TUN routes and applies process/destination route rules.
+4. `PolicyRuntimeOrder` supplies one Canonical Runtime Order to the builder and read-only views: priority ascending, creation timestamp ascending, then persisted source order.
+5. `SingBoxConfigBuilder` validates supported semantics and produces full and redacted JSON representations. Empty legacy protocol, `Both`, and `TCP/UDP` are emitted explicitly as `network: ["tcp", "udp"]`; unsupported `Any`, `ALL`, or `ICMP` inputs are rejected rather than broadened silently.
+6. `SingBoxRuntime` discovers a separately installed sing-box candidate, but only an exact path explicitly re-approved in Settings for the current elevated session may run the bounded, no-shell `sing-box version` probe.
+7. Only a recognized v1.13+ result crosses the readiness gate. Missing, old, timed-out, or unrecognized binaries do not receive configuration data and are not started.
+8. A candidate runtime configuration is written atomically and checked with `sing-box check -c`. This validates schema and configuration, not live network reachability.
+9. A checked candidate is promoted and the managed process is replaced. If the replacement exits during its startup-settle window, IntentRoute AI atomically restores and restarts the previous checked configuration when one exists.
+10. sing-box creates dual-stack IPv4/IPv6 Windows TUN routes and applies process/destination route rules.
 
 ## AI authoring path
 
@@ -23,6 +24,18 @@
 5. New rules are temporarily enabled only in a cloned candidate and passed through `SingBoxConfigBuilder`; this prevents disabled-rule filtering from turning validation into a no-op. This AI-preview dry-run is in-process construction, not execution of the external `sing-box` binary.
 6. After explicit user confirmation, `ConfigurationWorkspace` commits the whole draft through the same candidate-validation and atomic-persistence path as manual edits, while keeping every accepted rule disabled and not replacing the running sing-box process.
 7. Enabling remains a separate manual action through the supported path above, where a candidate file is checked by `sing-box check -c` before process replacement.
+
+## Policy Intelligence path
+
+1. The WPF page requests a detached Configuration Snapshot and passes it to `PolicyIntelligence.Analyze`.
+2. The deep local module uses Canonical Runtime Order plus the supported sing-box default-rule algebra: destination matcher types form one OR group, port and port-range matchers form another OR group, and process/network/other groups combine with AND. It reports containment only when every required relation is proven.
+3. Enabled rules produce runtime-order findings. Disabled rules are never described as active; each is temporarily enabled only in a cloned in-memory candidate and passed through `SingBoxConfigBuilder` to identify prospective enable failures.
+4. The local `PolicyAnalysisReport` contains display labels and rule IDs for navigation. It never crosses a provider seam.
+5. The user selects 1–20 findings. `PolicyIntelligence.ToDisclosure` creates a closed allowlist object containing aggregate counts and structural finding fields only.
+6. A confirmation dialog displays the exact logical JSON that will be sent and the provider-specific data notice. Cancel produces no request and no persistent authorization exists.
+7. `OpenAiRuleProvider` or `OllamaRuleProvider` implements the separate `IAiPolicyExplainer` seam. OpenAI uses strict Responses API output with `store=false` and no tools; Ollama uses the existing literal-loopback-only, non-streaming transport.
+8. `AiPolicyContract` rejects unknown output properties, unknown/duplicate finding codes, null/oversize fields, and out-of-range confidence. Model text is rendered as plain text and has no Configuration Workspace interface.
+9. A local fingerprint binds explanation to the analyzed snapshot. A configuration change before response acceptance discards the stale result while keeping the newest local report.
 
 ## Trust boundaries
 
@@ -39,6 +52,8 @@
 | Configuration snapshot to mutation | Expose detached snapshots only; clone, validate, persist, and publish complete candidates through the Configuration Workspace |
 | Proxy settings to outbound | Accept only literal loopback IP addresses and valid ports; protect stored passwords with DPAPI; never send credentials during the TCP-listener check |
 | User intent to AI provider | Send only intent plus static schema/instructions; never include proxy settings, existing rules, logs, paths, or process inventory |
+| Local Policy Finding to AI provider | Require per-request selected-finding confirmation; send only the exact closed Policy Disclosure, never local finding text, rule values/IDs, builder JSON, proxy data, paths, logs, runtime state, or process inventory |
+| AI policy explanation to UI | Strictly parse references to disclosed finding codes, display plain text only, discard stale results, and expose no mutation or runtime interface |
 | AI output to domain model | Reject oversized, malformed, missing, or additional fields; treat all model text as untrusted data |
 | Ollama client to local service | Permit only literal HTTP `127.0.0.1` or `::1`; disable proxy use and redirects; never pull models or launch a process |
 | Accepted AI draft to config | Validate all-or-nothing, dry-run enabled clones, persist disabled rules once, and require a second action to enable |
@@ -57,7 +72,7 @@ Passwords are plaintext only inside the in-memory domain model. `AppConfigStore.
 
 On stop, normal shutdown, or an unexpected managed-child exit, IntentRoute AI removes the generated configuration. On the next launch after an application or OS crash, it verifies a recorded orphan by PID and start time, checks the executable path when Windows permits it, terminates that process tree, and removes stale configs/candidates. Recovery and deletion remain best effort under administrator interference, filesystem failure, or corrupted state.
 
-Provider failure, cancellation, rate limiting, missing local models, malformed output, or local validation failure leaves configuration unchanged. Raw provider error bodies are not surfaced. Provider/model controls remain locked while a generation request is in flight so a response cannot be attributed to a newly selected provider.
+Provider failure, cancellation, rate limiting, missing local models, malformed output, or local validation failure leaves configuration unchanged. Raw provider error bodies are not surfaced. Provider/model controls remain locked while a generation or policy-explanation request is in flight so a response cannot be attributed to a newly selected provider. Policy-explanation failure never clears the local deterministic report; a changed policy invalidates and discards only the old model explanation.
 
 ## Dependency boundary
 

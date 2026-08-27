@@ -16,6 +16,8 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<ProxyRule> _rules = new();
     private readonly ObservableCollection<RuntimeLogLine> _runtimeLogs = new();
     private readonly ObservableCollection<AiRulePreviewLine> _aiDrafts = new();
+    private readonly ObservableCollection<PolicyFindingPreviewLine> _policyFindings = new();
+    private readonly ObservableCollection<AiPolicyAdviceLine> _policyAdvice = new();
     private readonly OpenAiRuleProvider _openAiProvider = new();
     private readonly OllamaRuleProvider _ollamaProvider = new();
     private readonly CancellationTokenSource _lifetimeCts = new();
@@ -24,10 +26,13 @@ public partial class MainWindow : Window
     private string _searchFilter = "";
     private bool _isMaximized = false;
     private CancellationTokenSource? _aiGenerationCts;
+    private CancellationTokenSource? _policyExplanationCts;
     private CancellationTokenSource? _runtimeReadinessCts;
     private int _aiModelRefreshVersion;
+    private int _policyModelRefreshVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
+    private PolicyAnalysisReport? _currentPolicyReport;
     private bool _shutdownStarted;
     private bool _shutdownComplete;
 
@@ -50,8 +55,12 @@ public partial class MainWindow : Window
         RulesList.ItemsSource = _rules;
         LogsList.ItemsSource = _runtimeLogs;
         AiDraftList.ItemsSource = _aiDrafts;
+        PolicyFindingsList.ItemsSource = _policyFindings;
+        PolicyAiAdviceList.ItemsSource = _policyAdvice;
         AiProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
         AiProviderCombo.SelectedIndex = 0;
+        PolicyProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
+        PolicyProviderCombo.SelectedIndex = 0;
 
         // 允许标题栏拖动
         MouseLeftButtonDown += (s, e) => { if (e.ChangedButton == MouseButton.Left) DragMove(); };
@@ -69,6 +78,7 @@ public partial class MainWindow : Window
             _lifetimeCts.Token.ThrowIfCancellationRequested();
             UpdateRuntimeStatusUi(_service.GetRuntimeStatus());
             await RefreshAiModelsAsync(_lifetimeCts.Token);
+            await RefreshPolicyModelsAsync(_lifetimeCts.Token);
         }
         catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
         {
@@ -98,51 +108,54 @@ public partial class MainWindow : Window
 
     private void Nav_Click(object sender, RoutedEventArgs e)
     {
+        if (sender is RadioButton rb) ShowPage(rb.Name);
+    }
+
+    private void ShowPage(string pageName)
+    {
         PageRules.Visibility = Visibility.Collapsed;
         PageAiAssistant.Visibility = Visibility.Collapsed;
+        PagePolicyIntelligence.Visibility = Visibility.Collapsed;
         PageMonitor.Visibility = Visibility.Collapsed;
         PageProcess.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Collapsed;
         PageAbout.Visibility = Visibility.Collapsed;
 
-        if (sender is RadioButton rb)
+        UIElement? page = pageName switch
         {
-            UIElement? page = rb.Name switch
-            {
-                "NavRules" => PageRules,
-                "NavAi" => PageAiAssistant,
-                "NavMonitor" => PageMonitor,
-                "NavProcess" => PageProcess,
-                "NavSettings" => PageSettings,
-                "NavAbout" => PageAbout,
-                _ => null
-            };
+            "NavRules" => PageRules,
+            "NavAi" => PageAiAssistant,
+            "NavPolicy" => PagePolicyIntelligence,
+            "NavMonitor" => PageMonitor,
+            "NavProcess" => PageProcess,
+            "NavSettings" => PageSettings,
+            "NavAbout" => PageAbout,
+            _ => null
+        };
 
-            if (page != null)
-                page.Visibility = Visibility.Visible;
-
-            PageTitle.Text = rb.Name switch
-            {
-                "NavRules" => "规则管理",
-                "NavAi" => "AI 规则助手",
-                "NavMonitor" => "运行日志",
-                "NavProcess" => "进程列表",
-                "NavSettings" => "设置",
-                "NavAbout" => "关于",
-                _ => ""
-            };
-
-            PageSubtitle.Text = rb.Name switch
-            {
-                "NavRules" => " - 拖拽 .exe 添加规则",
-                "NavAi" => " - 自然语言生成可审查的规则草案",
-                "NavMonitor" => " - sing-box 运行日志",
-                "NavProcess" => " - 运行中的进程",
-                "NavSettings" => " - 配置代理和功能",
-                "NavAbout" => " - 版本信息",
-                _ => ""
-            };
-        }
+        if (page != null) page.Visibility = Visibility.Visible;
+        PageTitle.Text = pageName switch
+        {
+            "NavRules" => "规则管理",
+            "NavAi" => "AI 规则助手",
+            "NavPolicy" => "AI 策略体检",
+            "NavMonitor" => "运行日志",
+            "NavProcess" => "进程列表",
+            "NavSettings" => "设置",
+            "NavAbout" => "关于",
+            _ => ""
+        };
+        PageSubtitle.Text = pageName switch
+        {
+            "NavRules" => " - 拖拽 .exe 添加规则",
+            "NavAi" => " - 自然语言生成可审查的规则草案",
+            "NavPolicy" => " - 本地确定性检查与可选 AI 解读",
+            "NavMonitor" => " - sing-box 运行日志",
+            "NavProcess" => " - 运行中的进程",
+            "NavSettings" => " - 配置代理和功能",
+            "NavAbout" => " - 版本信息",
+            _ => ""
+        };
     }
 
     #endregion
@@ -351,14 +364,268 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region AI 策略体检
+
+    private IAiPolicyExplainer GetSelectedPolicyExplainer() =>
+        PolicyProviderCombo.SelectedIndex == 1 ? _ollamaProvider : _openAiProvider;
+
+    private async void PolicyProvider_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded || _policyExplanationCts != null || _shutdownStarted) return;
+        await RefreshPolicyModelsAsync(_lifetimeCts.Token);
+    }
+
+    private async void RefreshPolicyModels_Click(object sender, RoutedEventArgs e)
+    {
+        if (_policyExplanationCts != null || _shutdownStarted) return;
+        await RefreshPolicyModelsAsync(_lifetimeCts.Token);
+    }
+
+    private async Task RefreshPolicyModelsAsync(CancellationToken cancellationToken = default)
+    {
+        var refreshVersion = ++_policyModelRefreshVersion;
+        var provider = GetSelectedPolicyExplainer();
+        PolicyModelCombo.ItemsSource = null;
+        PolicyModelCombo.IsEnabled = false;
+        PolicyExplainButton.IsEnabled = false;
+        ResetPolicyExplanation();
+
+        try
+        {
+            var models = await RunAiProviderOperationAsync(
+                token => provider.ListModelsAsync(token),
+                cancellationToken);
+            if (refreshVersion != _policyModelRefreshVersion ||
+                !ReferenceEquals(provider, GetSelectedPolicyExplainer()))
+            {
+                return;
+            }
+
+            PolicyModelCombo.ItemsSource = models;
+            if (models.Count > 0)
+            {
+                PolicyModelCombo.SelectedIndex = 0;
+                PolicyStatusText.Text = provider.Kind == AiProviderKind.OpenAI && !provider.IsAvailable
+                    ? "本地体检可直接使用。AI 解读需要先设置 OPENAI_API_KEY，再重新打开应用。"
+                    : "本地体检不会联网；只有点击 AI 解读后才发送去标识结构摘要。";
+                PolicyExplainButton.IsEnabled =
+                    PolicyFindingsList.SelectedItems.Count is > 0 and <= PolicyDisclosure.MaxFindings;
+            }
+            else
+            {
+                PolicyStatusText.Text = "本地体检可直接使用；当前 Ollama 没有已安装模型，AI 解读暂不可用。";
+            }
+        }
+        catch (AiProviderException ex)
+        {
+            if (refreshVersion == _policyModelRefreshVersion)
+                PolicyStatusText.Text = "本地体检仍可使用。AI 模型不可用: " + ex.Message;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutdown or a newer model refresh canceled this request.
+        }
+        finally
+        {
+            if (refreshVersion == _policyModelRefreshVersion && !cancellationToken.IsCancellationRequested)
+                PolicyModelCombo.IsEnabled = true;
+        }
+    }
+
+    private void AnalyzePolicy_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshPolicyAnalysis();
+        if (_currentPolicyReport != null)
+        {
+            PolicyStatusText.Text = !_currentPolicyReport.IsComplete
+                ? $"本地体检达到分析预算：至少 {_currentPolicyReport.OmittedFindingCount} 个项目未完整展开，当前报告不能视为完整结论。"
+                : _currentPolicyReport.Findings.Count == 0
+                ? "本地体检完成：未发现可确定的问题。此结果不代表真实流量或代理连通性已验证。"
+                : $"本地体检完成：{_currentPolicyReport.Findings.Count} 项发现；未调用 AI，未修改配置。";
+        }
+    }
+
+    private async void ExplainPolicy_Click(object sender, RoutedEventArgs e)
+    {
+        if (_policyExplanationCts != null || _currentPolicyReport == null) return;
+        var model = PolicyModelCombo.SelectedItem as string;
+        var selectedCodes = PolicyFindingsList.SelectedItems
+            .OfType<PolicyFindingPreviewLine>()
+            .Select(finding => finding.Code)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (string.IsNullOrWhiteSpace(model) || selectedCodes.Count == 0)
+        {
+            PolicyStatusText.Text = "请先在本地发现列表中选择 1–20 项，再选择 AI 模型。";
+            return;
+        }
+
+        var reportFingerprint = _currentPolicyReport.Fingerprint;
+        var disclosure = PolicyIntelligence.ToDisclosure(_currentPolicyReport, selectedCodes);
+        var provider = GetSelectedPolicyExplainer();
+        var preview = AiPolicyContract.CreateInput(disclosure);
+        var providerNotice = provider.Kind == AiProviderKind.OpenAI
+            ? "提供商: OpenAI；请求设置 store=false，但提供商侧处理仍受你的账户与当前政策约束。"
+            : "提供商: 本机 Ollama；请求仅发送到字面量 127.0.0.1 或 ::1。";
+        var confirmed = MessageBox.Show(
+            providerNotice + "\n\n将发送的完整逻辑 JSON：\n" + preview +
+            "\n\n不包含进程名、域名、IP、端口、规则 ID、备注、路径、代理地址、凭据、日志或进程列表。确认发送本次去标识摘要吗？",
+            "确认发送 AI 策略摘要",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question,
+            MessageBoxResult.No);
+        if (confirmed != MessageBoxResult.Yes)
+        {
+            PolicyStatusText.Text = "已取消发送；本地体检结果与配置均未变化。";
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, _lifetimeCts.Token);
+        _policyExplanationCts = cts;
+        PolicyProviderCombo.IsEnabled = false;
+        PolicyModelCombo.IsEnabled = false;
+        PolicyExplainButton.IsEnabled = false;
+        PolicyCancelButton.IsEnabled = true;
+        ResetPolicyExplanation();
+        PolicyStatusText.Text = disclosure.OmittedFindingCount == 0
+            ? "正在发送去标识结构摘要并等待只读 AI 解读…"
+            : $"正在发送最高优先级的 {disclosure.Findings.Count} 项结构发现；另有 {disclosure.OmittedFindingCount} 项仅保留在本地…";
+
+        try
+        {
+            var explanation = await RunAiProviderOperationAsync(
+                token => provider.ExplainPolicyAsync(
+                    new AiPolicyExplainRequest(model, disclosure),
+                    token),
+                requestCts.Token);
+
+            var latest = PolicyIntelligence.Analyze(_service.Config);
+            if (!string.Equals(reportFingerprint, latest.Fingerprint, StringComparison.Ordinal))
+            {
+                RefreshPolicyAnalysis();
+                PolicyStatusText.Text = "AI 解读返回前配置已变化；旧结果已丢弃，请基于最新体检重新解读。";
+                return;
+            }
+
+            PolicyAiSummaryText.Text = explanation.Summary;
+            foreach (var priority in explanation.Priorities)
+                _policyAdvice.Add(AiPolicyAdviceLine.FromPriority(priority));
+            var caveats = explanation.Caveats.Count == 0
+                ? "模型未返回额外限制说明。"
+                : "限制: " + string.Join("；", explanation.Caveats);
+            PolicyStatusText.Text = $"AI 解读完成，共 {explanation.Priorities.Count} 条优先建议。{caveats} 配置未发生变化。";
+        }
+        catch (OperationCanceledException)
+        {
+            PolicyStatusText.Text = "已取消 AI 策略解读；本地体检和配置均未变化。";
+        }
+        catch (AiProviderException ex)
+        {
+            PolicyStatusText.Text = ex.Message + " 本地体检结果仍然有效，配置未变化。";
+        }
+        catch
+        {
+            PolicyStatusText.Text = "AI 策略解读失败；本地体检结果仍然有效，配置未变化。";
+        }
+        finally
+        {
+            if (ReferenceEquals(_policyExplanationCts, cts))
+            {
+                _policyExplanationCts = null;
+                cts.Dispose();
+            }
+            if (!_shutdownStarted)
+            {
+                PolicyProviderCombo.IsEnabled = true;
+                PolicyModelCombo.IsEnabled = true;
+                PolicyCancelButton.IsEnabled = false;
+                PolicyExplainButton.IsEnabled =
+                    PolicyModelCombo.SelectedItem is string &&
+                    PolicyFindingsList.SelectedItems.Count is > 0 and <= PolicyDisclosure.MaxFindings;
+            }
+        }
+    }
+
+    private void CancelPolicyExplanation_Click(object sender, RoutedEventArgs e) =>
+        _policyExplanationCts?.Cancel();
+
+    private void PolicyFindingSelection_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        PolicyLocateButton.IsEnabled =
+            PolicyFindingsList.SelectedItem is PolicyFindingPreviewLine { PrimaryRuleId: not null };
+        PolicyExplainButton.IsEnabled =
+            _policyExplanationCts == null &&
+            PolicyModelCombo.SelectedItem is string &&
+            PolicyFindingsList.SelectedItems.Count is > 0 and <= PolicyDisclosure.MaxFindings;
+    }
+
+    private void LocatePolicyRule_Click(object sender, RoutedEventArgs e)
+    {
+        if (PolicyFindingsList.SelectedItem is not PolicyFindingPreviewLine { PrimaryRuleId: not null } selected)
+            return;
+
+        NavRules.IsChecked = true;
+        SearchBox.Text = string.Empty;
+        ShowPage("NavRules");
+        LoadRules();
+        var rule = _rules.FirstOrDefault(item => item.Id == selected.PrimaryRuleId);
+        if (rule == null) return;
+        RulesList.SelectedItem = rule;
+        RulesList.ScrollIntoView(rule);
+        RulesList.Focus();
+    }
+
+    private void RefreshPolicyAnalysis()
+    {
+        if (!_service.IsConfigurationWritable)
+        {
+            _currentPolicyReport = null;
+            _policyFindings.Clear();
+            _policyAdvice.Clear();
+            PolicyFindingCount.Text = "0 项";
+            PolicyEmptyText.Visibility = Visibility.Visible;
+            PolicyExplainButton.IsEnabled = false;
+            PolicyStatusText.Text = "配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。";
+            return;
+        }
+
+        var latest = PolicyIntelligence.Analyze(_service.Config);
+        var changed = _currentPolicyReport != null &&
+            !string.Equals(_currentPolicyReport.Fingerprint, latest.Fingerprint, StringComparison.Ordinal);
+        _currentPolicyReport = latest;
+        if (changed)
+        {
+            _policyExplanationCts?.Cancel();
+            ResetPolicyExplanation();
+        }
+
+        _policyFindings.Clear();
+        foreach (var finding in latest.Findings)
+            _policyFindings.Add(PolicyFindingPreviewLine.FromFinding(finding));
+        PolicyActiveCount.Text = latest.ActiveRuleCount.ToString();
+        PolicyCriticalCount.Text = latest.CriticalCount.ToString();
+        PolicyWarningCount.Text = latest.WarningCount.ToString();
+        PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
+        PolicyFindingCount.Text = $"{latest.Findings.Count} 项";
+        PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        PolicyLocateButton.IsEnabled = false;
+        PolicyExplainButton.IsEnabled = false;
+    }
+
+    private void ResetPolicyExplanation()
+    {
+        _policyAdvice.Clear();
+        PolicyAiSummaryText.Text = "AI 尚未解读；本地确定性发现始终优先于模型文字。";
+    }
+
+    #endregion
+
     #region 规则管理
 
     private void LoadRules()
     {
-        _allRules = _service.Config.Rules
-            .OrderBy(r => r.Priority)
-            .ThenByDescending(r => r.CreatedAt)
-            .ToList();
+        _allRules = PolicyRuntimeOrder.All(_service.Config.Rules).ToList();
         ApplyFilter();
         UpdateStats();
     }
@@ -381,6 +648,7 @@ public partial class MainWindow : Window
             _rules.Add(rule);
 
         EmptyState.Visibility = _rules.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        RefreshPolicyAnalysis();
     }
 
     private void UpdateStats()
@@ -581,9 +849,8 @@ public partial class MainWindow : Window
     private void RefreshProcessList()
     {
         var processes = ProcessMonitor.GetRunningProcesses();
-        var rules = _service.Config.Rules
-            .Where(r => r.IsEnabled)
-            .OrderBy(r => r.Priority)
+        var rules = PolicyRuntimeOrder.Enabled(_service.Config.Rules)
+            .Select(item => item.Rule)
             .ToList();
         var list = processes
             .OrderBy(p => p.Value)
@@ -592,7 +859,7 @@ public partial class MainWindow : Window
                 Pid = p.Key,
                 Name = p.Value,
                 Path = "",
-                Status = GetConfiguredMode(rules, p.Value)
+                Status = GetConfiguredCandidate(rules, p.Value)
             })
             .ToList();
 
@@ -775,6 +1042,7 @@ public partial class MainWindow : Window
         ConfigRecoveryBanner.Visibility = writable ? Visibility.Collapsed : Visibility.Visible;
         PageRules.IsEnabled = writable;
         PageAiAssistant.IsEnabled = writable;
+        PagePolicyIntelligence.IsEnabled = writable;
         RuntimeSettingsCard.IsEnabled = writable;
         ProxySettingsCard.IsEnabled = writable;
         ModeDirect.IsEnabled = writable;
@@ -954,7 +1222,9 @@ public partial class MainWindow : Window
         StatusDetail.Text = "正在安全停止 sing-box…";
         _lifetimeCts.Cancel();
         _aiModelRefreshVersion++;
+        _policyModelRefreshVersion++;
         _aiGenerationCts?.Cancel();
+        _policyExplanationCts?.Cancel();
         _runtimeReadinessCts?.Cancel();
         try
         {
@@ -985,6 +1255,7 @@ public partial class MainWindow : Window
         finally
         {
             _aiGenerationCts?.Dispose();
+            _policyExplanationCts?.Dispose();
             _runtimeReadinessCts?.Dispose();
             _lifetimeCts.Dispose();
             _aiProviderGate.Dispose();
@@ -1009,17 +1280,17 @@ public partial class MainWindow : Window
         }
     }
 
-    private static string GetConfiguredMode(IEnumerable<ProxyRule> rules, string processName)
+    private static string GetConfiguredCandidate(IEnumerable<ProxyRule> rules, string processName)
     {
         var rule = rules.FirstOrDefault(r =>
             string.Equals(r.ExeName, "*", StringComparison.Ordinal) ||
             string.Equals(r.ExeName, processName, StringComparison.OrdinalIgnoreCase));
         return rule?.Mode switch
         {
-            ProxyMode.Proxy => "代理规则",
-            ProxyMode.Direct => "直连规则",
-            ProxyMode.Block => "阻止规则",
-            _ => "默认规则"
+            ProxyMode.Proxy => "存在代理候选",
+            ProxyMode.Direct => "存在直连候选",
+            ProxyMode.Block => "存在阻止候选",
+            _ => "无进程名候选"
         };
     }
 
@@ -1046,5 +1317,50 @@ public partial class MainWindow : Window
                 draft.Rationale,
                 draft.Confidence.ToString("P0"));
         }
+    }
+
+    private sealed record PolicyFindingPreviewLine(
+        string Severity,
+        string Code,
+        string Title,
+        string AffectedRules,
+        string Guidance,
+        string? PrimaryRuleId)
+    {
+        public static PolicyFindingPreviewLine FromFinding(PolicyFinding finding)
+        {
+            var severity = finding.Severity switch
+            {
+                PolicyFindingSeverity.Critical => "高风险",
+                PolicyFindingSeverity.Warning => "复核",
+                _ => "提示"
+            };
+            var affected = finding.Rules.Count == 0
+                ? "全局默认"
+                : string.Join(" → ", finding.Rules.Select(rule =>
+                    rule.EvaluationOrder.HasValue
+                        ? $"#{rule.EvaluationOrder} {rule.DisplayName}"
+                        : $"禁用 {rule.DisplayName}"));
+            return new PolicyFindingPreviewLine(
+                severity,
+                finding.Code,
+                finding.Title,
+                affected,
+                finding.Detail + " " + finding.Recommendation,
+                finding.Rules.FirstOrDefault()?.RuleId);
+        }
+    }
+
+    private sealed record AiPolicyAdviceLine(
+        string Code,
+        string Explanation,
+        string SafeNextStep,
+        string Confidence)
+    {
+        public static AiPolicyAdviceLine FromPriority(AiPolicyPriority priority) => new(
+            priority.FindingCode,
+            priority.Explanation,
+            priority.SafeNextStep,
+            priority.Confidence.ToString("P0"));
     }
 }

@@ -8,7 +8,7 @@ IntentRoute AI is an open-source Windows control plane that turns plain-language
 
 > **Project status: v0.2.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-The `main` branch contains the unreleased v0.3.0 maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, and authenticated loopback-proxy editing. Tagged v0.2.0 archives do not contain these unreleased changes.
+The `main` branch contains the unreleased v0.3.0 maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, authenticated loopback-proxy editing, and local-first Policy Intelligence with optional AI explanation. Tagged v0.2.0 archives do not contain these unreleased changes.
 
 ## Why this project exists
 
@@ -16,6 +16,7 @@ Many Windows applications do not expose useful proxy controls, while hand-author
 
 - A conventional, inspectable rule editor for deterministic manual configuration.
 - An optional AI authoring assistant that translates natural language into a bounded, reviewable rule draft.
+- A local Policy Intelligence workflow that proves ordering, duplicate, conflict, shadowing, broad-scope, and disabled-draft findings before an optional AI explanation.
 
 The application does not capture packets itself. It generates a validated [sing-box](https://github.com/SagerNet/sing-box) v1.13+ TUN configuration, starts and supervises the external sing-box process, and keeps the default route direct unless a rule says otherwise.
 
@@ -30,6 +31,18 @@ The application does not capture packets itself. It generates a validated [sing-
 7. Enabling remains a separate user action. That state-changing path writes a candidate file and executes `sing-box check -c` before the managed runtime is replaced.
 
 AI never directly enables rules, invokes commands, selects files, installs models, downloads sing-box, or applies an unreviewed configuration.
+
+## AI Policy Intelligence workflow (unreleased `main`)
+
+1. Open **AI Policy Intelligence**. The application analyzes a detached configuration snapshot locally; this performs no provider request, filesystem write, runtime apply, executable probe, proxy connection, DNS lookup, or traffic observation.
+2. Findings use the same Canonical Runtime Order as the generated sing-box route: priority ascending, creation timestamp ascending, then persisted source order. The rules page uses that order too.
+3. The local report distinguishes exact duplicates, same-scope different outcomes, proven earlier-superset shadowing, broad process/global rules, invalid disabled rules, inactive duplicates, same-priority overlaps, and the ProxyAll default posture. It does not promote uncertain partial overlaps into facts.
+4. Local rows may show real rule labels and can navigate to an affected rule. They are never serialized to a provider.
+5. To request an explanation, select 1–20 findings and click **Explain selected summary with AI**. A confirmation dialog shows the exact logical JSON, provider, and exclusion list for that single request.
+6. The closed Policy Disclosure contains only aggregate counts plus finding code, category, severity, relationship, and affected-rule count. The AI response must use a strict schema and reference only those finding codes.
+7. AI explanation is plain, untrusted, read-only text. It cannot change local findings, write a note, create/enable/reorder a rule, save configuration, or apply sing-box. If the policy changes while a request is in flight, the returned explanation is discarded as stale.
+
+Policy Intelligence describes static configuration semantics, not real connection behavior. A clean report is not proof that TUN creation, a proxy listener, authentication, upstream reachability, DNS behavior, or a particular connection succeeded.
 
 ## Provider setup
 
@@ -61,9 +74,11 @@ IntentRoute AI queries only literal HTTP `127.0.0.1` (the default) or `::1`. v0.
 |---|---:|---:|
 | User-entered intent | Sent | Sent to loopback only |
 | Static rule schema/instructions | Sent | Sent to loopback only |
+| User-selected Policy Disclosure after exact preview/confirmation | Sent | Sent to loopback only |
 | Proxy username/password | Never | Never |
 | Proxy server address | Never | Never |
-| Existing rules/configuration | Never | Never |
+| Existing rule values, IDs, labels, notes, or complete configuration | Never | Never |
+| Process names, domains, IPs, ports, or paths from existing rules | Never | Never |
 | Runtime logs | Never | Never |
 | Full process list or paths | Never | Never |
 | API key | Authorization header only | Not applicable locally |
@@ -77,7 +92,10 @@ OpenAI API data handling is governed by the user's OpenAI account and current AP
 - IPv4/IPv6 address and CIDR filters.
 - Single ports and ascending port ranges.
 - TCP, UDP, or Both.
+- `Both` is emitted explicitly as TCP + UDP; it does not silently include sing-box v1.13 ICMP matching.
 - Explicit priority ordering.
+- Canonical runtime ordering shared by the builder, rule view, process-candidate view, and Policy Intelligence.
+- Local Policy Intelligence plus request-scoped, user-selected, structurally de-identified AI explanation.
 - IPv4 and IPv6 TUN addresses with strict routing.
 - Atomic candidate configuration, `sing-box check`, cancellation-aware startup-settle verification, and rollback.
 - Exclusive runtime ownership plus PID/start-time orphan recovery.
@@ -152,15 +170,17 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 - Preview quality; compatibility varies by Windows, firewall, endpoint-security, and sing-box versions.
 - Version readiness recognizes the standard `sing-box version X.Y.Z` output and fails closed on unrecognized vendor output; it does not verify a third-party binary signature or checksum.
 - AI suggestions are not authoritative and may omit service domains or misunderstand intent.
+- Policy Intelligence proves only supported static containment/equality relations; it intentionally omits uncertain partial-overlap claims and does not observe live traffic.
+- Very large policies are bounded to keep the WPF UI responsive; a visible incomplete-analysis finding is emitted instead of silently presenting a partial report as complete.
 - No autonomous activation, traffic self-healing, live connection attribution, arbitrary executable wildcards, or remote Ollama endpoints.
 - No proxy node distribution or connectivity guarantee.
 - `sing-box check` validates configuration syntax/schema, not adapter creation or upstream reachability.
 
 ## 中文快速说明
 
-IntentRoute AI 是一个 Windows 开源 AI 分流控制工具。你可以用中文描述“哪个程序的哪些域名应该代理、直连或阻止”，再由 OpenAI 或本机 Ollama 生成结构化草案。软件会在本地执行严格校验，草案写入后默认禁用，必须由你再次确认启用。
+IntentRoute AI 是一个 Windows 开源 AI 分流控制工具。你可以用中文描述“哪个程序的哪些域名应该代理、直连或阻止”，再由 OpenAI 或本机 Ollama 生成结构化草案。软件会在本地执行严格校验，草案写入后默认禁用，必须由你再次确认启用。未发布的 `main` 还提供“AI 策略体检”：先在本地确定性检查重复、冲突、遮蔽、范围过宽和禁用规则问题，再由你选择 1–20 项并确认精确结构摘要后，才可请求 AI 做只读解释。
 
-OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只允许字面量 `127.0.0.1` 或 `::1`（默认连接 `127.0.0.1:11434`）。两种模式都不会发送代理密码、现有规则、运行日志或完整进程列表。没有配置 AI 时，所有手工分流功能仍可正常使用。
+OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只允许字面量 `127.0.0.1` 或 `::1`（默认连接 `127.0.0.1:11434`）。两种模式都不会发送代理密码、现有规则值、运行日志或完整进程列表。策略解读只发送计数、发现编号/类型/等级/关系和受影响规则数量，不发送进程名、域名、IP、端口、规则 ID、备注、路径或代理信息。没有配置 AI 时，手工分流和本地策略体检仍可正常使用。
 
 ## License
 

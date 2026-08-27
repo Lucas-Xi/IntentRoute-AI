@@ -223,7 +223,7 @@ internal static class AiRuleContract
     }
 }
 
-public sealed class OpenAiRuleProvider : IAiRuleProvider, IDisposable
+public sealed partial class OpenAiRuleProvider : IAiRuleProvider, IAiPolicyExplainer, IDisposable
 {
     public const string DefaultModel = "gpt-5.4-mini";
     private static readonly string[] SupportedModels = [DefaultModel, "gpt-5.4"];
@@ -360,7 +360,7 @@ public sealed class OpenAiRuleProvider : IAiRuleProvider, IDisposable
     };
 }
 
-public sealed class OllamaRuleProvider : IAiRuleProvider, IDisposable
+public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExplainer, IDisposable
 {
     public static readonly Uri DefaultBaseUri = new("http://127.0.0.1:11434/");
 
