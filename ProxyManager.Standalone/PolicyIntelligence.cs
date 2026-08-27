@@ -839,8 +839,18 @@ public static class PolicyIntelligence
             port is >= 1 and <= 65535;
     }
 
-    private readonly record struct IpNetwork(AddressFamily Family, byte[] NetworkBytes, int PrefixLength)
+    private readonly struct IpNetwork : IEquatable<IpNetwork>
     {
+        public IpNetwork(AddressFamily family, byte[] networkBytes, int prefixLength)
+        {
+            Family = family;
+            NetworkBytes = networkBytes;
+            PrefixLength = prefixLength;
+        }
+
+        public AddressFamily Family { get; }
+        public byte[] NetworkBytes { get; }
+        public int PrefixLength { get; }
         public string SortKey => $"{(int)Family}:{PrefixLength}:{Convert.ToHexString(NetworkBytes)}";
 
         public bool Contains(IpNetwork later)
@@ -877,6 +887,12 @@ public static class PolicyIntelligence
 
         public bool Equals(IpNetwork other) =>
             Family == other.Family && PrefixLength == other.PrefixLength && NetworkBytes.SequenceEqual(other.NetworkBytes);
+
+        public override bool Equals(object? obj) => obj is IpNetwork other && Equals(other);
+
+        public static bool operator ==(IpNetwork left, IpNetwork right) => left.Equals(right);
+
+        public static bool operator !=(IpNetwork left, IpNetwork right) => !left.Equals(right);
 
         public override int GetHashCode()
         {

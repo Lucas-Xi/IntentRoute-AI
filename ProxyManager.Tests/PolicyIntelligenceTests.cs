@@ -278,6 +278,24 @@ public sealed class PolicyIntelligenceTests
     }
 
     [Fact]
+    public void Analyze_DeduplicatesCidrsByNetworkValueInsteadOfArrayIdentity()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("exact-cidr.exe", ProxyMode.Direct, ips: "10.0.0.0/24,10.0.0.0/24", priority: 10),
+            Rule("exact-cidr.exe", ProxyMode.Direct, ips: "10.0.0.0/24", priority: 20),
+            Rule("equivalent-cidr.exe", ProxyMode.Direct, ips: "10.0.0.1/24,10.0.0.0/24", priority: 30),
+            Rule("equivalent-cidr.exe", ProxyMode.Direct, ips: "10.0.0.0/24", priority: 40)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.Equal(2, report.Findings.Count(finding => finding.Kind == PolicyFindingKind.Duplicate));
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == PolicyFindingKind.Shadowed);
+    }
+
+    [Fact]
     public void Analyze_HonorsCancellationBeforeWorkBegins()
     {
         using var cancellation = new CancellationTokenSource();
