@@ -215,4 +215,107 @@
   <data name="AnalyzingText" xml:space="preserve"><value>Analyzing</value></data>
   <data name="VersionUnrecognized" xml:space="preserve"><value>Unrecognized</value></data>
   <data name="VersionCheckBlocked" xml:space="preserve"><value>Checking blocked</value></data>
+  <data name="ProviderOpenAiCloud" xml:space="preserve"><value>OpenAI (cloud)</value></data>
+  <data name="ProviderOllamaLocal" xml:space="preserve"><value>Ollama (local)</value></data>
+  <data name="JoinSeparator" xml:space="preserve"><value>; </value></data>
+  <data name="AiPrivacyOpenAiMsg" xml:space="preserve"><value>OpenAI mode sends only your intent text and the static rule format; requests set store=false. No proxy credentials, existing rules, logs, or process lists are sent.</value></data>
+  <data name="AiPrivacyOllamaMsg" xml:space="preserve"><value>Ollama mode connects to local 127.0.0.1 by default and accepts only literal 127.0.0.1 or ::1; it never downloads models, starts services, or falls back to the cloud.</value></data>
+  <data name="AiMsgModelsNoKey" xml:space="preserve"><value>OpenAI models loaded. Set the current-user environment variable OPENAI_API_KEY and reopen the app before generating.</value></data>
+  <data name="AiMsgModelsLoadedFormat" xml:space="preserve"><value>{0} models loaded. AI drafts are never written or enabled automatically.</value></data>
+  <data name="AiMsgOllamaNoModels" xml:space="preserve"><value>Ollama is running but no models are installed. Run "ollama pull &lt;model&gt;" in a terminal first.</value></data>
+  <data name="AiMsgEnterIntentAndModel" xml:space="preserve"><value>Enter a routing intent and select a model.</value></data>
+  <data name="AiMsgGenerating" xml:space="preserve"><value>Generating a structured draft; local deterministic validation runs immediately when it returns…</value></data>
+  <data name="AiMsgNoWarnings" xml:space="preserve"><value>No model warnings.</value></data>
+  <data name="AiMsgWarningsPrefix" xml:space="preserve"><value>Warnings: </value></data>
+  <data name="AiMsgValidationPassedFormat" xml:space="preserve"><value>Local validation passed. {0} {1} Rules are still added disabled.</value></data>
+  <data name="AiMsgValidationFailedPrefix" xml:space="preserve"><value>Local validation failed: </value></data>
+  <data name="AiMsgCancelled" xml:space="preserve"><value>AI rule generation cancelled; the configuration is unchanged.</value></data>
+  <data name="AiMsgFailed" xml:space="preserve"><value>AI rule generation failed. The configuration is unchanged; check the provider and retry.</value></data>
+  <data name="AiMsgRevalidationFailedPrefix" xml:space="preserve"><value>The configuration changed after preview and the draft failed revalidation: </value></data>
+  <data name="AiMsgAddedFormat" xml:space="preserve"><value>Added {0} disabled rules. Review them one by one on the rule page and enable manually.</value></data>
+  <data name="AiMsgSaveFailed" xml:space="preserve"><value>Failed to save the AI draft; the addition was rolled back and the existing configuration was not replaced.</value></data>
+  <data name="AiMsgEditRevalidated" xml:space="preserve"><value>The edited draft passed local validation again. Rules are still added disabled and must be enabled manually.</value></data>
+  <data name="AiMsgEditValidationFailedPrefix" xml:space="preserve"><value>Local validation failed after editing: </value></data>
+  <data name="PolicyMsgReadyNoKey" xml:space="preserve"><value>The local check is ready to use. AI explanation requires setting OPENAI_API_KEY first and reopening the app.</value></data>
+  <data name="PolicyMsgLocalOnly" xml:space="preserve"><value>The local check never accesses the network; a de-identified structured summary is sent only after you click AI explanation.</value></data>
+  <data name="PolicyMsgOllamaNoModels" xml:space="preserve"><value>The local check is ready; Ollama currently has no installed models, so AI explanation is unavailable.</value></data>
+  <data name="PolicyMsgModelUnavailablePrefix" xml:space="preserve"><value>The local check still works. AI model unavailable: </value></data>
+  <data name="PolicyMsgChangedPreviewBlocked" xml:space="preserve"><value>The policy changed; previewing the old summary was blocked. Re-select findings from the latest analysis.</value></data>
+  <data name="PolicyMsgSelectFindings" xml:space="preserve"><value>Select 1–20 findings in the local list and choose an AI model first.</value></data>
+  <data name="PolicyConfirmOpenAi" xml:space="preserve"><value>Provider: OpenAI; requests set store=false, but provider-side processing is still governed by your account and current policies.</value></data>
+  <data name="PolicyConfirmOllama" xml:space="preserve"><value>Provider: local Ollama; the request is sent only to literal 127.0.0.1 or ::1.</value></data>
+  <data name="PolicyConfirmJsonHeader" xml:space="preserve"><value>Complete logical JSON to be sent:</value></data>
+  <data name="PolicyConfirmExclusionNote" xml:space="preserve"><value>It contains no process names, domains, IPs, ports, rule IDs, notes, paths, proxy addresses, credentials, logs, or process lists. Send this de-identified summary?</value></data>
+  <data name="PolicyConfirmTitle" xml:space="preserve"><value>Confirm sending the AI policy summary</value></data>
+  <data name="PolicyMsgSendCancelled" xml:space="preserve"><value>Sending cancelled; local findings and configuration are unchanged.</value></data>
+  <data name="PolicyMsgChangedDuringConfirm" xml:space="preserve"><value>The policy changed during confirmation; the old summary was not sent. Re-select findings from the latest analysis.</value></data>
+  <data name="PolicyMsgSending" xml:space="preserve"><value>Sending the de-identified structured summary and waiting for read-only AI explanation…</value></data>
+  <data name="PolicyMsgSendingTopFormat" xml:space="preserve"><value>Sending the {0} highest-priority structured findings; {1} more remain local-only…</value></data>
+  <data name="PolicyMsgStaleResponse" xml:space="preserve"><value>The configuration changed before the AI response returned; the stale result was discarded. Re-explain from the latest analysis.</value></data>
+  <data name="PolicyMsgNoCaveats" xml:space="preserve"><value>The model returned no additional caveats.</value></data>
+  <data name="PolicyMsgCaveatsPrefix" xml:space="preserve"><value>Caveats: </value></data>
+  <data name="PolicyMsgExplanationDoneFormat" xml:space="preserve"><value>AI explanation finished with {0} priority recommendations. {1} The configuration is unchanged.</value></data>
+  <data name="PolicyMsgExplanationCancelled" xml:space="preserve"><value>AI policy explanation cancelled; local findings and configuration are unchanged.</value></data>
+  <data name="PolicyMsgStillValidSuffix" xml:space="preserve"><value> Local findings remain valid and the configuration is unchanged.</value></data>
+  <data name="PolicyMsgExplanationFailed" xml:space="preserve"><value>AI policy explanation failed; local findings remain valid and the configuration is unchanged.</value></data>
+  <data name="PolicyMsgBudgetFormat" xml:space="preserve"><value>The local check hit its analysis budget: at least {0} items were not fully expanded, so this report is not a complete conclusion.</value></data>
+  <data name="PolicyMsgDoneNoIssues" xml:space="preserve"><value>Local check finished: no determinable issues found. This does not verify real traffic or proxy reachability.</value></data>
+  <data name="PolicyMsgDoneFormat" xml:space="preserve"><value>Local check finished: {0} findings; no AI was called and no configuration changed.</value></data>
+  <data name="PolicyEmptyFailed" xml:space="preserve"><value>The local check failed; no policy conclusion was produced.</value></data>
+  <data name="PolicyMsgFailedPrefix" xml:space="preserve"><value>Local check failed: </value></data>
+  <data name="PolicyEmptyRunning" xml:space="preserve"><value>Running a cancellable local deterministic check in the background…</value></data>
+  <data name="PolicyMsgAnalyzing" xml:space="preserve"><value>Analyzing the current policy in the background; no network access, port probing, or configuration changes.</value></data>
+  <data name="PolicyEmptyProtected" xml:space="preserve"><value>The configuration is under recovery protection; the policy check was not run.</value></data>
+  <data name="PolicyMsgProtected" xml:space="preserve"><value>The configuration is under recovery protection; reporting the empty placeholder as a healthy policy was blocked.</value></data>
+  <data name="PolicyAiSummaryNotYet" xml:space="preserve"><value>AI has not explained yet; local deterministic findings always take precedence over model text.</value></data>
+  <data name="RouteMsgConfigChanged" xml:space="preserve"><value>The configuration changed during simulation; the old result is hidden. Simulate again.</value></data>
+  <data name="RouteMsgCancelled" xml:space="preserve"><value>Local simulation cancelled; the configuration and sing-box are unchanged.</value></data>
+  <data name="RouteMsgFailed" xml:space="preserve"><value>Local simulation failed; no route decision was produced.</value></data>
+  <data name="RouteBadgeSimulating" xml:space="preserve"><value>Simulating</value></data>
+  <data name="RouteSrcSimulating" xml:space="preserve"><value>Running a bounded evaluation in production canonical rule order.</value></data>
+  <data name="RouteReasonPending" xml:space="preserve"><value>No conclusion yet.</value></data>
+  <data name="RouteSnapshotBinding" xml:space="preserve"><value>Binding the configuration snapshot and normalized query.</value></data>
+  <data name="RouteStatusSimulating" xml:space="preserve"><value>Running a local static what-if in the background; no network access, proxy probing, or real-connection reading.</value></data>
+  <data name="RouteSrcMatchedFormat" xml:space="preserve"><value>Canonical order #{0}: {1}</value></data>
+  <data name="RouteSrcFallback" xml:space="preserve"><value>All active rules are provably excluded; the current global default applies.</value></data>
+  <data name="RouteSrcIndeterminateFormat" xml:space="preserve"><value>Stopped conservatively after evaluating {0} active rules.</value></data>
+  <data name="RouteSrcInvalidQuery" xml:space="preserve"><value>The query does not satisfy the v1 concrete-input contract.</value></data>
+  <data name="RouteSrcInvalidPolicy" xml:space="preserve"><value>The production configuration builder rejected the current policy.</value></data>
+  <data name="RouteSrcNone" xml:space="preserve"><value>No decision source to show.</value></data>
+  <data name="RouteSnapNoFingerprint" xml:space="preserve"><value>No valid snapshot fingerprint.</value></data>
+  <data name="RouteSnapFingerprintFormat" xml:space="preserve"><value>Snapshot/query fingerprint {0}…; checked against the current configuration.</value></data>
+  <data name="RouteStatusProvenDone" xml:space="preserve"><value>The local static simulation finished with a provable conclusion; this is still not evidence of real connections, DNS, proxy reachability, or actual traffic.</value></data>
+  <data name="RouteStatusIndeterminateDone" xml:space="preserve"><value>The local static simulation stopped conservatively; later rules are not guessed until the missing domain or resolved-IP context is supplied.</value></data>
+  <data name="RouteStatusInvalidQuery" xml:space="preserve"><value>Fix the input and retry; no network or runtime state was read.</value></data>
+  <data name="RouteStatusInvalidPolicy" xml:space="preserve"><value>The current policy cannot be built with production-supported semantics; no potentially misleading action was returned.</value></data>
+  <data name="RouteStatusNoDecision" xml:space="preserve"><value>No route decision was produced.</value></data>
+  <data name="RouteDestinationLabelIp" xml:space="preserve"><value>Concrete IP address</value></data>
+  <data name="RouteMsgInputChanged" xml:space="preserve"><value>The input changed; the old result is hidden. Simulate again.</value></data>
+  <data name="RouteMsgRulesChanged" xml:space="preserve"><value>The configuration changed; the old result is hidden. Simulate again.</value></data>
+  <data name="RouteBadgeStale" xml:space="preserve"><value>Re-simulation needed</value></data>
+  <data name="RouteBadgeFailed" xml:space="preserve"><value>Simulation failed</value></data>
+  <data name="RouteSrcHidden" xml:space="preserve"><value>The old decision is not shown.</value></data>
+  <data name="RouteSnapUnbound" xml:space="preserve"><value>No current configuration snapshot bound.</value></data>
+  <data name="RouteMsgProtected" xml:space="preserve"><value>The configuration is under recovery protection; simulating the empty placeholder is blocked. Recover or explicitly reset the configuration first.</value></data>
+  <data name="RouteBadgeProtected" xml:space="preserve"><value>Protection active</value></data>
+  <data name="RouteMsgGlobalModeChanged" xml:space="preserve"><value>The global default changed; re-simulate against the current snapshot.</value></data>
+  <data name="RouteMsgProxyChanged" xml:space="preserve"><value>The proxy configuration changed; re-simulate against the current snapshot.</value></data>
+  <data name="RouteMsgRulesRefreshed" xml:space="preserve"><value>Configuration rules were refreshed; re-simulate against the current snapshot.</value></data>
+  <data name="RouteReasonMatched" xml:space="preserve"><value>All provable conditions of the first winning rule or the global default are satisfied.</value></data>
+  <data name="RouteReasonProcessMismatch" xml:space="preserve"><value>The process name provably does not match.</value></data>
+  <data name="RouteReasonTransportMismatch" xml:space="preserve"><value>The TCP/UDP condition provably does not match.</value></data>
+  <data name="RouteReasonPortMismatch" xml:space="preserve"><value>The destination port is provably outside the rule's range.</value></data>
+  <data name="RouteReasonDestinationMismatch" xml:space="preserve"><value>The concrete destination provably does not match the rule's target conditions.</value></data>
+  <data name="RouteReasonResolvedIpRequired" xml:space="preserve"><value>The earlier rule also has IP/CIDR conditions; it cannot be excluded without a resolved IP.</value></data>
+  <data name="RouteReasonDomainContextRequired" xml:space="preserve"><value>The earlier rule also has domain conditions; it cannot be excluded without domain context.</value></data>
+  <data name="RouteReasonBudgetExceeded" xml:space="preserve"><value>Active rules exceed the bounded evaluation budget of 500 per run.</value></data>
+  <data name="RouteReasonInvalidQuery" xml:space="preserve"><value>An exact process name, a concrete domain or literal IP, a port in 1–65535, and TCP or UDP are required.</value></data>
+  <data name="RouteReasonInvalidPolicy" xml:space="preserve"><value>The current configuration failed the same supported-semantics validation as the production builder.</value></data>
+  <data name="RouteReasonUnknown" xml:space="preserve"><value>The basis for this decision cannot be determined.</value></data>
+  <data name="HealthStateReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="HealthStateNotConfigured" xml:space="preserve"><value>Not configured</value></data>
+  <data name="HealthStateMisconfigured" xml:space="preserve"><value>Incomplete configuration</value></data>
+  <data name="HealthStateUnreachable" xml:space="preserve"><value>Local service unreachable</value></data>
+  <data name="HealthStateUnknown" xml:space="preserve"><value>Unknown state</value></data>
+  <data name="HealthFailedFormat" xml:space="preserve"><value>Diagnostics could not complete: {0}</value></data>
 </root>

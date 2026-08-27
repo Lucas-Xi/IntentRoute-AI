@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using Strings = ProxyManager.Standalone.Localization.Strings;
 
 namespace ProxyManager.Standalone;
 
@@ -69,9 +70,9 @@ public partial class MainWindow : Window
         PolicyFindingsList.ItemsSource = _policyFindings;
         PolicyAiAdviceList.ItemsSource = _policyAdvice;
         RouteDecisionTraceList.ItemsSource = _routeDecisionTrace;
-        AiProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
+        AiProviderCombo.ItemsSource = new[] { Strings.ProviderOpenAiCloud, Strings.ProviderOllamaLocal };
         AiProviderCombo.SelectedIndex = 0;
-        PolicyProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
+        PolicyProviderCombo.ItemsSource = new[] { Strings.ProviderOpenAiCloud, Strings.ProviderOllamaLocal };
         PolicyProviderCombo.SelectedIndex = 0;
 
         // 允许标题栏拖动
@@ -207,8 +208,8 @@ public partial class MainWindow : Window
         ResetAiDraft();
 
         AiPrivacyText.Text = provider.Kind == AiProviderKind.OpenAI
-            ? "OpenAI 模式只发送你输入的意图和静态规则格式；请求设置 store=false。不会发送代理凭据、现有规则、日志或进程列表。"
-            : "Ollama 模式默认连接本机 127.0.0.1，且只允许字面量 127.0.0.1 或 ::1；不会自动下载模型、启动服务或回退到云端。";
+            ? Strings.AiPrivacyOpenAiMsg
+            : Strings.AiPrivacyOllamaMsg;
 
         try
         {
@@ -222,13 +223,13 @@ public partial class MainWindow : Window
             {
                 AiModelCombo.SelectedIndex = 0;
                 AiStatusText.Text = provider.Kind == AiProviderKind.OpenAI && !provider.IsAvailable
-                    ? "已加载 OpenAI 模型。生成前请设置当前用户环境变量 OPENAI_API_KEY，然后重新打开应用。"
-                    : $"已加载 {models.Count} 个可用模型。AI 草案不会自动写入或启用。";
+                    ? Strings.AiMsgModelsNoKey
+                    : string.Format(Strings.AiMsgModelsLoadedFormat, models.Count);
                 AiGenerateButton.IsEnabled = true;
             }
             else
             {
-                AiStatusText.Text = "Ollama 正在运行，但没有已安装模型。请先在终端执行 ollama pull <模型名>。";
+                AiStatusText.Text = Strings.AiMsgOllamaNoModels;
             }
         }
         catch (AiProviderException ex)
@@ -254,7 +255,7 @@ public partial class MainWindow : Window
         var model = AiModelCombo.SelectedItem as string;
         if (string.IsNullOrWhiteSpace(intent) || string.IsNullOrWhiteSpace(model))
         {
-            AiStatusText.Text = "请输入分流意图并选择模型。";
+            AiStatusText.Text = Strings.AiMsgEnterIntentAndModel;
             return;
         }
 
@@ -269,7 +270,7 @@ public partial class MainWindow : Window
         AiIntentBox.IsEnabled = false;
         AiGenerateButton.IsEnabled = false;
         AiCancelButton.IsEnabled = true;
-        AiStatusText.Text = "正在生成结构化草案；结果返回后会立即执行本地确定性校验…";
+        AiStatusText.Text = Strings.AiMsgGenerating;
 
         try
         {
@@ -292,19 +293,19 @@ public partial class MainWindow : Window
             if (validation.Success)
             {
                 var warnings = suggestion.Warnings.Count == 0
-                    ? "无模型警告。"
-                    : "警告: " + string.Join("；", suggestion.Warnings);
-                AiStatusText.Text = $"本地校验通过。{suggestion.Summary} {warnings} 添加后规则仍为禁用状态。";
+                    ? Strings.AiMsgNoWarnings
+                    : Strings.AiMsgWarningsPrefix + string.Join(Strings.JoinSeparator, suggestion.Warnings);
+                AiStatusText.Text = string.Format(Strings.AiMsgValidationPassedFormat, suggestion.Summary, warnings);
                 AiAcceptButton.IsEnabled = true;
             }
             else
             {
-                AiStatusText.Text = "本地校验未通过: " + string.Join("；", validation.Errors);
+                AiStatusText.Text = Strings.AiMsgValidationFailedPrefix + string.Join(Strings.JoinSeparator, validation.Errors);
             }
         }
         catch (OperationCanceledException)
         {
-            AiStatusText.Text = "已取消 AI 规则生成，配置未发生变化。";
+            AiStatusText.Text = Strings.AiMsgCancelled;
         }
         catch (AiProviderException ex)
         {
@@ -312,7 +313,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            AiStatusText.Text = "AI 规则生成失败。配置未发生变化，请检查提供商后重试。";
+            AiStatusText.Text = Strings.AiMsgFailed;
         }
         finally
         {
@@ -359,20 +360,20 @@ public partial class MainWindow : Window
             {
                 _currentAiValidation = revalidated;
                 AiAcceptButton.IsEnabled = false;
-                AiStatusText.Text = "现有配置在预览后发生变化，草案重新校验未通过: " + string.Join("；", revalidated.Errors);
+                AiStatusText.Text = Strings.AiMsgRevalidationFailedPrefix + string.Join(Strings.JoinSeparator, revalidated.Errors);
                 return;
             }
 
             _service.AcceptDisabledAiRules(revalidated.Rules);
             LoadRules();
-            AiStatusText.Text = $"已添加 {revalidated.Rules.Count} 条禁用规则。请到规则管理页逐条检查并手动启用。";
+            AiStatusText.Text = string.Format(Strings.AiMsgAddedFormat, revalidated.Rules.Count);
             AiAcceptButton.IsEnabled = false;
             _currentAiSuggestion = null;
             _currentAiValidation = null;
         }
         catch
         {
-            AiStatusText.Text = "保存 AI 草案失败；本次添加已回滚，现有配置未被替换。";
+            AiStatusText.Text = Strings.AiMsgSaveFailed;
         }
     }
 
@@ -416,12 +417,12 @@ public partial class MainWindow : Window
         if (validation.Success)
         {
             AiAcceptButton.IsEnabled = true;
-            AiStatusText.Text = "编辑后的草案已重新通过本地校验。添加后规则仍为禁用状态，需手动启用。";
+            AiStatusText.Text = Strings.AiMsgEditRevalidated;
         }
         else
         {
             AiAcceptButton.IsEnabled = false;
-            AiStatusText.Text = "编辑后本地校验未通过: " + string.Join("；", validation.Errors);
+            AiStatusText.Text = Strings.AiMsgEditValidationFailedPrefix + string.Join(Strings.JoinSeparator, validation.Errors);
         }
     }
 
@@ -476,20 +477,20 @@ public partial class MainWindow : Window
             {
                 PolicyModelCombo.SelectedIndex = 0;
                 PolicyStatusText.Text = provider.Kind == AiProviderKind.OpenAI && !provider.IsAvailable
-                    ? "本地体检可直接使用。AI 解读需要先设置 OPENAI_API_KEY，再重新打开应用。"
-                    : "本地体检不会联网；只有点击 AI 解读后才发送去标识结构摘要。";
+                    ? Strings.PolicyMsgReadyNoKey
+                    : Strings.PolicyMsgLocalOnly;
                 PolicyExplainButton.IsEnabled =
                     PolicyFindingsList.SelectedItems.Count is > 0 and <= PolicyDisclosure.MaxFindings;
             }
             else
             {
-                PolicyStatusText.Text = "本地体检可直接使用；当前 Ollama 没有已安装模型，AI 解读暂不可用。";
+                PolicyStatusText.Text = Strings.PolicyMsgOllamaNoModels;
             }
         }
         catch (AiProviderException ex)
         {
             if (refreshVersion == _policyModelRefreshVersion)
-                PolicyStatusText.Text = "本地体检仍可使用。AI 模型不可用: " + ex.Message;
+                PolicyStatusText.Text = Strings.PolicyMsgModelUnavailablePrefix + ex.Message;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -523,7 +524,7 @@ public partial class MainWindow : Window
         if (!matchesBeforePreview)
         {
             await RefreshPolicyAnalysisAsync();
-            PolicyStatusText.Text = "策略已变化；已阻止预览旧摘要，请在最新体检中重新选择发现。";
+            PolicyStatusText.Text = Strings.PolicyMsgChangedPreviewBlocked;
             return;
         }
 
@@ -535,7 +536,7 @@ public partial class MainWindow : Window
             .ToList();
         if (string.IsNullOrWhiteSpace(model) || selectedCodes.Count is < 1 or > PolicyDisclosure.MaxFindings)
         {
-            PolicyStatusText.Text = "请先在本地发现列表中选择 1–20 项，再选择 AI 模型。";
+            PolicyStatusText.Text = Strings.PolicyMsgSelectFindings;
             return;
         }
 
@@ -543,18 +544,18 @@ public partial class MainWindow : Window
         var provider = GetSelectedPolicyExplainer();
         var preview = AiPolicyContract.CreateInput(disclosure);
         var providerNotice = provider.Kind == AiProviderKind.OpenAI
-            ? "提供商: OpenAI；请求设置 store=false，但提供商侧处理仍受你的账户与当前政策约束。"
-            : "提供商: 本机 Ollama；请求仅发送到字面量 127.0.0.1 或 ::1。";
+            ? Strings.PolicyConfirmOpenAi
+            : Strings.PolicyConfirmOllama;
         var confirmed = MessageBox.Show(
-            providerNotice + "\n\n将发送的完整逻辑 JSON：\n" + preview +
-            "\n\n不包含进程名、域名、IP、端口、规则 ID、备注、路径、代理地址、凭据、日志或进程列表。确认发送本次去标识摘要吗？",
-            "确认发送 AI 策略摘要",
+            providerNotice + "\n\n" + Strings.PolicyConfirmJsonHeader + "\n" + preview +
+            "\n\n" + Strings.PolicyConfirmExclusionNote,
+            Strings.PolicyConfirmTitle,
             MessageBoxButton.YesNo,
             MessageBoxImage.Question,
             MessageBoxResult.No);
         if (confirmed != MessageBoxResult.Yes)
         {
-            PolicyStatusText.Text = "已取消发送；本地体检结果与配置均未变化。";
+            PolicyStatusText.Text = Strings.PolicyMsgSendCancelled;
             return;
         }
 
@@ -570,7 +571,7 @@ public partial class MainWindow : Window
         if (!matchesAfterConfirmation)
         {
             await RefreshPolicyAnalysisAsync();
-            PolicyStatusText.Text = "确认期间策略已变化；未发送旧摘要，请在最新体检中重新选择发现。";
+            PolicyStatusText.Text = Strings.PolicyMsgChangedDuringConfirm;
             return;
         }
 
@@ -583,8 +584,8 @@ public partial class MainWindow : Window
         PolicyCancelButton.IsEnabled = true;
         ResetPolicyExplanation();
         PolicyStatusText.Text = disclosure.OmittedFindingCount == 0
-            ? "正在发送去标识结构摘要并等待只读 AI 解读…"
-            : $"正在发送最高优先级的 {disclosure.Findings.Count} 项结构发现；另有 {disclosure.OmittedFindingCount} 项仅保留在本地…";
+            ? Strings.PolicyMsgSending
+            : string.Format(Strings.PolicyMsgSendingTopFormat, disclosure.Findings.Count, disclosure.OmittedFindingCount);
 
         try
         {
@@ -597,7 +598,7 @@ public partial class MainWindow : Window
             if (!await PolicyReportMatchesCurrentAsync(report, requestCts.Token))
             {
                 await RefreshPolicyAnalysisAsync();
-                PolicyStatusText.Text = "AI 解读返回前配置已变化；旧结果已丢弃，请基于最新体检重新解读。";
+                PolicyStatusText.Text = Strings.PolicyMsgStaleResponse;
                 return;
             }
 
@@ -605,21 +606,21 @@ public partial class MainWindow : Window
             foreach (var priority in explanation.Priorities)
                 _policyAdvice.Add(AiPolicyAdviceLine.FromPriority(priority));
             var caveats = explanation.Caveats.Count == 0
-                ? "模型未返回额外限制说明。"
-                : "限制: " + string.Join("；", explanation.Caveats);
-            PolicyStatusText.Text = $"AI 解读完成，共 {explanation.Priorities.Count} 条优先建议。{caveats} 配置未发生变化。";
+                ? Strings.PolicyMsgNoCaveats
+                : Strings.PolicyMsgCaveatsPrefix + string.Join(Strings.JoinSeparator, explanation.Caveats);
+            PolicyStatusText.Text = string.Format(Strings.PolicyMsgExplanationDoneFormat, explanation.Priorities.Count, caveats);
         }
         catch (OperationCanceledException)
         {
-            PolicyStatusText.Text = "已取消 AI 策略解读；本地体检和配置均未变化。";
+            PolicyStatusText.Text = Strings.PolicyMsgExplanationCancelled;
         }
         catch (AiProviderException ex)
         {
-            PolicyStatusText.Text = ex.Message + " 本地体检结果仍然有效，配置未变化。";
+            PolicyStatusText.Text = ex.Message + Strings.PolicyMsgStillValidSuffix;
         }
         catch
         {
-            PolicyStatusText.Text = "AI 策略解读失败；本地体检结果仍然有效，配置未变化。";
+            PolicyStatusText.Text = Strings.PolicyMsgExplanationFailed;
         }
         finally
         {
@@ -713,13 +714,13 @@ public partial class MainWindow : Window
             PolicyWarningCount.Text = latest.WarningCount.ToString();
             PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
             PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, latest.Findings.Count);
-            PolicyEmptyText.Text = "未发现可确定的问题。策略体检不等同于真实流量验证。";
+            PolicyEmptyText.Text = Strings.PolicyEmpty;
             PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             PolicyStatusText.Text = !latest.IsComplete
-                ? $"本地体检达到分析预算：至少 {latest.OmittedFindingCount} 个项目未完整展开，当前报告不能视为完整结论。"
+                ? string.Format(Strings.PolicyMsgBudgetFormat, latest.OmittedFindingCount)
                 : latest.Findings.Count == 0
-                    ? "本地体检完成：未发现可确定的问题。此结果不代表真实流量或代理连通性已验证。"
-                    : $"本地体检完成：{latest.Findings.Count} 项发现；未调用 AI，未修改配置。";
+                    ? Strings.PolicyMsgDoneNoIssues
+                    : string.Format(Strings.PolicyMsgDoneFormat, latest.Findings.Count);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
@@ -732,9 +733,9 @@ public partial class MainWindow : Window
                 _currentPolicyReport = null;
                 _policyFindings.Clear();
                 PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, 0);
-                PolicyEmptyText.Text = "本地体检失败，未生成策略结论。";
+                PolicyEmptyText.Text = Strings.PolicyEmptyFailed;
                 PolicyEmptyText.Visibility = Visibility.Visible;
-                PolicyStatusText.Text = "本地体检失败: " + SingBoxRuntime.RedactSecrets(ex.Message);
+                PolicyStatusText.Text = Strings.PolicyMsgFailedPrefix + SingBoxRuntime.RedactSecrets(ex.Message);
             }
         }
         finally
@@ -756,11 +757,11 @@ public partial class MainWindow : Window
         PolicyWarningCount.Text = "…";
         PolicyDisabledCount.Text = "…";
         PolicyFindingCount.Text = Localization.Strings.AnalyzingText;
-        PolicyEmptyText.Text = "正在后台执行可取消的本地确定性体检…";
+        PolicyEmptyText.Text = Strings.PolicyEmptyRunning;
         PolicyEmptyText.Visibility = Visibility.Visible;
         PolicyLocateButton.IsEnabled = false;
         PolicyExplainButton.IsEnabled = false;
-        PolicyStatusText.Text = "正在后台分析当前策略；不会联网、探测端口或修改配置。";
+        PolicyStatusText.Text = Strings.PolicyMsgAnalyzing;
     }
 
     private void ShowProtectedPolicyState()
@@ -774,17 +775,17 @@ public partial class MainWindow : Window
         PolicyWarningCount.Text = "0";
         PolicyDisabledCount.Text = "0";
         PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, 0);
-        PolicyEmptyText.Text = "配置处于恢复保护状态，未执行策略体检。";
+        PolicyEmptyText.Text = Strings.PolicyEmptyProtected;
         PolicyEmptyText.Visibility = Visibility.Visible;
         PolicyLocateButton.IsEnabled = false;
         PolicyExplainButton.IsEnabled = false;
-        PolicyStatusText.Text = "配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。";
+        PolicyStatusText.Text = Strings.PolicyMsgProtected;
     }
 
     private void ResetPolicyExplanation()
     {
         _policyAdvice.Clear();
-        PolicyAiSummaryText.Text = "AI 尚未解读；本地确定性发现始终优先于模型文字。";
+        PolicyAiSummaryText.Text = Strings.PolicyAiSummaryNotYet;
     }
 
     private async Task<bool> PolicyReportMatchesCurrentAsync(
@@ -848,7 +849,7 @@ public partial class MainWindow : Window
                 cts.Token);
             if (!stillCurrent)
             {
-                InvalidateRouteDecision("推演期间配置已经变化；旧结果已隐藏，请重新推演。");
+                InvalidateRouteDecision(Strings.RouteMsgConfigChanged);
                 return;
             }
 
@@ -859,13 +860,13 @@ public partial class MainWindow : Window
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
             if (version == _routeSimulationVersion && !_shutdownStarted)
-                RouteDecisionStatusText.Text = "本地推演已取消；配置和 sing-box 均未变化。";
+                RouteDecisionStatusText.Text = Strings.RouteMsgCancelled;
         }
         catch (Exception ex)
         {
             if (version == _routeSimulationVersion && !_shutdownStarted)
             {
-                InvalidateRouteDecision("本地推演失败；未生成路由结论。", markStale: false);
+                InvalidateRouteDecision(Strings.RouteMsgFailed, markStale: false);
                 RouteDecisionReasonText.Text = SingBoxRuntime.RedactSecrets(ex.Message);
             }
         }
@@ -891,12 +892,12 @@ public partial class MainWindow : Window
         _routeDecisionTrace.Clear();
         RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
         RouteDecisionTraceCountText.Text = string.Format(Localization.Strings.CountTraceFormat, 0);
-        RouteDecisionBadgeText.Text = "推演中";
+        RouteDecisionBadgeText.Text = Strings.RouteBadgeSimulating;
         RouteDecisionActionText.Text = "…";
-        RouteDecisionSourceText.Text = "正在按生产规则的规范顺序进行有界求值。";
-        RouteDecisionReasonText.Text = "尚未得出结论。";
-        RouteDecisionSnapshotText.Text = "正在绑定配置快照与规范化查询。";
-        RouteDecisionStatusText.Text = "正在后台执行本地静态 what-if；不会联网、探测代理或读取真实连接。";
+        RouteDecisionSourceText.Text = Strings.RouteSrcSimulating;
+        RouteDecisionReasonText.Text = Strings.RouteReasonPending;
+        RouteDecisionSnapshotText.Text = Strings.RouteSnapshotBinding;
+        RouteDecisionStatusText.Text = Strings.RouteStatusSimulating;
         RouteDecisionLocateButton.IsEnabled = false;
         RouteSimulateButton.IsEnabled = false;
         RouteDecisionCancelButton.IsEnabled = true;
@@ -931,33 +932,33 @@ public partial class MainWindow : Window
         RouteDecisionSourceText.Text = report.Kind switch
         {
             RouteDecisionKind.MatchedRule =>
-                $"规范顺序 #{report.MatchedEvaluationOrder}: {report.MatchedRuleDisplayName}",
-            RouteDecisionKind.GlobalFallback => "所有活动规则均可明确排除，使用当前全局默认。",
-            RouteDecisionKind.Indeterminate => $"在求值 {report.EvaluatedRuleCount} 条活动规则后保守停止。",
-            RouteDecisionKind.InvalidQuery => "查询不满足版本 1 的具体输入契约。",
-            RouteDecisionKind.InvalidPolicy => "生产配置构建器拒绝了当前策略。",
-            _ => "没有可展示的决策来源。"
+                string.Format(Strings.RouteSrcMatchedFormat, report.MatchedEvaluationOrder, report.MatchedRuleDisplayName),
+            RouteDecisionKind.GlobalFallback => Strings.RouteSrcFallback,
+            RouteDecisionKind.Indeterminate => string.Format(Strings.RouteSrcIndeterminateFormat, report.EvaluatedRuleCount),
+            RouteDecisionKind.InvalidQuery => Strings.RouteSrcInvalidQuery,
+            RouteDecisionKind.InvalidPolicy => Strings.RouteSrcInvalidPolicy,
+            _ => Strings.RouteSrcNone
         };
         RouteDecisionReasonText.Text = GetRouteDecisionReasonText(report.Reason) +
             (string.IsNullOrWhiteSpace(report.Error)
                 ? string.Empty
                 : " " + SingBoxRuntime.RedactSecrets(report.Error));
         RouteDecisionSnapshotText.Text = string.IsNullOrWhiteSpace(report.Fingerprint)
-            ? "无有效快照指纹。"
-            : $"快照与查询指纹 {report.Fingerprint[..12]}…；已核对当前配置。";
+            ? Strings.RouteSnapNoFingerprint
+            : string.Format(Strings.RouteSnapFingerprintFormat, report.Fingerprint[..12]);
         RouteDecisionLocateButton.IsEnabled = report.Kind == RouteDecisionKind.MatchedRule &&
             !string.IsNullOrWhiteSpace(report.MatchedRuleId);
         RouteDecisionStatusText.Text = report.Kind switch
         {
             RouteDecisionKind.MatchedRule or RouteDecisionKind.GlobalFallback =>
-                "本地静态推演完成并得出可证明结论；这仍不是实际连接、DNS、代理连通性或真实流量证据。",
+                Strings.RouteStatusProvenDone,
             RouteDecisionKind.Indeterminate =>
-                "本地静态推演已保守停止；补充缺失的域名或解析后 IP 上下文前，不会猜测后续规则。",
+                Strings.RouteStatusIndeterminateDone,
             RouteDecisionKind.InvalidQuery =>
-                "请修正输入后重试；未读取网络或运行时状态。",
+                Strings.RouteStatusInvalidQuery,
             RouteDecisionKind.InvalidPolicy =>
-                "当前策略无法按生产支持语义构建；未返回可能误导的动作。",
-            _ => "未生成路由结论。"
+                Strings.RouteStatusInvalidPolicy,
+            _ => Strings.RouteStatusNoDecision
         };
     }
 
@@ -975,7 +976,7 @@ public partial class MainWindow : Window
     private void RouteDestinationKind_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (RouteDestinationLabel != null)
-            RouteDestinationLabel.Text = RouteDestinationKindCombo.SelectedIndex == 1 ? "具体 IP 地址" : "具体域名";
+            RouteDestinationLabel.Text = RouteDestinationKindCombo.SelectedIndex == 1 ? Strings.RouteDestinationLabelIp : Strings.RouteDestinationLabelDomain;
         RouteQuery_Changed(sender, e);
     }
 
@@ -984,7 +985,7 @@ public partial class MainWindow : Window
         if (_currentRouteDecisionReport == null && _routeSimulationCts == null) return;
         _routeSimulationCts?.Cancel();
         _routeSimulationVersion++;
-        InvalidateRouteDecision("输入已变化；旧结果已隐藏，请重新推演。", cancelActive: false);
+        InvalidateRouteDecision(Strings.RouteMsgInputChanged, cancelActive: false);
     }
 
     private void CancelRouteSimulation_Click(object sender, RoutedEventArgs e) =>
@@ -1018,7 +1019,7 @@ public partial class MainWindow : Window
                     _currentRouteDecisionQuery,
                     _lifetimeCts.Token))
             {
-                InvalidateRouteDecision("配置已变化；旧结果已隐藏，请重新推演。");
+                InvalidateRouteDecision(Strings.RouteMsgRulesChanged);
             }
         }
         catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
@@ -1039,11 +1040,11 @@ public partial class MainWindow : Window
         if (RouteDecisionTraceEmptyText == null) return;
         RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
         RouteDecisionTraceCountText.Text = string.Format(Localization.Strings.CountTraceFormat, 0);
-        RouteDecisionBadgeText.Text = markStale ? "需要重新推演" : "推演失败";
+        RouteDecisionBadgeText.Text = markStale ? Strings.RouteBadgeStale : Strings.RouteBadgeFailed;
         RouteDecisionActionText.Text = "—";
-        RouteDecisionSourceText.Text = "未展示旧决策。";
+        RouteDecisionSourceText.Text = Strings.RouteSrcHidden;
         RouteDecisionReasonText.Text = status;
-        RouteDecisionSnapshotText.Text = "未绑定当前配置快照。";
+        RouteDecisionSnapshotText.Text = Strings.RouteSnapUnbound;
         RouteDecisionLocateButton.IsEnabled = false;
         RouteDecisionStatusText.Text = status;
     }
@@ -1052,26 +1053,26 @@ public partial class MainWindow : Window
     {
         _routeSimulationVersion++;
         InvalidateRouteDecision(
-            "配置处于恢复保护状态；已阻止对空占位配置进行推演。请先恢复或明确重置配置。",
+            Strings.RouteMsgProtected,
             markStale: false);
-        RouteDecisionBadgeText.Text = "配置保护中";
+        RouteDecisionBadgeText.Text = Strings.RouteBadgeProtected;
         RouteSimulateButton.IsEnabled = false;
         RouteDecisionCancelButton.IsEnabled = false;
     }
 
     private static string GetRouteDecisionReasonText(RouteDecisionReason reason) => reason switch
     {
-        RouteDecisionReason.Matched => "已满足首条获胜规则或全局默认的全部可证明条件。",
-        RouteDecisionReason.ProcessMismatch => "进程名称明确不匹配。",
-        RouteDecisionReason.TransportMismatch => "TCP/UDP 条件明确不匹配。",
-        RouteDecisionReason.PortMismatch => "目标端口明确不在规则范围内。",
-        RouteDecisionReason.DestinationMismatch => "具体目标明确不匹配该规则的目标条件。",
-        RouteDecisionReason.ResolvedIpRequired => "该较早规则还包含 IP/CIDR 条件；没有解析后 IP 就不能排除它。",
-        RouteDecisionReason.DomainContextRequired => "该较早规则还包含域名条件；没有域名上下文就不能排除它。",
-        RouteDecisionReason.EvaluationBudgetExceeded => "活动规则超过单次 500 条的有界求值预算。",
-        RouteDecisionReason.InvalidQuery => "必须提供精确进程名、具体域名或字面量 IP、1–65535 端口，以及 TCP 或 UDP。",
-        RouteDecisionReason.InvalidPolicy => "当前配置未通过与生产构建器相同的支持语义校验。",
-        _ => "无法确定本次判定依据。"
+        RouteDecisionReason.Matched => Strings.RouteReasonMatched,
+        RouteDecisionReason.ProcessMismatch => Strings.RouteReasonProcessMismatch,
+        RouteDecisionReason.TransportMismatch => Strings.RouteReasonTransportMismatch,
+        RouteDecisionReason.PortMismatch => Strings.RouteReasonPortMismatch,
+        RouteDecisionReason.DestinationMismatch => Strings.RouteReasonDestinationMismatch,
+        RouteDecisionReason.ResolvedIpRequired => Strings.RouteReasonResolvedIpRequired,
+        RouteDecisionReason.DomainContextRequired => Strings.RouteReasonDomainContextRequired,
+        RouteDecisionReason.EvaluationBudgetExceeded => Strings.RouteReasonBudgetExceeded,
+        RouteDecisionReason.InvalidQuery => Strings.RouteReasonInvalidQuery,
+        RouteDecisionReason.InvalidPolicy => Strings.RouteReasonInvalidPolicy,
+        _ => Strings.RouteReasonUnknown
     };
 
     #endregion
@@ -1084,7 +1085,7 @@ public partial class MainWindow : Window
         ApplyFilter();
         UpdateStats();
         if (IsLoaded)
-            InvalidateRouteDecision("配置规则已刷新；请基于当前快照重新推演。");
+            InvalidateRouteDecision(Strings.RouteMsgRulesRefreshed);
         _ = RefreshPolicyAnalysisAsync();
     }
 
@@ -1283,7 +1284,7 @@ public partial class MainWindow : Window
     {
         _service.SetGlobalMode(ModeProxy.IsChecked == true ? GlobalMode.ProxyAll : GlobalMode.DirectAll);
         if (IsLoaded)
-            InvalidateRouteDecision("全局默认已变化；请基于当前快照重新推演。");
+            InvalidateRouteDecision(Strings.RouteMsgGlobalModeChanged);
         _ = RefreshPolicyAnalysisAsync();
     }
 
@@ -1390,7 +1391,7 @@ public partial class MainWindow : Window
                 port,
                 ProxyUsername.Text,
                 ProxyPassword.Password);
-            InvalidateRouteDecision("代理配置已变化；请基于当前快照重新推演。");
+            InvalidateRouteDecision(Strings.RouteMsgProxyChanged);
             _ = RefreshPolicyAnalysisAsync();
             ProxyHost.Text = LocalProxyEndpoint.NormalizeOrThrow(ProxyHost.Text, port);
             StatusDetail.Text = $"本地 {proxyType} 代理已保存: {ProxyHost.Text}:{port}";
@@ -1474,7 +1475,7 @@ public partial class MainWindow : Window
         if (_shutdownStarted) return;
         var button = (Button)sender;
         button.IsEnabled = false;
-        AiHealthText.Text = "正在检查…";
+        AiHealthText.Text = Strings.SettingsRuntimeChecking;
         try
         {
             var provider = GetSelectedAiProvider();
@@ -1483,11 +1484,11 @@ public partial class MainWindow : Window
             var providerLabel = check.Kind == AiProviderKind.OpenAI ? "OpenAI" : "Ollama";
             var stateLabel = check.State switch
             {
-                AiProviderHealthState.Ready => "就绪",
-                AiProviderHealthState.NotConfigured => "未配置",
-                AiProviderHealthState.Misconfigured => "配置不完整",
-                AiProviderHealthState.Unreachable => "本地服务不可达",
-                _ => "未知状态"
+                AiProviderHealthState.Ready => Strings.HealthStateReady,
+                AiProviderHealthState.NotConfigured => Strings.HealthStateNotConfigured,
+                AiProviderHealthState.Misconfigured => Strings.HealthStateMisconfigured,
+                AiProviderHealthState.Unreachable => Strings.HealthStateUnreachable,
+                _ => Strings.HealthStateUnknown
             };
             AiHealthText.Text = $"{providerLabel}：{stateLabel}\n{string.Join("\n", check.Details)}";
         }
@@ -1501,7 +1502,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AiHealthText.Text = $"诊断未能完成：{SingBoxRuntime.RedactSecrets(ex.Message)}";
+            AiHealthText.Text = string.Format(Strings.HealthFailedFormat, SingBoxRuntime.RedactSecrets(ex.Message));
         }
         finally
         {

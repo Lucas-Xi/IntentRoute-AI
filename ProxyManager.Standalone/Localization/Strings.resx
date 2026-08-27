@@ -215,4 +215,107 @@
   <data name="AnalyzingText" xml:space="preserve"><value>分析中</value></data>
   <data name="VersionUnrecognized" xml:space="preserve"><value>未识别</value></data>
   <data name="VersionCheckBlocked" xml:space="preserve"><value>已阻止检查</value></data>
+  <data name="ProviderOpenAiCloud" xml:space="preserve"><value>OpenAI（云端）</value></data>
+  <data name="ProviderOllamaLocal" xml:space="preserve"><value>Ollama（本地）</value></data>
+  <data name="JoinSeparator" xml:space="preserve"><value>；</value></data>
+  <data name="AiPrivacyOpenAiMsg" xml:space="preserve"><value>OpenAI 模式只发送你输入的意图和静态规则格式；请求设置 store=false。不会发送代理凭据、现有规则、日志或进程列表。</value></data>
+  <data name="AiPrivacyOllamaMsg" xml:space="preserve"><value>Ollama 模式默认连接本机 127.0.0.1，且只允许字面量 127.0.0.1 或 ::1；不会自动下载模型、启动服务或回退到云端。</value></data>
+  <data name="AiMsgModelsNoKey" xml:space="preserve"><value>已加载 OpenAI 模型。生成前请设置当前用户环境变量 OPENAI_API_KEY，然后重新打开应用。</value></data>
+  <data name="AiMsgModelsLoadedFormat" xml:space="preserve"><value>已加载 {0} 个可用模型。AI 草案不会自动写入或启用。</value></data>
+  <data name="AiMsgOllamaNoModels" xml:space="preserve"><value>Ollama 正在运行，但没有已安装模型。请先在终端执行 ollama pull 模型名。</value></data>
+  <data name="AiMsgEnterIntentAndModel" xml:space="preserve"><value>请输入分流意图并选择模型。</value></data>
+  <data name="AiMsgGenerating" xml:space="preserve"><value>正在生成结构化草案；结果返回后会立即执行本地确定性校验…</value></data>
+  <data name="AiMsgNoWarnings" xml:space="preserve"><value>无模型警告。</value></data>
+  <data name="AiMsgWarningsPrefix" xml:space="preserve"><value>警告: </value></data>
+  <data name="AiMsgValidationPassedFormat" xml:space="preserve"><value>本地校验通过。{0} {1} 添加后规则仍为禁用状态。</value></data>
+  <data name="AiMsgValidationFailedPrefix" xml:space="preserve"><value>本地校验未通过: </value></data>
+  <data name="AiMsgCancelled" xml:space="preserve"><value>已取消 AI 规则生成，配置未发生变化。</value></data>
+  <data name="AiMsgFailed" xml:space="preserve"><value>AI 规则生成失败。配置未发生变化，请检查提供商后重试。</value></data>
+  <data name="AiMsgRevalidationFailedPrefix" xml:space="preserve"><value>现有配置在预览后发生变化，草案重新校验未通过: </value></data>
+  <data name="AiMsgAddedFormat" xml:space="preserve"><value>已添加 {0} 条禁用规则。请到规则管理页逐条检查并手动启用。</value></data>
+  <data name="AiMsgSaveFailed" xml:space="preserve"><value>保存 AI 草案失败；本次添加已回滚，现有配置未被替换。</value></data>
+  <data name="AiMsgEditRevalidated" xml:space="preserve"><value>编辑后的草案已重新通过本地校验。添加后规则仍为禁用状态，需手动启用。</value></data>
+  <data name="AiMsgEditValidationFailedPrefix" xml:space="preserve"><value>编辑后本地校验未通过: </value></data>
+  <data name="PolicyMsgReadyNoKey" xml:space="preserve"><value>本地体检可直接使用。AI 解读需要先设置 OPENAI_API_KEY，再重新打开应用。</value></data>
+  <data name="PolicyMsgLocalOnly" xml:space="preserve"><value>本地体检不会联网；只有点击 AI 解读后才发送去标识结构摘要。</value></data>
+  <data name="PolicyMsgOllamaNoModels" xml:space="preserve"><value>本地体检可直接使用；当前 Ollama 没有已安装模型，AI 解读暂不可用。</value></data>
+  <data name="PolicyMsgModelUnavailablePrefix" xml:space="preserve"><value>本地体检仍可使用。AI 模型不可用: </value></data>
+  <data name="PolicyMsgChangedPreviewBlocked" xml:space="preserve"><value>策略已变化；已阻止预览旧摘要，请在最新体检中重新选择发现。</value></data>
+  <data name="PolicyMsgSelectFindings" xml:space="preserve"><value>请先在本地发现列表中选择 1–20 项，再选择 AI 模型。</value></data>
+  <data name="PolicyConfirmOpenAi" xml:space="preserve"><value>提供商: OpenAI；请求设置 store=false，但提供商侧处理仍受你的账户与当前政策约束。</value></data>
+  <data name="PolicyConfirmOllama" xml:space="preserve"><value>提供商: 本机 Ollama；请求仅发送到字面量 127.0.0.1 或 ::1。</value></data>
+  <data name="PolicyConfirmJsonHeader" xml:space="preserve"><value>将发送的完整逻辑 JSON：</value></data>
+  <data name="PolicyConfirmExclusionNote" xml:space="preserve"><value>不包含进程名、域名、IP、端口、规则 ID、备注、路径、代理地址、凭据、日志或进程列表。确认发送本次去标识摘要吗？</value></data>
+  <data name="PolicyConfirmTitle" xml:space="preserve"><value>确认发送 AI 策略摘要</value></data>
+  <data name="PolicyMsgSendCancelled" xml:space="preserve"><value>已取消发送；本地体检结果与配置均未变化。</value></data>
+  <data name="PolicyMsgChangedDuringConfirm" xml:space="preserve"><value>确认期间策略已变化；未发送旧摘要，请在最新体检中重新选择发现。</value></data>
+  <data name="PolicyMsgSending" xml:space="preserve"><value>正在发送去标识结构摘要并等待只读 AI 解读…</value></data>
+  <data name="PolicyMsgSendingTopFormat" xml:space="preserve"><value>正在发送最高优先级的 {0} 项结构发现；另有 {1} 项仅保留在本地…</value></data>
+  <data name="PolicyMsgStaleResponse" xml:space="preserve"><value>AI 解读返回前配置已变化；旧结果已丢弃，请基于最新体检重新解读。</value></data>
+  <data name="PolicyMsgNoCaveats" xml:space="preserve"><value>模型未返回额外限制说明。</value></data>
+  <data name="PolicyMsgCaveatsPrefix" xml:space="preserve"><value>限制: </value></data>
+  <data name="PolicyMsgExplanationDoneFormat" xml:space="preserve"><value>AI 解读完成，共 {0} 条优先建议。{1} 配置未发生变化。</value></data>
+  <data name="PolicyMsgExplanationCancelled" xml:space="preserve"><value>已取消 AI 策略解读；本地体检和配置均未变化。</value></data>
+  <data name="PolicyMsgStillValidSuffix" xml:space="preserve"><value> 本地体检结果仍然有效，配置未变化。</value></data>
+  <data name="PolicyMsgExplanationFailed" xml:space="preserve"><value>AI 策略解读失败；本地体检结果仍然有效，配置未变化。</value></data>
+  <data name="PolicyMsgBudgetFormat" xml:space="preserve"><value>本地体检达到分析预算：至少 {0} 个项目未完整展开，当前报告不能视为完整结论。</value></data>
+  <data name="PolicyMsgDoneNoIssues" xml:space="preserve"><value>本地体检完成：未发现可确定的问题。此结果不代表真实流量或代理连通性已验证。</value></data>
+  <data name="PolicyMsgDoneFormat" xml:space="preserve"><value>本地体检完成：{0} 项发现；未调用 AI，未修改配置。</value></data>
+  <data name="PolicyEmptyFailed" xml:space="preserve"><value>本地体检失败，未生成策略结论。</value></data>
+  <data name="PolicyMsgFailedPrefix" xml:space="preserve"><value>本地体检失败: </value></data>
+  <data name="PolicyEmptyRunning" xml:space="preserve"><value>正在后台执行可取消的本地确定性体检…</value></data>
+  <data name="PolicyMsgAnalyzing" xml:space="preserve"><value>正在后台分析当前策略；不会联网、探测端口或修改配置。</value></data>
+  <data name="PolicyEmptyProtected" xml:space="preserve"><value>配置处于恢复保护状态，未执行策略体检。</value></data>
+  <data name="PolicyMsgProtected" xml:space="preserve"><value>配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。</value></data>
+  <data name="PolicyAiSummaryNotYet" xml:space="preserve"><value>AI 尚未解读；本地确定性发现始终优先于模型文字。</value></data>
+  <data name="RouteMsgConfigChanged" xml:space="preserve"><value>推演期间配置已经变化；旧结果已隐藏，请重新推演。</value></data>
+  <data name="RouteMsgCancelled" xml:space="preserve"><value>本地推演已取消；配置和 sing-box 均未变化。</value></data>
+  <data name="RouteMsgFailed" xml:space="preserve"><value>本地推演失败；未生成路由结论。</value></data>
+  <data name="RouteBadgeSimulating" xml:space="preserve"><value>推演中</value></data>
+  <data name="RouteSrcSimulating" xml:space="preserve"><value>正在按生产规则的规范顺序进行有界求值。</value></data>
+  <data name="RouteReasonPending" xml:space="preserve"><value>尚未得出结论。</value></data>
+  <data name="RouteSnapshotBinding" xml:space="preserve"><value>正在绑定配置快照与规范化查询。</value></data>
+  <data name="RouteStatusSimulating" xml:space="preserve"><value>正在后台执行本地静态 what-if；不会联网、探测代理或读取真实连接。</value></data>
+  <data name="RouteSrcMatchedFormat" xml:space="preserve"><value>规范顺序 #{0}: {1}</value></data>
+  <data name="RouteSrcFallback" xml:space="preserve"><value>所有活动规则均可明确排除，使用当前全局默认。</value></data>
+  <data name="RouteSrcIndeterminateFormat" xml:space="preserve"><value>在求值 {0} 条活动规则后保守停止。</value></data>
+  <data name="RouteSrcInvalidQuery" xml:space="preserve"><value>查询不满足版本 1 的具体输入契约。</value></data>
+  <data name="RouteSrcInvalidPolicy" xml:space="preserve"><value>生产配置构建器拒绝了当前策略。</value></data>
+  <data name="RouteSrcNone" xml:space="preserve"><value>没有可展示的决策来源。</value></data>
+  <data name="RouteSnapNoFingerprint" xml:space="preserve"><value>无有效快照指纹。</value></data>
+  <data name="RouteSnapFingerprintFormat" xml:space="preserve"><value>快照与查询指纹 {0}…；已核对当前配置。</value></data>
+  <data name="RouteStatusProvenDone" xml:space="preserve"><value>本地静态推演完成并得出可证明结论；这仍不是实际连接、DNS、代理连通性或真实流量证据。</value></data>
+  <data name="RouteStatusIndeterminateDone" xml:space="preserve"><value>本地静态推演已保守停止；补充缺失的域名或解析后 IP 上下文前，不会猜测后续规则。</value></data>
+  <data name="RouteStatusInvalidQuery" xml:space="preserve"><value>请修正输入后重试；未读取网络或运行时状态。</value></data>
+  <data name="RouteStatusInvalidPolicy" xml:space="preserve"><value>当前策略无法按生产支持语义构建；未返回可能误导的动作。</value></data>
+  <data name="RouteStatusNoDecision" xml:space="preserve"><value>未生成路由结论。</value></data>
+  <data name="RouteDestinationLabelIp" xml:space="preserve"><value>具体 IP 地址</value></data>
+  <data name="RouteMsgInputChanged" xml:space="preserve"><value>输入已变化；旧结果已隐藏，请重新推演。</value></data>
+  <data name="RouteMsgRulesChanged" xml:space="preserve"><value>配置已变化；旧结果已隐藏，请重新推演。</value></data>
+  <data name="RouteBadgeStale" xml:space="preserve"><value>需要重新推演</value></data>
+  <data name="RouteBadgeFailed" xml:space="preserve"><value>推演失败</value></data>
+  <data name="RouteSrcHidden" xml:space="preserve"><value>未展示旧决策。</value></data>
+  <data name="RouteSnapUnbound" xml:space="preserve"><value>未绑定当前配置快照。</value></data>
+  <data name="RouteMsgProtected" xml:space="preserve"><value>配置处于恢复保护状态；已阻止对空占位配置进行推演。请先恢复或明确重置配置。</value></data>
+  <data name="RouteBadgeProtected" xml:space="preserve"><value>配置保护中</value></data>
+  <data name="RouteMsgGlobalModeChanged" xml:space="preserve"><value>全局默认已变化；请基于当前快照重新推演。</value></data>
+  <data name="RouteMsgProxyChanged" xml:space="preserve"><value>代理配置已变化；请基于当前快照重新推演。</value></data>
+  <data name="RouteMsgRulesRefreshed" xml:space="preserve"><value>配置规则已刷新；请基于当前快照重新推演。</value></data>
+  <data name="RouteReasonMatched" xml:space="preserve"><value>已满足首条获胜规则或全局默认的全部可证明条件。</value></data>
+  <data name="RouteReasonProcessMismatch" xml:space="preserve"><value>进程名称明确不匹配。</value></data>
+  <data name="RouteReasonTransportMismatch" xml:space="preserve"><value>TCP/UDP 条件明确不匹配。</value></data>
+  <data name="RouteReasonPortMismatch" xml:space="preserve"><value>目标端口明确不在规则范围内。</value></data>
+  <data name="RouteReasonDestinationMismatch" xml:space="preserve"><value>具体目标明确不匹配该规则的目标条件。</value></data>
+  <data name="RouteReasonResolvedIpRequired" xml:space="preserve"><value>该较早规则还包含 IP/CIDR 条件；没有解析后 IP 就不能排除它。</value></data>
+  <data name="RouteReasonDomainContextRequired" xml:space="preserve"><value>该较早规则还包含域名条件；没有域名上下文就不能排除它。</value></data>
+  <data name="RouteReasonBudgetExceeded" xml:space="preserve"><value>活动规则超过单次 500 条的有界求值预算。</value></data>
+  <data name="RouteReasonInvalidQuery" xml:space="preserve"><value>必须提供精确进程名、具体域名或字面量 IP、1–65535 端口，以及 TCP 或 UDP。</value></data>
+  <data name="RouteReasonInvalidPolicy" xml:space="preserve"><value>当前配置未通过与生产构建器相同的支持语义校验。</value></data>
+  <data name="RouteReasonUnknown" xml:space="preserve"><value>无法确定本次判定依据。</value></data>
+  <data name="HealthStateReady" xml:space="preserve"><value>就绪</value></data>
+  <data name="HealthStateNotConfigured" xml:space="preserve"><value>未配置</value></data>
+  <data name="HealthStateMisconfigured" xml:space="preserve"><value>配置不完整</value></data>
+  <data name="HealthStateUnreachable" xml:space="preserve"><value>本地服务不可达</value></data>
+  <data name="HealthStateUnknown" xml:space="preserve"><value>未知状态</value></data>
+  <data name="HealthFailedFormat" xml:space="preserve"><value>诊断未能完成：{0}</value></data>
 </root>
