@@ -32,4 +32,55 @@
   <data name="SettingsLanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="SettingsLanguageFollowSystem" xml:space="preserve"><value>Follow system</value></data>
   <data name="SettingsLanguageRestartHint" xml:space="preserve"><value>Language preference saved. It takes effect after restarting the app.</value></data>
+  <data name="WindowTitle" xml:space="preserve"><value>IntentRoute AI - Windows Smart Routing</value></data>
+  <data name="NavItemRules" xml:space="preserve"><value>📋  Rule management</value></data>
+  <data name="NavItemPolicy" xml:space="preserve"><value>◈  AI policy check</value></data>
+  <data name="NavItemRouteSimulator" xml:space="preserve"><value>◇  AI route simulator</value></data>
+  <data name="NavItemAi" xml:space="preserve"><value>✦  AI rule assistant</value></data>
+  <data name="NavItemMonitor" xml:space="preserve"><value>📋  Runtime log</value></data>
+  <data name="NavItemProcess" xml:space="preserve"><value>⚙️  Process list</value></data>
+  <data name="NavItemSettings" xml:space="preserve"><value>🔧  Settings</value></data>
+  <data name="NavItemAbout" xml:space="preserve"><value>ℹ️  About</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.4.0 development preview</value></data>
+  <data name="StatusFooterLabel" xml:space="preserve"><value>Runtime status</value></data>
+  <data name="StatusFooterInitial" xml:space="preserve"><value>Checking sing-box…</value></data>
+  <data name="ModeDirectLabel" xml:space="preserve"><value>Direct by default</value></data>
+  <data name="ModeProxyLabel" xml:space="preserve"><value>Proxy by default</value></data>
+  <data name="WindowMinimizeName" xml:space="preserve"><value>Minimize window</value></data>
+  <data name="WindowMaximizeName" xml:space="preserve"><value>Maximize or restore window</value></data>
+  <data name="WindowCloseName" xml:space="preserve"><value>Close window</value></data>
+  <data name="PageTitleRules" xml:space="preserve"><value>Rule management</value></data>
+  <data name="PageTitleAi" xml:space="preserve"><value>AI rule assistant</value></data>
+  <data name="PageTitlePolicy" xml:space="preserve"><value>AI policy check</value></data>
+  <data name="PageTitleRouteSimulator" xml:space="preserve"><value>AI route simulator</value></data>
+  <data name="PageTitleMonitor" xml:space="preserve"><value>Runtime log</value></data>
+  <data name="PageTitleProcess" xml:space="preserve"><value>Process list</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="PageTitleAbout" xml:space="preserve"><value>About</value></data>
+  <data name="PageSubtitleRules" xml:space="preserve"><value> - Drag an .exe file to add rules</value></data>
+  <data name="PageSubtitleAi" xml:space="preserve"><value> - Natural-language reviewable rule drafts</value></data>
+  <data name="PageSubtitlePolicy" xml:space="preserve"><value> - Local deterministic checks with optional AI explanation</value></data>
+  <data name="PageSubtitleRouteSimulator" xml:space="preserve"><value> - Strictly static what-if, not traffic telemetry</value></data>
+  <data name="PageSubtitleMonitor" xml:space="preserve"><value> - sing-box runtime log</value></data>
+  <data name="PageSubtitleProcess" xml:space="preserve"><value> - Running processes</value></data>
+  <data name="PageSubtitleSettings" xml:space="preserve"><value> - Configure proxies and features</value></data>
+  <data name="PageSubtitleAbout" xml:space="preserve"><value> - Version information</value></data>
+  <data name="MenuToggleEnabled" xml:space="preserve"><value>Toggle enabled</value></data>
+  <data name="MenuForceProxy" xml:space="preserve"><value>🔵 Force proxy</value></data>
+  <data name="MenuForceDirect" xml:space="preserve"><value>🟢 Force direct</value></data>
+  <data name="MenuForceBlock" xml:space="preserve"><value>🔴 Block network</value></data>
+  <data name="MenuMoveUp" xml:space="preserve"><value>⬆ Move up</value></data>
+  <data name="MenuMoveDown" xml:space="preserve"><value>⬇ Move down</value></data>
+  <data name="MenuDelete" xml:space="preserve"><value>❌ Delete</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.4.0</value></data>
+  <data name="AboutFeaturesTitle" xml:space="preserve"><value>Features</value></data>
+  <data name="AboutFeature1" xml:space="preserve"><value>• Drag an application to add rules</value></data>
+  <data name="AboutFeature2" xml:space="preserve"><value>• Proxy / direct / block routing modes</value></data>
+  <data name="AboutFeature3" xml:space="preserve"><value>• Live process monitoring</value></data>
+  <data name="AboutFeature4" xml:space="preserve"><value>• Rule import and export</value></data>
+  <data name="AboutFeature5" xml:space="preserve"><value>• OpenAI / local Ollama natural-language rule drafts</value></data>
+  <data name="AboutFeature6" xml:space="preserve"><value>• Strict local validation with drafts disabled by default</value></data>
+  <data name="AboutFeature7" xml:space="preserve"><value>• Local policy checks with optional de-identified AI explanation</value></data>
+  <data name="AboutFeature8" xml:space="preserve"><value>• sing-box TUN data plane (installed separately)</value></data>
+  <data name="AboutFooter" xml:space="preserve"><value>Built on .NET 8 + WPF</value></data>
 </root>

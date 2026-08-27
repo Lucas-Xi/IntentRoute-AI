@@ -6,7 +6,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
-- Added localization infrastructure: Chinese-neutral and English resources with key-parity tests, a per-app language preference stored in `ui-preferences.json` outside the routing Configuration Workspace, applied at startup before any window is created, and a Settings-page pilot whose static texts follow the preference. Other pages and dynamic messages remain Chinese; the preference applies after restart and defaults to Chinese.
+- Added localization infrastructure: Chinese-neutral and English resources with key-parity tests, a per-app language preference stored in `ui-preferences.json` outside the routing Configuration Workspace, applied at startup before any window is created, and a Settings-page pilot whose static texts follow the preference. The framework surfaces now follow it too — window title, navigation and status footer, page titles/subtitles, the rule context menu, and the About page. Other pages and dynamic messages remain Chinese; the preference applies after restart and defaults to Chinese.
 - Declared Per-Monitor V2 DPI awareness in the embedded application manifest and extended the packaged-WPF smoke gate to assert the main window's Per-Monitor V2 context through `AreDpiAwarenessContextsEqual`. Visual layout validation across mixed-DPI displays remains unclaimed.
 
 ## [0.4.0] - 2026-08-27

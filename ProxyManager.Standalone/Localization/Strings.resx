@@ -32,4 +32,55 @@
   <data name="SettingsLanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="SettingsLanguageFollowSystem" xml:space="preserve"><value>跟随系统</value></data>
   <data name="SettingsLanguageRestartHint" xml:space="preserve"><value>已保存语言设置，重启应用后生效。</value></data>
+  <data name="WindowTitle" xml:space="preserve"><value>IntentRoute AI - Windows 智能分流</value></data>
+  <data name="NavItemRules" xml:space="preserve"><value>📋  规则管理</value></data>
+  <data name="NavItemPolicy" xml:space="preserve"><value>◈  AI 策略体检</value></data>
+  <data name="NavItemRouteSimulator" xml:space="preserve"><value>◇  AI 路由推演</value></data>
+  <data name="NavItemAi" xml:space="preserve"><value>✦  AI 规则助手</value></data>
+  <data name="NavItemMonitor" xml:space="preserve"><value>📋  运行日志</value></data>
+  <data name="NavItemProcess" xml:space="preserve"><value>⚙️  进程列表</value></data>
+  <data name="NavItemSettings" xml:space="preserve"><value>🔧  设置</value></data>
+  <data name="NavItemAbout" xml:space="preserve"><value>ℹ️  关于</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.4.0 开发预览版</value></data>
+  <data name="StatusFooterLabel" xml:space="preserve"><value>运行状态</value></data>
+  <data name="StatusFooterInitial" xml:space="preserve"><value>正在检查 sing-box…</value></data>
+  <data name="ModeDirectLabel" xml:space="preserve"><value>默认直连</value></data>
+  <data name="ModeProxyLabel" xml:space="preserve"><value>默认代理</value></data>
+  <data name="WindowMinimizeName" xml:space="preserve"><value>最小化窗口</value></data>
+  <data name="WindowMaximizeName" xml:space="preserve"><value>最大化或还原窗口</value></data>
+  <data name="WindowCloseName" xml:space="preserve"><value>关闭窗口</value></data>
+  <data name="PageTitleRules" xml:space="preserve"><value>规则管理</value></data>
+  <data name="PageTitleAi" xml:space="preserve"><value>AI 规则助手</value></data>
+  <data name="PageTitlePolicy" xml:space="preserve"><value>AI 策略体检</value></data>
+  <data name="PageTitleRouteSimulator" xml:space="preserve"><value>AI 路由推演</value></data>
+  <data name="PageTitleMonitor" xml:space="preserve"><value>运行日志</value></data>
+  <data name="PageTitleProcess" xml:space="preserve"><value>进程列表</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>设置</value></data>
+  <data name="PageTitleAbout" xml:space="preserve"><value>关于</value></data>
+  <data name="PageSubtitleRules" xml:space="preserve"><value> - 拖拽 .exe 添加规则</value></data>
+  <data name="PageSubtitleAi" xml:space="preserve"><value> - 自然语言生成可审查的规则草案</value></data>
+  <data name="PageSubtitlePolicy" xml:space="preserve"><value> - 本地确定性检查与可选 AI 解读</value></data>
+  <data name="PageSubtitleRouteSimulator" xml:space="preserve"><value> - 严格静态 what-if，不是流量遥测</value></data>
+  <data name="PageSubtitleMonitor" xml:space="preserve"><value> - sing-box 运行日志</value></data>
+  <data name="PageSubtitleProcess" xml:space="preserve"><value> - 运行中的进程</value></data>
+  <data name="PageSubtitleSettings" xml:space="preserve"><value> - 配置代理和功能</value></data>
+  <data name="PageSubtitleAbout" xml:space="preserve"><value> - 版本信息</value></data>
+  <data name="MenuToggleEnabled" xml:space="preserve"><value>切换启用</value></data>
+  <data name="MenuForceProxy" xml:space="preserve"><value>🔵 强制代理</value></data>
+  <data name="MenuForceDirect" xml:space="preserve"><value>🟢 强制直连</value></data>
+  <data name="MenuForceBlock" xml:space="preserve"><value>🔴 阻止联网</value></data>
+  <data name="MenuMoveUp" xml:space="preserve"><value>⬆ 上移</value></data>
+  <data name="MenuMoveDown" xml:space="preserve"><value>⬇ 下移</value></data>
+  <data name="MenuDelete" xml:space="preserve"><value>❌ 删除</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI 辅助 Windows 网络分流 v0.4.0</value></data>
+  <data name="AboutFeaturesTitle" xml:space="preserve"><value>功能特性</value></data>
+  <data name="AboutFeature1" xml:space="preserve"><value>• 拖拽添加应用程序规则</value></data>
+  <data name="AboutFeature2" xml:space="preserve"><value>• 支持代理/直连/阻止三种模式</value></data>
+  <data name="AboutFeature3" xml:space="preserve"><value>• 实时进程监控</value></data>
+  <data name="AboutFeature4" xml:space="preserve"><value>• 规则导入导出</value></data>
+  <data name="AboutFeature5" xml:space="preserve"><value>• OpenAI / 本地 Ollama 自然语言规则草案</value></data>
+  <data name="AboutFeature6" xml:space="preserve"><value>• 严格本地校验，草案默认禁用</value></data>
+  <data name="AboutFeature7" xml:space="preserve"><value>• 本地策略体检与可选的去标识 AI 解读</value></data>
+  <data name="AboutFeature8" xml:space="preserve"><value>• sing-box TUN 数据面（需单独安装）</value></data>
+  <data name="AboutFooter" xml:space="preserve"><value>基于 .NET 8 + WPF 构建</value></data>
 </root>

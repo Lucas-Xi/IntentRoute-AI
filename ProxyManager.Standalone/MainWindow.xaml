@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:ProxyManager.Standalone.Localization"
-        Title="IntentRoute AI - Windows 智能分流" Height="720" Width="1040"
+        Title="{x:Static loc:Strings.WindowTitle}" Height="720" Width="1040"
         MinHeight="500" MinWidth="750"
         Background="#0F0F0F"
         WindowStartupLocation="CenterScreen"
@@ -180,16 +180,16 @@
 
         <!-- 右键菜单 -->
         <ContextMenu x:Key="RuleMenu" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}">
-            <MenuItem Header="切换启用" Click="ToggleRule_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuToggleEnabled}" Click="ToggleRule_Click" Foreground="{StaticResource TextBrush}"/>
             <Separator Background="{StaticResource BorderBrush}"/>
-            <MenuItem Header="🔵 强制代理" Click="SetProxy_Click" Foreground="{StaticResource TextBrush}"/>
-            <MenuItem Header="🟢 强制直连" Click="SetDirect_Click" Foreground="{StaticResource TextBrush}"/>
-            <MenuItem Header="🔴 阻止联网" Click="SetBlock_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuForceProxy}" Click="SetProxy_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuForceDirect}" Click="SetDirect_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuForceBlock}" Click="SetBlock_Click" Foreground="{StaticResource TextBrush}"/>
             <Separator Background="{StaticResource BorderBrush}"/>
-            <MenuItem Header="⬆ 上移" Click="MoveUp_Click" Foreground="{StaticResource TextBrush}"/>
-            <MenuItem Header="⬇ 下移" Click="MoveDown_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuMoveUp}" Click="MoveUp_Click" Foreground="{StaticResource TextBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuMoveDown}" Click="MoveDown_Click" Foreground="{StaticResource TextBrush}"/>
             <Separator Background="{StaticResource BorderBrush}"/>
-            <MenuItem Header="❌ 删除" Click="DeleteRule_Click" Foreground="{StaticResource DangerBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuDelete}" Click="DeleteRule_Click" Foreground="{StaticResource DangerBrush}"/>
         </ContextMenu>
     </Window.Resources>
 
@@ -213,39 +213,39 @@
                     <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <StackPanel>
                             <TextBlock Text="✦ IntentRoute AI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="v0.4.0 开发预览版" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="{x:Static loc:Strings.SidebarVersion}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- 导航菜单 -->
                     <StackPanel Grid.Row="1" Margin="10,16,10,0">
-                        <RadioButton x:Name="NavRules" Content="📋  规则管理" GroupName="Nav" IsChecked="True"
+                        <RadioButton x:Name="NavRules" Content="{x:Static loc:Strings.NavItemRules}" GroupName="Nav" IsChecked="True"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavRules" AutomationProperties.Name="规则管理导航"/>
-                        <RadioButton x:Name="NavPolicy" Content="◈  AI 策略体检" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavRules" AutomationProperties.Name="{x:Static loc:Strings.NavItemRules}"/>
+                        <RadioButton x:Name="NavPolicy" Content="{x:Static loc:Strings.NavItemPolicy}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavPolicy" AutomationProperties.Name="AI 策略体检导航"/>
-                        <RadioButton x:Name="NavRouteSimulator" Content="◇  AI 路由推演" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavPolicy" AutomationProperties.Name="{x:Static loc:Strings.NavItemPolicy}"/>
+                        <RadioButton x:Name="NavRouteSimulator" Content="{x:Static loc:Strings.NavItemRouteSimulator}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavRouteSimulator" AutomationProperties.Name="AI 路由推演导航"/>
-                        <RadioButton x:Name="NavAi" Content="✦  AI 规则助手" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavRouteSimulator" AutomationProperties.Name="{x:Static loc:Strings.NavItemRouteSimulator}"/>
+                        <RadioButton x:Name="NavAi" Content="{x:Static loc:Strings.NavItemAi}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavAi" AutomationProperties.Name="AI 规则助手导航"/>
-                        <RadioButton x:Name="NavMonitor" Content="📋  运行日志" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavAi" AutomationProperties.Name="{x:Static loc:Strings.NavItemAi}"/>
+                        <RadioButton x:Name="NavMonitor" Content="{x:Static loc:Strings.NavItemMonitor}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavMonitor" AutomationProperties.Name="运行日志导航"/>
-                        <RadioButton x:Name="NavProcess" Content="⚙️  进程列表" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavMonitor" AutomationProperties.Name="{x:Static loc:Strings.NavItemMonitor}"/>
+                        <RadioButton x:Name="NavProcess" Content="{x:Static loc:Strings.NavItemProcess}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavProcess" AutomationProperties.Name="进程列表导航"/>
-                        <RadioButton x:Name="NavSettings" Content="🔧  设置" GroupName="Nav"
+                                     AutomationProperties.AutomationId="NavProcess" AutomationProperties.Name="{x:Static loc:Strings.NavItemProcess}"/>
+                        <RadioButton x:Name="NavSettings" Content="{x:Static loc:Strings.NavItemSettings}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavSettings" AutomationProperties.Name="设置导航"/>
+                                     AutomationProperties.AutomationId="NavSettings" AutomationProperties.Name="{x:Static loc:Strings.NavItemSettings}"/>
 
                         <Border Height="1" Background="{StaticResource BorderBrush}" Margin="8,16,8,12"/>
 
-                        <RadioButton x:Name="NavAbout" Content="ℹ️  关于" GroupName="Nav"
+                        <RadioButton x:Name="NavAbout" Content="{x:Static loc:Strings.NavItemAbout}" GroupName="Nav"
                                      Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavAbout" AutomationProperties.Name="关于导航"/>
+                                     AutomationProperties.AutomationId="NavAbout" AutomationProperties.Name="{x:Static loc:Strings.NavItemAbout}"/>
                     </StackPanel>
 
                     <!-- 底部状态 -->
@@ -253,9 +253,9 @@
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                 <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
-                                <TextBlock x:Name="StatusLabel" Text="运行状态" FontSize="12" Foreground="{StaticResource TextBrush}"/>
+                                <TextBlock x:Name="StatusLabel" Text="{x:Static loc:Strings.StatusFooterLabel}" FontSize="12" Foreground="{StaticResource TextBrush}"/>
                             </StackPanel>
-                            <TextBlock x:Name="StatusDetail" Text="正在检查 sing-box…" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="StatusDetail" Text="{x:Static loc:Strings.StatusFooterInitial}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -280,17 +280,17 @@
 
                         <!-- 标题 -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <TextBlock x:Name="PageTitle" Text="规则管理" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock x:Name="PageSubtitle" Text=" - 拖拽 .exe 添加规则" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,0,6"/>
+                            <TextBlock x:Name="PageTitle" Text="{x:Static loc:Strings.PageTitleRules}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock x:Name="PageSubtitle" Text="{x:Static loc:Strings.PageSubtitleRules}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,0,6"/>
                         </StackPanel>
 
                         <!-- 全局模式切换 -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                             <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="2">
                                 <StackPanel Orientation="Horizontal">
-                                    <RadioButton x:Name="ModeDirect" Content="默认直连" GroupName="Mode" IsChecked="True"
+                                    <RadioButton x:Name="ModeDirect" Content="{x:Static loc:Strings.ModeDirectLabel}" GroupName="Mode" IsChecked="True"
                                                  Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
-                                    <RadioButton x:Name="ModeProxy" Content="默认代理" GroupName="Mode"
+                                    <RadioButton x:Name="ModeProxy" Content="{x:Static loc:Strings.ModeProxyLabel}" GroupName="Mode"
                                                  Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
                                 </StackPanel>
                             </Border>
@@ -300,15 +300,15 @@
                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                             <Button Content="—" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="16" Width="32" Height="28" Cursor="Hand"
-                                    AutomationProperties.AutomationId="WindowMinimize" AutomationProperties.Name="最小化窗口"
+                                    AutomationProperties.AutomationId="WindowMinimize" AutomationProperties.Name="{x:Static loc:Strings.WindowMinimizeName}"
                                     Click="Minimize_Click"/>
                             <Button Content="□" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
-                                    AutomationProperties.AutomationId="WindowMaximize" AutomationProperties.Name="最大化或还原窗口"
+                                    AutomationProperties.AutomationId="WindowMaximize" AutomationProperties.Name="{x:Static loc:Strings.WindowMaximizeName}"
                                     Click="Maximize_Click"/>
                             <Button Content="✕" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
-                                    AutomationProperties.AutomationId="WindowClose" AutomationProperties.Name="关闭窗口"
+                                    AutomationProperties.AutomationId="WindowClose" AutomationProperties.Name="{x:Static loc:Strings.WindowCloseName}"
                                     Click="Close_Click"/>
                         </StackPanel>
                     </Grid>
@@ -1148,23 +1148,23 @@
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="✦" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="IntentRoute AI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="AI 辅助 Windows 网络分流 v0.4.0" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                                <TextBlock Text="{x:Static loc:Strings.AboutTagline}" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
 
                                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                                     <StackPanel>
-                                        <TextBlock Text="功能特性" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"/>
-                                        <TextBlock Text="• 拖拽添加应用程序规则" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• 支持代理/直连/阻止三种模式" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• 实时进程监控" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• 规则导入导出" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• OpenAI / 本地 Ollama 自然语言规则草案" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• 严格本地校验，草案默认禁用" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• 本地策略体检与可选的去标识 AI 解读" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="• sing-box TUN 数据面（需单独安装）" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeaturesTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature1}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature2}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature3}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature4}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature5}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature6}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature7}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{x:Static loc:Strings.AboutFeature8}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Border>
 
-                                <TextBlock Text="基于 .NET 8 + WPF 构建" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{x:Static loc:Strings.AboutFooter}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Border>
                     </Grid>

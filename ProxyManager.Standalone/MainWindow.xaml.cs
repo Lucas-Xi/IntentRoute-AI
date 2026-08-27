@@ -150,26 +150,26 @@ public partial class MainWindow : Window
         if (page != null) page.Visibility = Visibility.Visible;
         PageTitle.Text = pageName switch
         {
-            "NavRules" => "规则管理",
-            "NavAi" => "AI 规则助手",
-            "NavPolicy" => "AI 策略体检",
-            "NavRouteSimulator" => "AI 路由推演",
-            "NavMonitor" => "运行日志",
-            "NavProcess" => "进程列表",
-            "NavSettings" => "设置",
-            "NavAbout" => "关于",
+            "NavRules" => Localization.Strings.PageTitleRules,
+            "NavAi" => Localization.Strings.PageTitleAi,
+            "NavPolicy" => Localization.Strings.PageTitlePolicy,
+            "NavRouteSimulator" => Localization.Strings.PageTitleRouteSimulator,
+            "NavMonitor" => Localization.Strings.PageTitleMonitor,
+            "NavProcess" => Localization.Strings.PageTitleProcess,
+            "NavSettings" => Localization.Strings.PageTitleSettings,
+            "NavAbout" => Localization.Strings.PageTitleAbout,
             _ => ""
         };
         PageSubtitle.Text = pageName switch
         {
-            "NavRules" => " - 拖拽 .exe 添加规则",
-            "NavAi" => " - 自然语言生成可审查的规则草案",
-            "NavPolicy" => " - 本地确定性检查与可选 AI 解读",
-            "NavRouteSimulator" => " - 严格静态 what-if，不是流量遥测",
-            "NavMonitor" => " - sing-box 运行日志",
-            "NavProcess" => " - 运行中的进程",
-            "NavSettings" => " - 配置代理和功能",
-            "NavAbout" => " - 版本信息",
+            "NavRules" => Localization.Strings.PageSubtitleRules,
+            "NavAi" => Localization.Strings.PageSubtitleAi,
+            "NavPolicy" => Localization.Strings.PageSubtitlePolicy,
+            "NavRouteSimulator" => Localization.Strings.PageSubtitleRouteSimulator,
+            "NavMonitor" => Localization.Strings.PageSubtitleMonitor,
+            "NavProcess" => Localization.Strings.PageSubtitleProcess,
+            "NavSettings" => Localization.Strings.PageSubtitleSettings,
+            "NavAbout" => Localization.Strings.PageSubtitleAbout,
             _ => ""
         };
 
