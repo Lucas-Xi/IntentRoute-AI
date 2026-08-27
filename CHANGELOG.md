@@ -6,6 +6,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
+- Added a credential-free AI provider health diagnostics panel in Settings. OpenAI checks report only whether `OPENAI_API_KEY` is present — the key is never displayed and no network request is sent; Ollama checks reuse the literal-loopback model listing to report service reachability, installed-model count, and whether the selected model is installed.
 - Added a conservative `PartialOverlap` Policy Finding: two enabled rules whose scopes provably intersect without either containing the other are reported as an explicitly non-proven hint (Warning when outcomes differ, Info when they match). Domain-versus-IP constraints, disjoint ports, and different processes are never claimed as overlapping.
 
 ## [0.3.0] - 2026-08-27

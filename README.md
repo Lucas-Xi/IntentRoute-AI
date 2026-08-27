@@ -79,6 +79,10 @@ ollama pull qwen3:8b
 
 IntentRoute AI queries only literal HTTP `127.0.0.1` (the default) or `::1`. It rejects hostnames, other loopback addresses, credentialed endpoints, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
 
+### Health diagnostics
+
+The Settings page offers a credential-free provider health check for the currently selected provider and model. For OpenAI it reports only whether `OPENAI_API_KEY` is present — the key is never displayed and no network request is sent. For Ollama it reports loopback service reachability, the installed-model count, and whether the selected model is installed. Diagnostics never contain credentials or endpoints beyond the literal loopback constant.
+
 ## AI data boundary
 
 | Data | OpenAI | Local Ollama |

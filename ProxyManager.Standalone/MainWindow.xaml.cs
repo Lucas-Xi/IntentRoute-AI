@@ -1393,6 +1393,46 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void AiHealthCheck_Click(object sender, RoutedEventArgs e)
+    {
+        if (_shutdownStarted) return;
+        var button = (Button)sender;
+        button.IsEnabled = false;
+        AiHealthText.Text = "正在检查…";
+        try
+        {
+            var provider = GetSelectedAiProvider();
+            var model = AiModelCombo.SelectedItem as string;
+            var check = await AiProviderDiagnostics.CheckAsync(provider, model, _lifetimeCts.Token);
+            var providerLabel = check.Kind == AiProviderKind.OpenAI ? "OpenAI" : "Ollama";
+            var stateLabel = check.State switch
+            {
+                AiProviderHealthState.Ready => "就绪",
+                AiProviderHealthState.NotConfigured => "未配置",
+                AiProviderHealthState.Misconfigured => "配置不完整",
+                AiProviderHealthState.Unreachable => "本地服务不可达",
+                _ => "未知状态"
+            };
+            AiHealthText.Text = $"{providerLabel}：{stateLabel}\n{string.Join("\n", check.Details)}";
+        }
+        catch (AiProviderException ex)
+        {
+            AiHealthText.Text = ex.Message;
+        }
+        catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
+        {
+            // Shutdown during diagnostics keeps the last visible state.
+        }
+        catch (Exception ex)
+        {
+            AiHealthText.Text = $"诊断未能完成：{SingBoxRuntime.RedactSecrets(ex.Message)}";
+        }
+        finally
+        {
+            if (!_shutdownStarted) button.IsEnabled = true;
+        }
+    }
+
     private async Task RefreshRuntimeReadinessAsync()
     {
         if (!_service.IsConfigurationWritable)

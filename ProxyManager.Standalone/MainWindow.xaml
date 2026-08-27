@@ -963,6 +963,19 @@
                                     </StackPanel>
                                 </Border>
 
+                                <!-- AI 提供方健康诊断 -->
+                                <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="AI 提供方健康诊断" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="按 AI 页当前选择的提供方与模型执行无凭据检查：OpenAI 只报告密钥存在性，不显示内容、不发送请求；Ollama 只访问本机字面量环回地址。"
+                                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
+                                        <Button x:Name="AiHealthCheckButton" Content="运行诊断" Style="{StaticResource SecondaryBtn}" HorizontalAlignment="Left"
+                                                Click="AiHealthCheck_Click"/>
+                                        <TextBlock x:Name="AiHealthText" Text="尚未运行诊断。" TextWrapping="Wrap" FontSize="11"
+                                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- 本地代理设置 -->
                                 <Border x:Name="ProxySettingsCard" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                                     <StackPanel>
