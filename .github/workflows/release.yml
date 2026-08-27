@@ -35,6 +35,10 @@ jobs:
         shell: pwsh
         run: ./scripts/test.ps1
 
+      - name: Validate builder output with pinned real sing-box
+        shell: pwsh
+        run: ./scripts/test-pinned-sing-box.ps1
+
       - name: Check vulnerable dependencies
         shell: pwsh
         run: ./scripts/check-vulnerabilities.ps1

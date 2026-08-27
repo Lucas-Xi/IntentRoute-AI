@@ -17,7 +17,10 @@ Requirements: Windows 10/11, the .NET 8.0.424 SDK pinned by `global.json`, and o
 ./scripts/test.ps1
 ./scripts/build.ps1
 ./scripts/validate-sing-box.ps1 -SingBoxPath C:\path\to\sing-box.exe
+./scripts/test-pinned-sing-box.ps1 -SingBoxPath C:\path\to\sing-box.exe
 ```
+
+CI also runs `test-pinned-sing-box.ps1` without a path. That explicit test command downloads the official v1.13.19 Windows archive into the runner temp directory, verifies the pinned SHA-256, validates representative production-builder output, and deletes the test dependency. It does not change the product rule that sing-box must be installed separately and is never bundled or automatically downloaded by IntentRoute AI.
 
 ## Pull requests
 

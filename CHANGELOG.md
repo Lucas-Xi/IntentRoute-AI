@@ -23,6 +23,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Added authenticated local proxy editing for SOCKS5, HTTP, and HTTPS listeners with DPAPI-protected passwords.
 - Added a bounded local TCP port check that sends no proxy credentials and does not claim protocol, authentication, or internet reachability success.
 - Added guided recovery actions for an unreadable configuration: open the data directory, import a valid configuration, or explicitly reset.
+- Added a shared CI/Release compatibility gate that verifies the official sing-box v1.13.19 Windows archive SHA-256 and runs representative production-builder output through the real `sing-box check` without shipping the test dependency.
 
 ### Changed
 
@@ -62,6 +63,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Tests
 
+- Added pinned real sing-box coverage for DirectAll/ProxyAll, canonical rules, exact/suffix destinations, IPv4/IPv6 CIDRs, port/range, TCP/UDP/Both, Proxy/Direct/Block, authenticated loopback SOCKS5/HTTP/HTTPS, and explicit/default proxy selection.
 - Added canonical-order, explicit TCP/UDP, unsupported-protocol, domain-suffix, destination-union, CIDR/port/protocol containment, disabled-rule, selected-disclosure, privacy-canary, strict-output, and OpenAI/Ollama policy-payload coverage.
 - Added a regression test proving that rule up/down actions follow the order shown by the UI and used by sing-box.
 - Added equivalent-union and analyzer-cancellation coverage for domain, port, and CIDR policy shapes.

@@ -17,6 +17,7 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 - Provider-independent AI contracts, mocked provider tests, strict structured-output parsing, and public data-boundary documentation.
 - Local-first Policy Intelligence that separates deterministic facts from optional model explanation, exposes exact per-request disclosure, rejects stale output, and has canary tests for every excluded existing-policy field.
 - One documented Canonical Runtime Order plus explicit TCP/UDP `Both` semantics, reducing the chance that UI, tests, analysis, and generated sing-box behavior drift apart.
+- A public CI/Release gate that verifies the official sing-box v1.13.19 archive hash and passes representative production-builder output through the real `sing-box check` without bundling the test dependency.
 
 ## Facts that must remain honest in a future application
 

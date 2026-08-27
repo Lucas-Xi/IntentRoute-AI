@@ -150,9 +150,12 @@ Requirements for source builds:
 ./scripts/check-vulnerabilities.ps1
 ./scripts/build.ps1
 ./scripts/smoke-test-wpf.ps1 -OutputDirectory ./artifacts/win-x64
+./scripts/test-pinned-sing-box.ps1
 ```
 
 Provider tests use mocked HTTP handlers. They do not require an OpenAI key, a paid API call, a running Ollama service, or a downloaded local model. The Windows CI also launches the published single-file executable, verifies that the expected WPF main window is created, requests a normal close, and requires a clean zero exit.
+
+The explicit `test-pinned-sing-box.ps1` developer/CI gate temporarily downloads the official sing-box v1.13.19 Windows archive, verifies its pinned SHA-256, passes representative `SingBoxConfigBuilder` output through the real `sing-box check`, and removes the temporary executable and generated configurations. This test-only dependency is never copied into application artifacts; IntentRoute AI itself still never downloads or bundles sing-box. Pass `-SingBoxPath C:\path\to\sing-box.exe` to test an already-installed exact v1.13.19 executable without downloading it.
 
 ## Architecture and security
 

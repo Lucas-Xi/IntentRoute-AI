@@ -15,6 +15,8 @@
 9. A checked candidate is promoted and the managed process is replaced. If the replacement exits during its startup-settle window, IntentRoute AI atomically restores and restarts the previous checked configuration when one exists.
 10. sing-box creates dual-stack IPv4/IPv6 Windows TUN routes and applies process/destination route rules.
 
+CI and Release use a shared, explicit test-only adapter to download the official pinned sing-box v1.13.19 Windows archive into runner temp, verify its SHA-256, and run representative production `SingBoxConfigBuilder` output through the real `sing-box check`. The adapter removes the executable and generated test configurations afterward, and package verification independently rejects bundled sing-box files. This is compatibility evidence for the builder schema, not a product download path or a network-reachability test.
+
 ## AI authoring path
 
 1. The AI page creates an `AiRuleRequest` containing only the user-entered intent and selected model.
@@ -77,3 +79,5 @@ Provider failure, cancellation, rate limiting, missing local models, malformed o
 ## Dependency boundary
 
 sing-box, Ollama, local models, and OpenAI service access are separate dependencies selected/configured by the user. None are linked, vendored, downloaded, or redistributed by IntentRoute AI. Upstream behavior, availability, pricing, data handling, and licensing remain the responsibility of their respective projects/providers.
+
+The repository's pinned sing-box compatibility adapter is invoked only by an explicit developer/CI test command. It does not sit behind an application interface and its temporary dependency is excluded from every package.
