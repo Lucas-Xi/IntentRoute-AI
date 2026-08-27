@@ -29,6 +29,133 @@ public sealed class PolicyIntelligenceTests
     }
 
     [Fact]
+    public void Analyze_ReportsNonProvenPartialOverlapForDifferentOutcomes()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("chrome.exe", ProxyMode.Proxy, hosts: "github.com, api.example.com", priority: 10),
+            Rule("chrome.exe", ProxyMode.Direct, hosts: "api.example.com, docs.example.com", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        var finding = Assert.Single(report.Findings, item => item.Kind == PolicyFindingKind.PartialOverlap);
+        Assert.Equal(PolicyFindingSeverity.Warning, finding.Severity);
+        Assert.Equal(PolicyScopeRelation.PartialOverlap, finding.Relation);
+        Assert.Equal([1, 2], finding.Rules.Select(rule => rule.EvaluationOrder).ToArray());
+        Assert.Contains("非证明", finding.Title);
+    }
+
+    [Fact]
+    public void Analyze_ClassifiesSameOutcomePartialOverlapAsInfo()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, hosts: "a.example.com, b.example.com", priority: 10),
+            Rule("app.exe", ProxyMode.Proxy, hosts: "b.example.com, c.example.com", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        var finding = Assert.Single(report.Findings, item => item.Kind == PolicyFindingKind.PartialOverlap);
+        Assert.Equal(PolicyFindingSeverity.Info, finding.Severity);
+    }
+
+    [Fact]
+    public void Analyze_ReportsPartialOverlapForOverlappingPortRanges()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, hosts: "example.com", ports: "8000-9000", priority: 10),
+            Rule("app.exe", ProxyMode.Direct, hosts: "example.com", ports: "8500-9500", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        var finding = Assert.Single(report.Findings, item => item.Kind == PolicyFindingKind.PartialOverlap);
+        Assert.Equal(PolicyFindingSeverity.Warning, finding.Severity);
+    }
+
+    [Fact]
+    public void Analyze_ReportsPartialOverlapForIntersectingCidrUnions()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, ips: "10.0.0.0/8, 192.168.1.0/24", priority: 10),
+            Rule("app.exe", ProxyMode.Direct, ips: "10.1.0.0/16, 172.16.0.0/12", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.Contains(report.Findings, finding => finding.Kind == PolicyFindingKind.PartialOverlap);
+    }
+
+    [Fact]
+    public void Analyze_DoesNotClaimPartialOverlapAcrossDomainAndIpConstraints()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, hosts: "example.com", priority: 10),
+            Rule("app.exe", ProxyMode.Direct, ips: "203.0.113.7/32", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == PolicyFindingKind.PartialOverlap);
+    }
+
+    [Fact]
+    public void Analyze_DoesNotReportPartialOverlapWhenContainmentIsProven()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, hosts: "*.example.com", priority: 10),
+            Rule("app.exe", ProxyMode.Direct, hosts: "api.example.com", ports: "443", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.Contains(report.Findings, finding => finding.Kind == PolicyFindingKind.Shadowed);
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == PolicyFindingKind.PartialOverlap);
+    }
+
+    [Fact]
+    public void Analyze_DoesNotReportPartialOverlapForDisjointPorts()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("app.exe", ProxyMode.Proxy, hosts: "example.com", ports: "80", priority: 10),
+            Rule("app.exe", ProxyMode.Direct, hosts: "example.com", ports: "443", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == PolicyFindingKind.PartialOverlap);
+    }
+
+    [Fact]
+    public void Analyze_IgnoresPartialOverlapAcrossDifferentProcesses()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("a.exe", ProxyMode.Proxy, hosts: "example.com", priority: 10),
+            Rule("b.exe", ProxyMode.Direct, hosts: "example.com", priority: 20)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.DoesNotContain(report.Findings, finding => finding.Kind == PolicyFindingKind.PartialOverlap);
+    }
+
+    [Fact]
     public void Analyze_DistinguishesDuplicateAndConflictByEffectiveOutcome()
     {
         var config = BaseConfig();

@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Added a conservative `PartialOverlap` Policy Finding: two enabled rules whose scopes provably intersect without either containing the other are reported as an explicitly non-proven hint (Warning when outcomes differ, Info when they match). Domain-versus-IP constraints, disjoint ports, and different processes are never claimed as overlapping.
+
 ## [0.3.0] - 2026-08-27
 
 ### Fixed

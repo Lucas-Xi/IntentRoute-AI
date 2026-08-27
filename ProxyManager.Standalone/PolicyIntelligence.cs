@@ -25,7 +25,8 @@ public enum PolicyFindingKind
     DisabledDuplicate,
     PriorityTie,
     AnalysisIncomplete,
-    GlobalProxyPosture
+    GlobalProxyPosture,
+    PartialOverlap
 }
 
 public enum PolicyScopeRelation
@@ -35,7 +36,8 @@ public enum PolicyScopeRelation
     EarlierSuperset,
     SamePriorityOverlap,
     InactiveExactMatch,
-    GlobalDefault
+    GlobalDefault,
+    PartialOverlap
 }
 
 public sealed record PolicyRuleReference(
@@ -382,6 +384,37 @@ public static class PolicyIntelligence
                 // The first proven superset is the earliest runtime cause; reporting every later
                 // superset would produce duplicate advice without changing the result.
                 break;
+            }
+        }
+
+        for (var laterIndex = 0; laterIndex < evaluated.Count && !pairBudgetExhausted; laterIndex++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var later = evaluated[laterIndex];
+            for (var earlierIndex = 0; earlierIndex < laterIndex; earlierIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (++pairComparisons > MaxPairComparisons)
+                {
+                    pairBudgetExhausted = true;
+                    break;
+                }
+                var earlier = evaluated[earlierIndex];
+                if (earlier.Scope.Contains(later.Scope) || later.Scope.Contains(earlier.Scope)) continue;
+                if (!MatchScope.HasProvenPartialOverlap(earlier.Scope, later.Scope)) continue;
+
+                var sameOutcome = earlier.Outcome.Equals(later.Outcome);
+                AddFinding(PendingFinding.Pair(
+                    PolicyFindingKind.PartialOverlap,
+                    sameOutcome ? PolicyFindingSeverity.Info : PolicyFindingSeverity.Warning,
+                    PolicyScopeRelation.PartialOverlap,
+                    sameOutcome ? "部分重叠范围使用相同动作（非证明提示）" : "部分重叠范围在不同动作下顺序敏感（非证明提示）",
+                    $"第 {earlier.EvaluationOrder} 与第 {later.EvaluationOrder} 条活动规则的匹配范围存在可机械证明的交集，但互不包含；交集中的流量会先命中较早规则。此提示不构成遮蔽或冲突的证明：交集之外的流量仍由各自范围决定。",
+                    sameOutcome
+                        ? "相同动作下交集内结果一致，通常可保持现状；如需区分意图可收窄其中一条的范围。"
+                        : "确认两条规则的意图：若希望后一条在交集中生效，应收窄前一条或调整优先级。",
+                    earlier,
+                    later));
             }
         }
 
@@ -1029,6 +1062,40 @@ public static class PolicyIntelligence
             if (!NetworkContains(Network, later.Network)) return false;
             if (!ContainsPorts(Ports, later.Ports)) return false;
             return ContainsDestinations(this, later);
+        }
+
+        public static bool HasProvenPartialOverlap(MatchScope earlier, MatchScope later)
+        {
+            if (earlier.Contains(later) || later.Contains(earlier)) return false;
+            if (!ProcessesMayOverlap(earlier.ProcessName, later.ProcessName)) return false;
+            if (!NetworksOverlap(earlier.Network, later.Network)) return false;
+            if (!PortsOverlap(earlier.Ports, later.Ports)) return false;
+            if (!earlier.HasDestinationFilter || !later.HasDestinationFilter) return true;
+
+            // Domain matchers and IP networks each form a containment tree: two constraints
+            // provably intersect exactly when one contains the other. A domain constraint
+            // versus an IP constraint cannot be proven to intersect without resolution context.
+            var domainsOverlap = earlier.Domains.Any(earlierDomain =>
+                later.Domains.Any(laterDomain =>
+                    earlierDomain.Contains(laterDomain) || laterDomain.Contains(earlierDomain)));
+            var networksOverlap = earlier.IpNetworks.Any(earlierNetwork =>
+                later.IpNetworks.Any(laterNetwork =>
+                    earlierNetwork.Contains(laterNetwork) || laterNetwork.Contains(earlierNetwork)));
+            return domainsOverlap || networksOverlap;
+        }
+
+        private static bool ProcessesMayOverlap(string? earlier, string? later) =>
+            earlier == null || later == null ||
+            string.Equals(earlier, later, StringComparison.OrdinalIgnoreCase);
+
+        private static bool NetworksOverlap(NetworkClass earlier, NetworkClass later) =>
+            earlier == NetworkClass.TcpUdp || later == NetworkClass.TcpUdp || earlier == later;
+
+        private static bool PortsOverlap(IReadOnlyList<PortRange> earlier, IReadOnlyList<PortRange> later)
+        {
+            if (earlier.Count == 0 || later.Count == 0) return true;
+            return earlier.Any(left => later.Any(right =>
+                left.Start <= right.End && right.Start <= left.End));
         }
 
         public ScopeEvaluation Evaluate(NormalizedRouteQuery query)
