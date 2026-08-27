@@ -17,6 +17,7 @@ All notable changes are documented here. The project follows semantic versioning
 - Added a local-first AI Policy Intelligence page with deterministic duplicate, conflict, proven shadowing, broad-scope, disabled-invalid, inactive-duplicate, same-priority-overlap, and ProxyAll-posture findings.
 - Added local finding navigation to affected rules plus optional OpenAI/Ollama plain-language explanation for 1–20 user-selected findings.
 - Added a per-request confirmation dialog that displays the exact closed Policy Disclosure JSON before any policy-explanation request is sent.
+- Added cancellation-aware background policy scans so large bounded analyses do not block the WPF dispatcher or delay safe shutdown.
 - Added a Settings readiness panel that reports the resolved sing-box path, probes `sing-box version`, and requires a recognized v1.13+ release before configuration checking or process launch.
 - Added an explicit file picker for a separately installed sing-box executable without bundling, downloading, or installing it.
 - Added authenticated local proxy editing for SOCKS5, HTTP, and HTTPS listeners with DPAPI-protected passwords.
@@ -27,6 +28,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 - Use one Canonical Runtime Order across sing-box generation, the rules page, process-candidate display, and Policy Intelligence: priority ascending, creation timestamp ascending, then persisted source order.
 - Make rule up/down actions move within that same canonical order before priorities are normalized.
+- Canonicalize equivalent domain-suffix, adjacent/overlapping port-range, and mergeable CIDR unions before duplicate and containment analysis, reducing conservative false negatives without DNS or heuristic overlap claims.
 - Emit empty legacy protocol, `Both`, and `TCP/UDP` explicitly as sing-box TCP plus UDP; reject `Any`, `ALL`, and `ICMP` instead of silently including v1.13 ICMP traffic.
 - Label the process page as a process-name configuration candidate rather than a live routing status because destination, port, and protocol conditions are not evaluated there.
 - Restrict supported proxy endpoints to literal loopback IP addresses; hostnames, LAN addresses, public addresses, and IPv4-mapped IPv6 forms are rejected.
@@ -62,6 +64,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 - Added canonical-order, explicit TCP/UDP, unsupported-protocol, domain-suffix, destination-union, CIDR/port/protocol containment, disabled-rule, selected-disclosure, privacy-canary, strict-output, and OpenAI/Ollama policy-payload coverage.
 - Added a regression test proving that rule up/down actions follow the order shown by the UI and used by sing-box.
+- Added equivalent-union and analyzer-cancellation coverage for domain, port, and CIDR policy shapes.
 - Added coverage for corrupt JSON preservation, DPAPI failure, save blocking, explicit reset, loopback-only endpoint validation, local TCP checks, sing-box version compatibility, and prevention of check/start on unsupported versions.
 - Added invalid UTF-8 preservation and unapproved discovery tests, plus a build-time package-content gate that rejects bundled sing-box and generated runtime files.
 - Added null-collection-entry recovery coverage for rules, proxy servers, and proxy chains.

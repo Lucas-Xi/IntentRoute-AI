@@ -34,9 +34,9 @@ AI never directly enables rules, invokes commands, selects files, installs model
 
 ## AI Policy Intelligence workflow (unreleased `main`)
 
-1. Open **AI Policy Intelligence**. The application analyzes a detached configuration snapshot locally; this performs no provider request, filesystem write, runtime apply, executable probe, proxy connection, DNS lookup, or traffic observation.
+1. Open **AI Policy Intelligence**. A cancellation-aware background worker analyzes a detached configuration snapshot without blocking the WPF dispatcher; this performs no provider request, filesystem write, runtime apply, executable probe, proxy connection, DNS lookup, or traffic observation.
 2. Findings use the same Canonical Runtime Order as the generated sing-box route: priority ascending, creation timestamp ascending, then persisted source order. The rules page uses that order too.
-3. The local report distinguishes exact duplicates, same-scope different outcomes, proven earlier-superset shadowing, broad process/global rules, invalid disabled rules, inactive duplicates, same-priority overlaps, and the ProxyAll default posture. It does not promote uncertain partial overlaps into facts.
+3. The local report distinguishes exact duplicates, same-scope different outcomes, proven earlier-superset shadowing, broad process/global rules, invalid disabled rules, inactive duplicates, same-priority overlaps, and the ProxyAll default posture. Equivalent suffix, integer-port-union, and mergeable CIDR-union spellings are canonicalized before comparison. Uncertain partial overlaps are not promoted into facts.
 4. Local rows may show real rule labels and can navigate to an affected rule. They are never serialized to a provider.
 5. To request an explanation, select 1–20 findings and click **Explain selected summary with AI**. A confirmation dialog shows the exact logical JSON, provider, and exclusion list for that single request.
 6. The closed Policy Disclosure contains only aggregate counts plus finding code, category, severity, relationship, and affected-rule count. The AI response must use a strict schema and reference only those finding codes.

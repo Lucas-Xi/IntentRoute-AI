@@ -155,9 +155,12 @@ public static class PolicyIntelligence
 
     private static readonly char[] ListSeparators = [',', ';', '|', '\n', '\r', '\t', ' '];
 
-    public static PolicyAnalysisReport Analyze(AppConfig snapshot)
+    public static PolicyAnalysisReport Analyze(
+        AppConfig snapshot,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        cancellationToken.ThrowIfCancellationRequested();
 
         var rules = snapshot.Rules ?? [];
         var enabledProxyIds = (snapshot.ProxyServers ?? [])
@@ -190,11 +193,13 @@ public static class PolicyIntelligence
 
         foreach (var priorityGroup in evaluated.GroupBy(item => item.Rule.Priority).Where(group => group.Count() > 1))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var tied = priorityGroup.ToList();
             for (var laterIndex = 1; laterIndex < tied.Count; laterIndex++)
             {
                 for (var earlierIndex = 0; earlierIndex < laterIndex; earlierIndex++)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var earlier = tied[earlierIndex];
                     var later = tied[laterIndex];
                     if (++pairComparisons > MaxPairComparisons)
@@ -220,9 +225,11 @@ public static class PolicyIntelligence
 
         for (var laterIndex = 0; laterIndex < evaluated.Count && !pairBudgetExhausted; laterIndex++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var later = evaluated[laterIndex];
             for (var earlierIndex = 0; earlierIndex < laterIndex; earlierIndex++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var earlier = evaluated[earlierIndex];
                 if (++pairComparisons > MaxPairComparisons)
                 {
@@ -280,6 +287,7 @@ public static class PolicyIntelligence
 
         foreach (var rule in evaluated.Where(item => item.Scope.IsUnconstrainedExceptProcess))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var global = rule.Scope.ProcessName == null;
             AddFinding(PendingFinding.Single(
                 PolicyFindingKind.BroadScope,
@@ -300,10 +308,13 @@ public static class PolicyIntelligence
             .Where(item => item.Rule != null && !item.Rule.IsEnabled)
             .Take(MaxRulesAnalyzedPerState)
             .ToList();
+        cancellationToken.ThrowIfCancellationRequested();
         var disabledValidationBase = CreateDisabledValidationBase(snapshot);
+        cancellationToken.ThrowIfCancellationRequested();
 
         foreach (var item in disabled)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var disabledError = ValidateDisabledRule(disabledValidationBase, item.Rule);
             if (disabledError != null)
             {
@@ -375,7 +386,7 @@ public static class PolicyIntelligence
         var active = rules.Where(rule => rule != null && rule.IsEnabled).ToList();
 
         return new PolicyAnalysisReport(
-            CreateFingerprint(snapshot),
+            CreateFingerprint(snapshot, cancellationToken),
             snapshot.GlobalMode,
             active.Count,
             totalDisabledCount,
@@ -436,11 +447,17 @@ public static class PolicyIntelligence
             findings);
     }
 
-    public static bool MatchesSnapshot(PolicyAnalysisReport report, AppConfig snapshot)
+    public static bool MatchesSnapshot(
+        PolicyAnalysisReport report,
+        AppConfig snapshot,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(snapshot);
-        return string.Equals(report.Fingerprint, CreateFingerprint(snapshot), StringComparison.Ordinal);
+        return string.Equals(
+            report.Fingerprint,
+            CreateFingerprint(snapshot, cancellationToken),
+            StringComparison.Ordinal);
     }
 
     private static AppConfig CreateDisabledValidationBase(AppConfig snapshot)
@@ -480,13 +497,15 @@ public static class PolicyIntelligence
         }
     }
 
-    private static string CreateFingerprint(AppConfig config)
+    private static string CreateFingerprint(AppConfig config, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var value = new StringBuilder()
             .Append((int)config.GlobalMode).Append('|')
             .Append((int)config.DnsMode).Append('|');
         foreach (var rule in config.Rules ?? [])
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (rule == null)
             {
                 value.Append("<null>\u001e");
@@ -509,6 +528,7 @@ public static class PolicyIntelligence
 
         foreach (var server in config.ProxyServers ?? [])
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (server != null)
                 value.Append(server.Id).Append('\u001f').Append(server.Enabled).Append('\u001e');
         }
@@ -709,14 +729,64 @@ public static class PolicyIntelligence
             return false;
         }
 
-        private static IReadOnlyList<DomainMatcher> NormalizeDomains(IEnumerable<DomainMatcher> domains) =>
-            domains.Distinct().OrderBy(domain => domain.Value, StringComparer.Ordinal).ThenBy(domain => domain.IsSuffix).ToList();
+        private static IReadOnlyList<DomainMatcher> NormalizeDomains(IEnumerable<DomainMatcher> domains)
+        {
+            var distinct = domains.Distinct().ToList();
+            return distinct
+                .Where(candidate => !distinct.Any(other =>
+                    other != candidate && other.Contains(candidate)))
+                .OrderBy(domain => domain.Value, StringComparer.Ordinal)
+                .ThenBy(domain => domain.IsSuffix)
+                .ToList();
+        }
 
-        private static IReadOnlyList<IpNetwork> NormalizeNetworks(IEnumerable<IpNetwork> networks) =>
-            networks.Distinct().OrderBy(network => network.SortKey, StringComparer.Ordinal).ToList();
+        private static IReadOnlyList<IpNetwork> NormalizeNetworks(IEnumerable<IpNetwork> networks)
+        {
+            var normalized = networks.Distinct().ToList();
+            while (true)
+            {
+                normalized = normalized
+                    .Where(candidate => !normalized.Any(other =>
+                        other != candidate && other.Contains(candidate)))
+                    .ToList();
 
-        private static IReadOnlyList<PortRange> NormalizePorts(IEnumerable<PortRange> ports) =>
-            ports.Distinct().OrderBy(port => port.Start).ThenBy(port => port.End).ToList();
+                var merged = false;
+                for (var leftIndex = 0; leftIndex < normalized.Count && !merged; leftIndex++)
+                {
+                    for (var rightIndex = leftIndex + 1; rightIndex < normalized.Count; rightIndex++)
+                    {
+                        if (!normalized[leftIndex].TryMergeSibling(normalized[rightIndex], out var parent))
+                            continue;
+                        normalized.RemoveAt(rightIndex);
+                        normalized.RemoveAt(leftIndex);
+                        normalized.Add(parent);
+                        merged = true;
+                        break;
+                    }
+                }
+
+                if (!merged) break;
+            }
+
+            return normalized.OrderBy(network => network.SortKey, StringComparer.Ordinal).ToList();
+        }
+
+        private static IReadOnlyList<PortRange> NormalizePorts(IEnumerable<PortRange> ports)
+        {
+            var ordered = ports.Distinct().OrderBy(port => port.Start).ThenBy(port => port.End).ToList();
+            if (ordered.Count < 2) return ordered;
+
+            var merged = new List<PortRange> { ordered[0] };
+            foreach (var next in ordered.Skip(1))
+            {
+                var current = merged[^1];
+                if (next.Start <= current.End + 1)
+                    merged[^1] = new PortRange(current.Start, Math.Max(current.End, next.End));
+                else
+                    merged.Add(next);
+            }
+            return merged;
+        }
     }
 
     private enum NetworkClass
@@ -786,6 +856,23 @@ public static class PolicyIntelligence
             if (remainingBits == 0) return true;
             var mask = (byte)(0xFF << (8 - remainingBits));
             return (NetworkBytes[wholeBytes] & mask) == (later.NetworkBytes[wholeBytes] & mask);
+        }
+
+        public bool TryMergeSibling(IpNetwork other, out IpNetwork parent)
+        {
+            parent = default;
+            if (Family != other.Family || PrefixLength != other.PrefixLength || PrefixLength == 0 || Equals(other))
+                return false;
+
+            var parentPrefix = PrefixLength - 1;
+            var leftParentBytes = NetworkBytes.ToArray();
+            var rightParentBytes = other.NetworkBytes.ToArray();
+            ApplyMask(leftParentBytes, parentPrefix);
+            ApplyMask(rightParentBytes, parentPrefix);
+            if (!leftParentBytes.SequenceEqual(rightParentBytes)) return false;
+
+            parent = new IpNetwork(Family, leftParentBytes, parentPrefix);
+            return true;
         }
 
         public bool Equals(IpNetwork other) =>

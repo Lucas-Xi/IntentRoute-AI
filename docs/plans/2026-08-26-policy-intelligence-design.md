@@ -97,7 +97,7 @@ Acceptance criteria:
 - **NFR-PI-001: MUST — Privacy.** The Policy Disclosure is an allowlist DTO, not serialized `AppConfig`, rule objects, builder JSON, or locally rendered finding text.
 - **NFR-PI-002: MUST — Safety.** No Policy Intelligence interface exposes a configuration mutation or runtime-apply operation.
 - **NFR-PI-003: MUST — Determinism.** Equal snapshots produce equal fingerprints, order, codes, and findings.
-- **NFR-PI-004: MUST — Bounded operation.** A scan examines at most 500 active and 500 disabled rules, caps local findings/comparisons, and emits an explicit incomplete-analysis finding when a budget is reached. Provider disclosure is limited to 20 selected findings; provider response and arrays have explicit limits.
+- **NFR-PI-004: MUST — Bounded operation.** A scan runs on a cancellation-aware background task, examines at most 500 active and 500 disabled rules, caps local findings/comparisons, and emits an explicit incomplete-analysis finding when a budget is reached. Newer snapshots and shutdown cancel superseded work. Provider disclosure is limited to 20 selected findings; provider response and arrays have explicit limits.
 - **NFR-PI-005: SHOULD — Accessibility.** Native WPF selection, keyboard multi-select, plain text, and visible status/cancel controls remain usable without mouse-only gestures.
 
 ## Deep modules and seams

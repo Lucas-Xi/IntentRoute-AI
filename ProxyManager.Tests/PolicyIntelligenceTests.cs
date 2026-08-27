@@ -259,6 +259,35 @@ public sealed class PolicyIntelligenceTests
     }
 
     [Fact]
+    public void Analyze_NormalizesEquivalentDestinationAndPortUnions()
+    {
+        var config = BaseConfig();
+        config.Rules =
+        [
+            Rule("ports.exe", ProxyMode.Direct, ports: "80-90,91-100", priority: 10),
+            Rule("ports.exe", ProxyMode.Direct, ports: "80-100", priority: 20),
+            Rule("network.exe", ProxyMode.Direct, ips: "10.0.0.0/9,10.128.0.0/9", priority: 30),
+            Rule("network.exe", ProxyMode.Direct, ips: "10.0.0.0/8", priority: 40),
+            Rule("domain.exe", ProxyMode.Direct, hosts: "*.example.com,api.example.com", priority: 50),
+            Rule("domain.exe", ProxyMode.Direct, hosts: "*.example.com", priority: 60)
+        ];
+
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.Equal(3, report.Findings.Count(finding => finding.Kind == PolicyFindingKind.Duplicate));
+    }
+
+    [Fact]
+    public void Analyze_HonorsCancellationBeforeWorkBegins()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            PolicyIntelligence.Analyze(BaseConfig(), cancellation.Token));
+    }
+
+    [Fact]
     public void Disclosure_OmitsAllLocalIdentifiersAndSensitiveValues()
     {
         var config = BaseConfig();

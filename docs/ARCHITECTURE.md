@@ -27,8 +27,8 @@
 
 ## Policy Intelligence path
 
-1. The WPF page requests a detached Configuration Snapshot and passes it to `PolicyIntelligence.Analyze`.
-2. The deep local module uses Canonical Runtime Order plus the supported sing-box default-rule algebra: destination matcher types form one OR group, port and port-range matchers form another OR group, and process/network/other groups combine with AND. It reports containment only when every required relation is proven.
+1. The WPF page requests a detached Configuration Snapshot and passes it to `PolicyIntelligence.Analyze` on a cancellation-aware background task; newer snapshots and shutdown supersede the old scan without blocking the dispatcher.
+2. The deep local module canonicalizes redundant domain suffixes, adjacent/overlapping integer port ranges, and mergeable sibling CIDRs, then uses Canonical Runtime Order plus the supported sing-box default-rule algebra: destination matcher types form one OR group, port and port-range matchers form another OR group, and process/network/other groups combine with AND. It reports containment only when every required relation is proven.
 3. Enabled rules produce runtime-order findings. Disabled rules are never described as active; each is temporarily enabled only in a cloned in-memory candidate and passed through `SingBoxConfigBuilder` to identify prospective enable failures.
 4. The local `PolicyAnalysisReport` contains display labels and rule IDs for navigation. It never crosses a provider seam.
 5. The user selects 1–20 findings. `PolicyIntelligence.ToDisclosure` creates a closed allowlist object containing aggregate counts and structural finding fields only.

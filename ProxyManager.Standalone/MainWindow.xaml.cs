@@ -26,8 +26,11 @@ public partial class MainWindow : Window
     private string _searchFilter = "";
     private bool _isMaximized = false;
     private CancellationTokenSource? _aiGenerationCts;
+    private CancellationTokenSource? _policyAnalysisCts;
     private CancellationTokenSource? _policyExplanationCts;
     private CancellationTokenSource? _runtimeReadinessCts;
+    private Task _policyAnalysisDrainTask = Task.CompletedTask;
+    private int _policyAnalysisVersion;
     private int _aiModelRefreshVersion;
     private int _policyModelRefreshVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
@@ -432,25 +435,27 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AnalyzePolicy_Click(object sender, RoutedEventArgs e)
+    private async void AnalyzePolicy_Click(object sender, RoutedEventArgs e)
     {
-        RefreshPolicyAnalysis();
-        if (_currentPolicyReport != null)
-        {
-            PolicyStatusText.Text = !_currentPolicyReport.IsComplete
-                ? $"本地体检达到分析预算：至少 {_currentPolicyReport.OmittedFindingCount} 个项目未完整展开，当前报告不能视为完整结论。"
-                : _currentPolicyReport.Findings.Count == 0
-                ? "本地体检完成：未发现可确定的问题。此结果不代表真实流量或代理连通性已验证。"
-                : $"本地体检完成：{_currentPolicyReport.Findings.Count} 项发现；未调用 AI，未修改配置。";
-        }
+        await RefreshPolicyAnalysisAsync();
     }
 
     private async void ExplainPolicy_Click(object sender, RoutedEventArgs e)
     {
         if (_policyExplanationCts != null || _currentPolicyReport == null) return;
-        if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config))
+        var report = _currentPolicyReport;
+        bool matchesBeforePreview;
+        try
         {
-            RefreshPolicyAnalysis();
+            matchesBeforePreview = await PolicyReportMatchesCurrentAsync(report, _lifetimeCts.Token);
+        }
+        catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
+        {
+            return;
+        }
+        if (!matchesBeforePreview)
+        {
+            await RefreshPolicyAnalysisAsync();
             PolicyStatusText.Text = "策略已变化；已阻止预览旧摘要，请在最新体检中重新选择发现。";
             return;
         }
@@ -467,8 +472,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var reportFingerprint = _currentPolicyReport.Fingerprint;
-        var disclosure = PolicyIntelligence.ToDisclosure(_currentPolicyReport, selectedCodes);
+        var disclosure = PolicyIntelligence.ToDisclosure(report, selectedCodes);
         var provider = GetSelectedPolicyExplainer();
         var preview = AiPolicyContract.CreateInput(disclosure);
         var providerNotice = provider.Kind == AiProviderKind.OpenAI
@@ -487,9 +491,18 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config))
+        bool matchesAfterConfirmation;
+        try
         {
-            RefreshPolicyAnalysis();
+            matchesAfterConfirmation = await PolicyReportMatchesCurrentAsync(report, _lifetimeCts.Token);
+        }
+        catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
+        {
+            return;
+        }
+        if (!matchesAfterConfirmation)
+        {
+            await RefreshPolicyAnalysisAsync();
             PolicyStatusText.Text = "确认期间策略已变化；未发送旧摘要，请在最新体检中重新选择发现。";
             return;
         }
@@ -514,10 +527,9 @@ public partial class MainWindow : Window
                     token),
                 requestCts.Token);
 
-            if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config) ||
-                !string.Equals(reportFingerprint, _currentPolicyReport.Fingerprint, StringComparison.Ordinal))
+            if (!await PolicyReportMatchesCurrentAsync(report, requestCts.Token))
             {
-                RefreshPolicyAnalysis();
+                await RefreshPolicyAnalysisAsync();
                 PolicyStatusText.Text = "AI 解读返回前配置已变化；旧结果已丢弃，请基于最新体检重新解读。";
                 return;
             }
@@ -590,55 +602,132 @@ public partial class MainWindow : Window
         RulesList.Focus();
     }
 
-    private void RefreshPolicyAnalysis()
+    private Task RefreshPolicyAnalysisAsync()
     {
+        var previous = _policyAnalysisCts;
+        previous?.Cancel();
+        var version = ++_policyAnalysisVersion;
+
         if (!_service.IsConfigurationWritable)
         {
-            _policyExplanationCts?.Cancel();
-            _currentPolicyReport = null;
-            _policyFindings.Clear();
-            ResetPolicyExplanation();
-            PolicyActiveCount.Text = "0";
-            PolicyCriticalCount.Text = "0";
-            PolicyWarningCount.Text = "0";
-            PolicyDisabledCount.Text = "0";
-            PolicyFindingCount.Text = "0 项";
-            PolicyEmptyText.Text = "配置处于恢复保护状态，未执行策略体检。";
-            PolicyEmptyText.Visibility = Visibility.Visible;
-            PolicyLocateButton.IsEnabled = false;
-            PolicyExplainButton.IsEnabled = false;
-            PolicyStatusText.Text = "配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。";
-            return;
+            _policyAnalysisCts = null;
+            ShowProtectedPolicyState();
+            return Task.CompletedTask;
         }
 
-        var latest = PolicyIntelligence.Analyze(_service.Config);
-        var changed = _currentPolicyReport != null &&
-            !string.Equals(_currentPolicyReport.Fingerprint, latest.Fingerprint, StringComparison.Ordinal);
-        _currentPolicyReport = latest;
-        if (changed)
+        var snapshot = _service.Config;
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(_lifetimeCts.Token);
+        _policyAnalysisCts = cts;
+        BeginPolicyAnalysisUi();
+        var currentTask = RunPolicyAnalysisAsync(snapshot, version, cts);
+        _policyAnalysisDrainTask = Task.WhenAll(_policyAnalysisDrainTask, currentTask);
+        return currentTask;
+    }
+
+    private async Task RunPolicyAnalysisAsync(
+        AppConfig snapshot,
+        int version,
+        CancellationTokenSource cts)
+    {
+        try
         {
-            _policyExplanationCts?.Cancel();
-            ResetPolicyExplanation();
-        }
+            var latest = await Task.Run(
+                () => PolicyIntelligence.Analyze(snapshot, cts.Token),
+                cts.Token);
+            if (cts.IsCancellationRequested || version != _policyAnalysisVersion || _shutdownStarted)
+                return;
 
+            _currentPolicyReport = latest;
+            _policyFindings.Clear();
+            foreach (var finding in latest.Findings)
+                _policyFindings.Add(PolicyFindingPreviewLine.FromFinding(finding));
+            PolicyActiveCount.Text = latest.ActiveRuleCount.ToString();
+            PolicyCriticalCount.Text = latest.CriticalCount.ToString();
+            PolicyWarningCount.Text = latest.WarningCount.ToString();
+            PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
+            PolicyFindingCount.Text = $"{latest.Findings.Count} 项";
+            PolicyEmptyText.Text = "未发现可确定的问题。策略体检不等同于真实流量验证。";
+            PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            PolicyStatusText.Text = !latest.IsComplete
+                ? $"本地体检达到分析预算：至少 {latest.OmittedFindingCount} 个项目未完整展开，当前报告不能视为完整结论。"
+                : latest.Findings.Count == 0
+                    ? "本地体检完成：未发现可确定的问题。此结果不代表真实流量或代理连通性已验证。"
+                    : $"本地体检完成：{latest.Findings.Count} 项发现；未调用 AI，未修改配置。";
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            // A newer snapshot or window shutdown superseded this bounded local scan.
+        }
+        catch (Exception ex)
+        {
+            if (version == _policyAnalysisVersion && !_shutdownStarted)
+            {
+                _currentPolicyReport = null;
+                _policyFindings.Clear();
+                PolicyFindingCount.Text = "0 项";
+                PolicyEmptyText.Text = "本地体检失败，未生成策略结论。";
+                PolicyEmptyText.Visibility = Visibility.Visible;
+                PolicyStatusText.Text = "本地体检失败: " + SingBoxRuntime.RedactSecrets(ex.Message);
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_policyAnalysisCts, cts))
+                _policyAnalysisCts = null;
+            cts.Dispose();
+        }
+    }
+
+    private void BeginPolicyAnalysisUi()
+    {
+        _policyExplanationCts?.Cancel();
+        _currentPolicyReport = null;
         _policyFindings.Clear();
-        foreach (var finding in latest.Findings)
-            _policyFindings.Add(PolicyFindingPreviewLine.FromFinding(finding));
-        PolicyActiveCount.Text = latest.ActiveRuleCount.ToString();
-        PolicyCriticalCount.Text = latest.CriticalCount.ToString();
-        PolicyWarningCount.Text = latest.WarningCount.ToString();
-        PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
-        PolicyFindingCount.Text = $"{latest.Findings.Count} 项";
-        PolicyEmptyText.Text = "未发现可确定的问题。策略体检不等同于真实流量验证。";
-        PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResetPolicyExplanation();
+        PolicyActiveCount.Text = "…";
+        PolicyCriticalCount.Text = "…";
+        PolicyWarningCount.Text = "…";
+        PolicyDisabledCount.Text = "…";
+        PolicyFindingCount.Text = "分析中";
+        PolicyEmptyText.Text = "正在后台执行可取消的本地确定性体检…";
+        PolicyEmptyText.Visibility = Visibility.Visible;
         PolicyLocateButton.IsEnabled = false;
         PolicyExplainButton.IsEnabled = false;
+        PolicyStatusText.Text = "正在后台分析当前策略；不会联网、探测端口或修改配置。";
+    }
+
+    private void ShowProtectedPolicyState()
+    {
+        _policyExplanationCts?.Cancel();
+        _currentPolicyReport = null;
+        _policyFindings.Clear();
+        ResetPolicyExplanation();
+        PolicyActiveCount.Text = "0";
+        PolicyCriticalCount.Text = "0";
+        PolicyWarningCount.Text = "0";
+        PolicyDisabledCount.Text = "0";
+        PolicyFindingCount.Text = "0 项";
+        PolicyEmptyText.Text = "配置处于恢复保护状态，未执行策略体检。";
+        PolicyEmptyText.Visibility = Visibility.Visible;
+        PolicyLocateButton.IsEnabled = false;
+        PolicyExplainButton.IsEnabled = false;
+        PolicyStatusText.Text = "配置处于恢复保护状态；已阻止把空占位配置误报为健康策略。";
     }
 
     private void ResetPolicyExplanation()
     {
         _policyAdvice.Clear();
         PolicyAiSummaryText.Text = "AI 尚未解读；本地确定性发现始终优先于模型文字。";
+    }
+
+    private async Task<bool> PolicyReportMatchesCurrentAsync(
+        PolicyAnalysisReport report,
+        CancellationToken cancellationToken)
+    {
+        var snapshot = _service.Config;
+        return await Task.Run(
+            () => PolicyIntelligence.MatchesSnapshot(report, snapshot, cancellationToken),
+            cancellationToken);
     }
 
     #endregion
@@ -650,6 +739,7 @@ public partial class MainWindow : Window
         _allRules = PolicyRuntimeOrder.All(_service.Config.Rules).ToList();
         ApplyFilter();
         UpdateStats();
+        _ = RefreshPolicyAnalysisAsync();
     }
 
     private void ApplyFilter()
@@ -670,7 +760,6 @@ public partial class MainWindow : Window
             _rules.Add(rule);
 
         EmptyState.Visibility = _rules.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        RefreshPolicyAnalysis();
     }
 
     private void UpdateStats()
@@ -847,6 +936,7 @@ public partial class MainWindow : Window
     private void Mode_Changed(object sender, RoutedEventArgs e)
     {
         _service.SetGlobalMode(ModeProxy.IsChecked == true ? GlobalMode.ProxyAll : GlobalMode.DirectAll);
+        _ = RefreshPolicyAnalysisAsync();
     }
 
     #endregion
@@ -929,6 +1019,7 @@ public partial class MainWindow : Window
                 port,
                 ProxyUsername.Text,
                 ProxyPassword.Password);
+            _ = RefreshPolicyAnalysisAsync();
             ProxyHost.Text = LocalProxyEndpoint.NormalizeOrThrow(ProxyHost.Text, port);
             StatusDetail.Text = $"本地 {proxyType} 代理已保存: {ProxyHost.Text}:{port}";
             ProxyTestStatus.Text = "设置已保存。端口测试仍需单独执行，保存不代表代理可用。";
@@ -1245,9 +1336,19 @@ public partial class MainWindow : Window
         _lifetimeCts.Cancel();
         _aiModelRefreshVersion++;
         _policyModelRefreshVersion++;
+        _policyAnalysisVersion++;
         _aiGenerationCts?.Cancel();
+        _policyAnalysisCts?.Cancel();
         _policyExplanationCts?.Cancel();
         _runtimeReadinessCts?.Cancel();
+        try
+        {
+            await _policyAnalysisDrainTask;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("IntentRoute AI policy-analysis shutdown failed: " + SingBoxRuntime.RedactSecrets(ex.Message));
+        }
         try
         {
             await _service.DisposeAsync();
