@@ -287,7 +287,7 @@ public partial class MainWindow : Window
                 line.PropertyChanged += (_, _) => ScheduleDraftRevalidation();
                 _aiDrafts.Add(line);
             }
-            AiDraftCount.Text = $"{_aiDrafts.Count} 条规则";
+            AiDraftCount.Text = string.Format(Localization.Strings.CountRulesFormat, _aiDrafts.Count);
 
             if (validation.Success)
             {
@@ -382,7 +382,7 @@ public partial class MainWindow : Window
         _currentAiValidation = null;
         _draftRevalidationTimer?.Stop();
         _aiDrafts.Clear();
-        AiDraftCount.Text = "0 条规则";
+        AiDraftCount.Text = string.Format(Localization.Strings.CountRulesFormat, 0);
         AiAcceptButton.IsEnabled = false;
     }
 
@@ -712,7 +712,7 @@ public partial class MainWindow : Window
             PolicyCriticalCount.Text = latest.CriticalCount.ToString();
             PolicyWarningCount.Text = latest.WarningCount.ToString();
             PolicyDisabledCount.Text = latest.DisabledRuleCount.ToString();
-            PolicyFindingCount.Text = $"{latest.Findings.Count} 项";
+            PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, latest.Findings.Count);
             PolicyEmptyText.Text = "未发现可确定的问题。策略体检不等同于真实流量验证。";
             PolicyEmptyText.Visibility = latest.Findings.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             PolicyStatusText.Text = !latest.IsComplete
@@ -731,7 +731,7 @@ public partial class MainWindow : Window
             {
                 _currentPolicyReport = null;
                 _policyFindings.Clear();
-                PolicyFindingCount.Text = "0 项";
+                PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, 0);
                 PolicyEmptyText.Text = "本地体检失败，未生成策略结论。";
                 PolicyEmptyText.Visibility = Visibility.Visible;
                 PolicyStatusText.Text = "本地体检失败: " + SingBoxRuntime.RedactSecrets(ex.Message);
@@ -755,7 +755,7 @@ public partial class MainWindow : Window
         PolicyCriticalCount.Text = "…";
         PolicyWarningCount.Text = "…";
         PolicyDisabledCount.Text = "…";
-        PolicyFindingCount.Text = "分析中";
+        PolicyFindingCount.Text = Localization.Strings.AnalyzingText;
         PolicyEmptyText.Text = "正在后台执行可取消的本地确定性体检…";
         PolicyEmptyText.Visibility = Visibility.Visible;
         PolicyLocateButton.IsEnabled = false;
@@ -773,7 +773,7 @@ public partial class MainWindow : Window
         PolicyCriticalCount.Text = "0";
         PolicyWarningCount.Text = "0";
         PolicyDisabledCount.Text = "0";
-        PolicyFindingCount.Text = "0 项";
+        PolicyFindingCount.Text = string.Format(Localization.Strings.CountFindingsFormat, 0);
         PolicyEmptyText.Text = "配置处于恢复保护状态，未执行策略体检。";
         PolicyEmptyText.Visibility = Visibility.Visible;
         PolicyLocateButton.IsEnabled = false;
@@ -890,7 +890,7 @@ public partial class MainWindow : Window
         _currentRouteDecisionQuery = null;
         _routeDecisionTrace.Clear();
         RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
-        RouteDecisionTraceCountText.Text = "0 条";
+        RouteDecisionTraceCountText.Text = string.Format(Localization.Strings.CountTraceFormat, 0);
         RouteDecisionBadgeText.Text = "推演中";
         RouteDecisionActionText.Text = "…";
         RouteDecisionSourceText.Text = "正在按生产规则的规范顺序进行有界求值。";
@@ -907,26 +907,26 @@ public partial class MainWindow : Window
         _routeDecisionTrace.Clear();
         foreach (var step in report.Trace)
             _routeDecisionTrace.Add(RouteDecisionTraceLine.FromStep(step));
-        RouteDecisionTraceCountText.Text = $"{report.Trace.Count} 条";
+        RouteDecisionTraceCountText.Text = string.Format(Localization.Strings.CountTraceFormat, report.Trace.Count);
         RouteDecisionTraceEmptyText.Visibility = report.Trace.Count == 0
             ? Visibility.Visible
             : Visibility.Collapsed;
 
         RouteDecisionBadgeText.Text = report.Kind switch
         {
-            RouteDecisionKind.MatchedRule => "已证明 · 规则命中",
-            RouteDecisionKind.GlobalFallback => "已证明 · 全局默认",
-            RouteDecisionKind.Indeterminate => "信息不足",
-            RouteDecisionKind.InvalidQuery => "输入无效",
-            RouteDecisionKind.InvalidPolicy => "策略无效",
-            _ => "未得出结论"
+            RouteDecisionKind.MatchedRule => Localization.Strings.RouteBadgeMatched,
+            RouteDecisionKind.GlobalFallback => Localization.Strings.RouteBadgeFallback,
+            RouteDecisionKind.Indeterminate => Localization.Strings.TraceVerdictIndeterminate,
+            RouteDecisionKind.InvalidQuery => Localization.Strings.RouteBadgeInvalidQuery,
+            RouteDecisionKind.InvalidPolicy => Localization.Strings.RouteBadgeInvalidPolicy,
+            _ => Localization.Strings.RouteBadgeNoConclusion
         };
         RouteDecisionActionText.Text = report.Action switch
         {
-            ProxyMode.Proxy => "代理",
-            ProxyMode.Direct => "直连",
-            ProxyMode.Block => "阻止",
-            _ => "未证明"
+            ProxyMode.Proxy => Localization.Strings.ModeProxyText,
+            ProxyMode.Direct => Localization.Strings.ModeDirectText,
+            ProxyMode.Block => Localization.Strings.ModeBlockText,
+            _ => Localization.Strings.RouteActionUnproven
         };
         RouteDecisionSourceText.Text = report.Kind switch
         {
@@ -1038,7 +1038,7 @@ public partial class MainWindow : Window
         _routeDecisionTrace.Clear();
         if (RouteDecisionTraceEmptyText == null) return;
         RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
-        RouteDecisionTraceCountText.Text = "0 条";
+        RouteDecisionTraceCountText.Text = string.Format(Localization.Strings.CountTraceFormat, 0);
         RouteDecisionBadgeText.Text = markStale ? "需要重新推演" : "推演失败";
         RouteDecisionActionText.Text = "—";
         RouteDecisionSourceText.Text = "未展示旧决策。";
@@ -1114,9 +1114,9 @@ public partial class MainWindow : Window
         var directCount = _allRules.Count(r => r.Mode == ProxyMode.Direct && r.IsEnabled);
         var blockCount = _allRules.Count(r => r.Mode == ProxyMode.Block && r.IsEnabled);
 
-        ProxyCount.Text = $"代理: {proxyCount}";
-        DirectCount.Text = $"直连: {directCount}";
-        BlockCount.Text = $"阻止: {blockCount}";
+            ProxyCount.Text = string.Format(Localization.Strings.CountProxyFormat, proxyCount);
+            DirectCount.Text = string.Format(Localization.Strings.CountDirectFormat, directCount);
+            BlockCount.Text = string.Format(Localization.Strings.CountBlockFormat, blockCount);
     }
 
     private void Search_Changed(object sender, TextChangedEventArgs e)
@@ -1324,7 +1324,7 @@ public partial class MainWindow : Window
             .ToList();
 
         ProcessList.ItemsSource = list;
-        ProcessCount.Text = $"{list.Count} 个进程";
+        ProcessCount.Text = string.Format(Localization.Strings.CountProcessesFormat, list.Count);
     }
 
     #endregion
@@ -1514,7 +1514,7 @@ public partial class MainWindow : Window
         if (!_service.IsConfigurationWritable)
         {
             RuntimeReadinessText.Text = "配置保护期间不会检查或启动 sing-box。请先完成配置恢复。";
-            RuntimeVersionText.Text = "版本：已阻止检查";
+            RuntimeVersionText.Text = Localization.Strings.VersionPrefix + Localization.Strings.VersionCheckBlocked;
             return;
         }
 
@@ -1528,7 +1528,8 @@ public partial class MainWindow : Window
         {
             var readiness = await _service.ProbeRuntimeReadinessAsync(cts.Token);
             RuntimePathBox.Text = readiness.ExecutablePath ?? _service.Config.SingBoxExecutablePath;
-            RuntimeVersionText.Text = "版本：" + (readiness.Version ?? "未识别");
+            RuntimeVersionText.Text = Localization.Strings.VersionPrefix +
+                (readiness.Version ?? Localization.Strings.VersionUnrecognized);
             RuntimeReadinessText.Text = readiness.IsReady
                 ? "已就绪：版本满足 v1.13+。规则变更仍会先执行 sing-box check。"
                 : readiness.Error ?? "sing-box 未就绪。";
@@ -1684,7 +1685,7 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(status.ExecutablePath))
             RuntimePathBox.Text = status.ExecutablePath;
         if (!string.IsNullOrWhiteSpace(status.Version))
-            RuntimeVersionText.Text = "版本：" + status.Version;
+            RuntimeVersionText.Text = Localization.Strings.VersionPrefix + status.Version;
     }
 
     private void SetStatusBrush(string resourceKey)
@@ -1852,9 +1853,9 @@ public partial class MainWindow : Window
             step.DisplayName,
             step.Evaluation switch
             {
-                RouteRuleEvaluation.ProvenMatch => "命中",
-                RouteRuleEvaluation.ProvenMiss => "不命中",
-                RouteRuleEvaluation.Indeterminate => "信息不足",
+                RouteRuleEvaluation.ProvenMatch => Localization.Strings.TraceVerdictMatch,
+                RouteRuleEvaluation.ProvenMiss => Localization.Strings.TraceVerdictMiss,
+                RouteRuleEvaluation.Indeterminate => Localization.Strings.TraceVerdictIndeterminate,
                 _ => "未知"
             },
             GetRouteDecisionReasonText(step.Reason));
@@ -1931,9 +1932,9 @@ public partial class MainWindow : Window
         {
             var severity = finding.Severity switch
             {
-                PolicyFindingSeverity.Critical => "高风险",
-                PolicyFindingSeverity.Warning => "复核",
-                _ => "提示"
+                PolicyFindingSeverity.Critical => Localization.Strings.SeverityCritical,
+                PolicyFindingSeverity.Warning => Localization.Strings.SeverityWarning,
+                _ => Localization.Strings.SeverityInfo
             };
             var affected = finding.Rules.Count == 0
                 ? "全局默认"

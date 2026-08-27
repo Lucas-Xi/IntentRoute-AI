@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Localized dynamic display values: rule-row mode/status/condition text, proxy-server status, count badges, policy severities, the route simulator's verdicts and decision badges, and version strings now follow the language preference. Status messages, dialogs, and runtime-error text remain Chinese.
+
 ## [0.5.0] - 2026-08-27
 
 ### Added

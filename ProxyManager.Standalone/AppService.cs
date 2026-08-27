@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Newtonsoft.Json;
+using ProxyManager.Standalone.Localization;
 
 namespace ProxyManager.Standalone;
 
@@ -38,7 +39,7 @@ public class ProxyServer : INotifyPropertyChanged
 
     public string ProxyTypeText => ProxyType switch { ProxyType.Socks5 => "SOCKS5", ProxyType.Http => "HTTP", ProxyType.Https => "HTTPS", _ => "?" };
     public string Address => $"{Host}:{Port}";
-    public string StatusText => Enabled ? "✓ 启用" : "✗ 禁用";
+    public string StatusText => Enabled ? Strings.ServerStatusEnabled : Strings.ServerStatusDisabled;
     public Brush StatusColor => Enabled ? new SolidColorBrush(Color.FromRgb(63, 185, 80)) : new SolidColorBrush(Color.FromRgb(139, 148, 158));
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? n = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
@@ -78,8 +79,14 @@ public class ProxyRule : INotifyPropertyChanged
     private bool _enabled = true;
     public bool IsEnabled { get => _enabled; set { _enabled = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusText)); } }
     public int Index { get; set; }
-    public string ModeText => Mode switch { ProxyMode.Proxy => "代理", ProxyMode.Direct => "直连", ProxyMode.Block => "阻止", _ => "?" };
-    public string StatusText => IsEnabled ? "启用" : "禁用";
+    public string ModeText => Mode switch
+    {
+        ProxyMode.Proxy => Strings.ModeProxyText,
+        ProxyMode.Direct => Strings.ModeDirectText,
+        ProxyMode.Block => Strings.ModeBlockText,
+        _ => "?"
+    };
+    public string StatusText => IsEnabled ? Strings.RuleStatusEnabled : Strings.RuleStatusDisabled;
     public Brush ModeColor => Mode switch
     {
         ProxyMode.Proxy => new SolidColorBrush(Color.FromRgb(88, 166, 255)),
@@ -92,11 +99,11 @@ public class ProxyRule : INotifyPropertyChanged
         get
         {
             var p = new List<string>();
-            if (!string.IsNullOrEmpty(TargetHosts)) p.Add($"主机:{TargetHosts}");
-            if (!string.IsNullOrEmpty(TargetIPs)) p.Add($"IP:{TargetIPs}");
-            if (!string.IsNullOrEmpty(TargetPorts)) p.Add($"端口:{TargetPorts}");
+            if (!string.IsNullOrEmpty(TargetHosts)) p.Add($"{Strings.RuleConditionHostsPrefix}{TargetHosts}");
+            if (!string.IsNullOrEmpty(TargetIPs)) p.Add($"{Strings.RuleConditionIpPrefix}{TargetIPs}");
+            if (!string.IsNullOrEmpty(TargetPorts)) p.Add($"{Strings.RuleConditionPortsPrefix}{TargetPorts}");
             if (!string.IsNullOrEmpty(Protocol) && !Protocol.Equals("Both", StringComparison.OrdinalIgnoreCase)) p.Add(Protocol);
-            return p.Count > 0 ? string.Join(" | ", p) : "全部流量";
+            return p.Count > 0 ? string.Join(" | ", p) : Strings.RuleConditionAll;
         }
     }
     public event PropertyChangedEventHandler? PropertyChanged;

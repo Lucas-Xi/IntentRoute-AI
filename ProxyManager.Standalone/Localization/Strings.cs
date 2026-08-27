@@ -192,6 +192,41 @@ public static class Strings
     public static string ProcessColPath => GetString(nameof(ProcessColPath));
     public static string ProcessColStatus => GetString(nameof(ProcessColStatus));
 
+    public static string ModeProxyText => GetString(nameof(ModeProxyText));
+    public static string ModeDirectText => GetString(nameof(ModeDirectText));
+    public static string ModeBlockText => GetString(nameof(ModeBlockText));
+    public static string RuleStatusEnabled => GetString(nameof(RuleStatusEnabled));
+    public static string RuleStatusDisabled => GetString(nameof(RuleStatusDisabled));
+    public static string RuleConditionHostsPrefix => GetString(nameof(RuleConditionHostsPrefix));
+    public static string RuleConditionIpPrefix => GetString(nameof(RuleConditionIpPrefix));
+    public static string RuleConditionPortsPrefix => GetString(nameof(RuleConditionPortsPrefix));
+    public static string RuleConditionAll => GetString(nameof(RuleConditionAll));
+    public static string ServerStatusEnabled => GetString(nameof(ServerStatusEnabled));
+    public static string ServerStatusDisabled => GetString(nameof(ServerStatusDisabled));
+    public static string CountProxyFormat => GetString(nameof(CountProxyFormat));
+    public static string CountDirectFormat => GetString(nameof(CountDirectFormat));
+    public static string CountBlockFormat => GetString(nameof(CountBlockFormat));
+    public static string CountRulesFormat => GetString(nameof(CountRulesFormat));
+    public static string CountFindingsFormat => GetString(nameof(CountFindingsFormat));
+    public static string CountTraceFormat => GetString(nameof(CountTraceFormat));
+    public static string CountProcessesFormat => GetString(nameof(CountProcessesFormat));
+    public static string VersionPrefix => GetString(nameof(VersionPrefix));
+    public static string SeverityCritical => GetString(nameof(SeverityCritical));
+    public static string SeverityWarning => GetString(nameof(SeverityWarning));
+    public static string SeverityInfo => GetString(nameof(SeverityInfo));
+    public static string TraceVerdictMatch => GetString(nameof(TraceVerdictMatch));
+    public static string TraceVerdictMiss => GetString(nameof(TraceVerdictMiss));
+    public static string TraceVerdictIndeterminate => GetString(nameof(TraceVerdictIndeterminate));
+    public static string RouteBadgeMatched => GetString(nameof(RouteBadgeMatched));
+    public static string RouteBadgeFallback => GetString(nameof(RouteBadgeFallback));
+    public static string RouteBadgeInvalidQuery => GetString(nameof(RouteBadgeInvalidQuery));
+    public static string RouteBadgeInvalidPolicy => GetString(nameof(RouteBadgeInvalidPolicy));
+    public static string RouteBadgeNoConclusion => GetString(nameof(RouteBadgeNoConclusion));
+    public static string RouteActionUnproven => GetString(nameof(RouteActionUnproven));
+    public static string AnalyzingText => GetString(nameof(AnalyzingText));
+    public static string VersionUnrecognized => GetString(nameof(VersionUnrecognized));
+    public static string VersionCheckBlocked => GetString(nameof(VersionCheckBlocked));
+
     public static string GetString(string name) => Manager.GetString(name) ?? string.Empty;
 
     public static IReadOnlySet<string> GetKeySet(CultureInfo culture)

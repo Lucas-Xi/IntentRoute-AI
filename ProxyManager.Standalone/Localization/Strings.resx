@@ -181,4 +181,38 @@
   <data name="ProcessColName" xml:space="preserve"><value>进程名</value></data>
   <data name="ProcessColPath" xml:space="preserve"><value>路径</value></data>
   <data name="ProcessColStatus" xml:space="preserve"><value>配置候选（未按目标求值）</value></data>
+  <data name="ModeProxyText" xml:space="preserve"><value>代理</value></data>
+  <data name="ModeDirectText" xml:space="preserve"><value>直连</value></data>
+  <data name="ModeBlockText" xml:space="preserve"><value>阻止</value></data>
+  <data name="RuleStatusEnabled" xml:space="preserve"><value>启用</value></data>
+  <data name="RuleStatusDisabled" xml:space="preserve"><value>禁用</value></data>
+  <data name="RuleConditionHostsPrefix" xml:space="preserve"><value>主机:</value></data>
+  <data name="RuleConditionIpPrefix" xml:space="preserve"><value>IP:</value></data>
+  <data name="RuleConditionPortsPrefix" xml:space="preserve"><value>端口:</value></data>
+  <data name="RuleConditionAll" xml:space="preserve"><value>全部流量</value></data>
+  <data name="ServerStatusEnabled" xml:space="preserve"><value>✓ 启用</value></data>
+  <data name="ServerStatusDisabled" xml:space="preserve"><value>✗ 禁用</value></data>
+  <data name="CountProxyFormat" xml:space="preserve"><value>代理: {0}</value></data>
+  <data name="CountDirectFormat" xml:space="preserve"><value>直连: {0}</value></data>
+  <data name="CountBlockFormat" xml:space="preserve"><value>阻止: {0}</value></data>
+  <data name="CountRulesFormat" xml:space="preserve"><value>{0} 条规则</value></data>
+  <data name="CountFindingsFormat" xml:space="preserve"><value>{0} 项</value></data>
+  <data name="CountTraceFormat" xml:space="preserve"><value>{0} 条</value></data>
+  <data name="CountProcessesFormat" xml:space="preserve"><value>{0} 个进程</value></data>
+  <data name="VersionPrefix" xml:space="preserve"><value>版本：</value></data>
+  <data name="SeverityCritical" xml:space="preserve"><value>严重</value></data>
+  <data name="SeverityWarning" xml:space="preserve"><value>警告</value></data>
+  <data name="SeverityInfo" xml:space="preserve"><value>信息</value></data>
+  <data name="TraceVerdictMatch" xml:space="preserve"><value>命中</value></data>
+  <data name="TraceVerdictMiss" xml:space="preserve"><value>不命中</value></data>
+  <data name="TraceVerdictIndeterminate" xml:space="preserve"><value>信息不足</value></data>
+  <data name="RouteBadgeMatched" xml:space="preserve"><value>已证明 · 规则命中</value></data>
+  <data name="RouteBadgeFallback" xml:space="preserve"><value>已证明 · 全局默认</value></data>
+  <data name="RouteBadgeInvalidQuery" xml:space="preserve"><value>输入无效</value></data>
+  <data name="RouteBadgeInvalidPolicy" xml:space="preserve"><value>策略无效</value></data>
+  <data name="RouteBadgeNoConclusion" xml:space="preserve"><value>未得出结论</value></data>
+  <data name="RouteActionUnproven" xml:space="preserve"><value>未证明</value></data>
+  <data name="AnalyzingText" xml:space="preserve"><value>分析中</value></data>
+  <data name="VersionUnrecognized" xml:space="preserve"><value>未识别</value></data>
+  <data name="VersionCheckBlocked" xml:space="preserve"><value>已阻止检查</value></data>
 </root>
