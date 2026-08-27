@@ -55,3 +55,15 @@ _Avoid_: Redacted config, policy export
 **AI Policy Explanation**:
 Untrusted, strictly parsed plain text attached only to Policy Finding codes from the exact Policy Disclosure. It cannot create facts, mutate rules, change severity, or cross the Configuration Workspace seam.
 _Avoid_: AI fix, AI policy result
+
+**Route Decision Query**:
+One concrete, user-authored what-if input containing an exact process name, either a concrete domain or literal IP, one port, and TCP or UDP. It is local input and is never inferred from runtime activity or sent to an AI provider.
+_Avoid_: Connection, packet, traffic sample
+
+**Route Decision Simulation**:
+The bounded, read-only local evaluation of a Route Decision Query against a Configuration Snapshot in Canonical Runtime Order. It performs no DNS resolution, proxy probing, process inspection, runtime-log reading, sing-box execution, or configuration mutation.
+_Avoid_: Live route, traffic analyzer, connection attribution
+
+**Simulated Decision**:
+A snapshot-and-query-bound result that is either a proven first-rule match, a proven global fallback after all active rules miss, or explicitly indeterminate/invalid. It is not evidence that a real connection occurred or succeeded.
+_Avoid_: Observed route, connection result, telemetry

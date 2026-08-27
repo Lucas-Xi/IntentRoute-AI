@@ -24,6 +24,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Added a bounded local TCP port check that sends no proxy credentials and does not claim protocol, authentication, or internet reachability success.
 - Added guided recovery actions for an unreadable configuration: open the data directory, import a valid configuration, or explicitly reset.
 - Added a shared CI/Release compatibility gate that verifies the official sing-box v1.13.19 Windows archive SHA-256 and runs representative production-builder output through the real `sing-box check` without shipping the test dependency.
+- Added a dedicated AI Route Decision Simulator page for one exact process/domain-or-IP/port/TCP-or-UDP what-if query, with a local evaluation trace and navigation to a proven matched rule.
+- Added conservative matched-rule, global-fallback, indeterminate, invalid-query, and invalid-policy results, plus a policy-and-query fingerprint that hides stale decisions.
 
 ### Changed
 
@@ -36,6 +38,8 @@ All notable changes are documented here. The project follows semantic versioning
 - Drive the runtime status indicator from real probing, checking, starting, running, failed, and stopped states instead of a fixed green indicator.
 - Show a clear dialog when another IntentRoute AI instance already owns the sing-box runtime lock.
 - Route manual edits, imports, Profiles, recovery, and AI-draft acceptance through one Configuration Workspace candidate transaction; callers now receive detached snapshots instead of mutable active-state references.
+- Evaluate static route queries in Canonical Runtime Order with the same destination-OR and cross-group-AND semantics as the production builder; stop at the first earlier rule whose domain/IP context cannot be disproved.
+- Propagate cancellation through production configuration construction so large background simulations and runtime apply can stop cleanly during supersession or window shutdown.
 
 ### Security
 
@@ -60,10 +64,14 @@ All notable changes are documented here. The project follows semantic versioning
 - Normalize optional imported strings defensively and reject missing or duplicate rule and proxy-server IDs before publication; UI matching remains null-safe as a second line of defense.
 - Reject every non-empty proxy-chain collection at both workspace and direct-builder boundaries until a real sing-box runtime mapping exists; removed the unused service methods that implied chain support.
 - Require `Id` to be present in serialized rule, proxy-server, and proxy-chain objects, preventing Json.NET property initializers from silently repairing omitted IDs with random GUIDs.
+- Keep Route Decision Queries, local trace labels/IDs, resolved proxy identity, and simulated results entirely local; never invoke an AI provider, DNS, a proxy probe, process inspection, runtime logs, sing-box, persistence, or configuration apply from simulation.
+- Disable route simulation during Recovery Protection and return no action for invalid policy, invalid query, missing cross-kind destination context, or the 500-rule evaluation bound.
 
 ### Tests
 
 - Added pinned real sing-box coverage for DirectAll/ProxyAll, canonical rules, exact/suffix destinations, IPv4/IPv6 CIDRs, port/range, TCP/UDP/Both, Proxy/Direct/Block, authenticated loopback SOCKS5/HTTP/HTTPS, and explicit/default proxy selection.
+- Added Route Decision Simulator coverage for canonical order, global and disabled rules, domain suffixes, IPv4/IPv6 CIDRs, port/protocol constraints, Direct/Proxy/Block/default outcomes, destination OR semantics, conservative cross-kind uncertainty, invalid inputs/policies, cancellation, stale fingerprints, read-only behavior, and evaluation bounds.
+- Added direct production-builder cancellation coverage.
 - Added canonical-order, explicit TCP/UDP, unsupported-protocol, domain-suffix, destination-union, CIDR/port/protocol containment, disabled-rule, selected-disclosure, privacy-canary, strict-output, and OpenAI/Ollama policy-payload coverage.
 - Added a regression test proving that rule up/down actions follow the order shown by the UI and used by sing-box.
 - Added equivalent-union and analyzer-cancellation coverage for domain, port, and CIDR policy shapes.

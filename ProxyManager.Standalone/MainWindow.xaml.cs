@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<AiRulePreviewLine> _aiDrafts = new();
     private readonly ObservableCollection<PolicyFindingPreviewLine> _policyFindings = new();
     private readonly ObservableCollection<AiPolicyAdviceLine> _policyAdvice = new();
+    private readonly ObservableCollection<RouteDecisionTraceLine> _routeDecisionTrace = new();
     private readonly OpenAiRuleProvider _openAiProvider = new();
     private readonly OllamaRuleProvider _ollamaProvider = new();
     private readonly CancellationTokenSource _lifetimeCts = new();
@@ -29,13 +30,18 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _policyAnalysisCts;
     private CancellationTokenSource? _policyExplanationCts;
     private CancellationTokenSource? _runtimeReadinessCts;
+    private CancellationTokenSource? _routeSimulationCts;
     private Task _policyAnalysisDrainTask = Task.CompletedTask;
+    private Task _routeSimulationDrainTask = Task.CompletedTask;
     private int _policyAnalysisVersion;
     private int _aiModelRefreshVersion;
     private int _policyModelRefreshVersion;
+    private int _routeSimulationVersion;
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
     private PolicyAnalysisReport? _currentPolicyReport;
+    private RouteDecisionReport? _currentRouteDecisionReport;
+    private RouteDecisionQuery? _currentRouteDecisionQuery;
     private bool _shutdownStarted;
     private bool _shutdownComplete;
 
@@ -60,6 +66,7 @@ public partial class MainWindow : Window
         AiDraftList.ItemsSource = _aiDrafts;
         PolicyFindingsList.ItemsSource = _policyFindings;
         PolicyAiAdviceList.ItemsSource = _policyAdvice;
+        RouteDecisionTraceList.ItemsSource = _routeDecisionTrace;
         AiProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
         AiProviderCombo.SelectedIndex = 0;
         PolicyProviderCombo.ItemsSource = new[] { "OpenAI（云端）", "Ollama（本地）" };
@@ -119,6 +126,7 @@ public partial class MainWindow : Window
         PageRules.Visibility = Visibility.Collapsed;
         PageAiAssistant.Visibility = Visibility.Collapsed;
         PagePolicyIntelligence.Visibility = Visibility.Collapsed;
+        PageRouteSimulator.Visibility = Visibility.Collapsed;
         PageMonitor.Visibility = Visibility.Collapsed;
         PageProcess.Visibility = Visibility.Collapsed;
         PageSettings.Visibility = Visibility.Collapsed;
@@ -129,6 +137,7 @@ public partial class MainWindow : Window
             "NavRules" => PageRules,
             "NavAi" => PageAiAssistant,
             "NavPolicy" => PagePolicyIntelligence,
+            "NavRouteSimulator" => PageRouteSimulator,
             "NavMonitor" => PageMonitor,
             "NavProcess" => PageProcess,
             "NavSettings" => PageSettings,
@@ -142,6 +151,7 @@ public partial class MainWindow : Window
             "NavRules" => "规则管理",
             "NavAi" => "AI 规则助手",
             "NavPolicy" => "AI 策略体检",
+            "NavRouteSimulator" => "AI 路由推演",
             "NavMonitor" => "运行日志",
             "NavProcess" => "进程列表",
             "NavSettings" => "设置",
@@ -153,12 +163,16 @@ public partial class MainWindow : Window
             "NavRules" => " - 拖拽 .exe 添加规则",
             "NavAi" => " - 自然语言生成可审查的规则草案",
             "NavPolicy" => " - 本地确定性检查与可选 AI 解读",
+            "NavRouteSimulator" => " - 严格静态 what-if，不是流量遥测",
             "NavMonitor" => " - sing-box 运行日志",
             "NavProcess" => " - 运行中的进程",
             "NavSettings" => " - 配置代理和功能",
             "NavAbout" => " - 版本信息",
             _ => ""
         };
+
+        if (pageName == "NavRouteSimulator")
+            RefreshRouteDecisionFreshness();
     }
 
     #endregion
@@ -732,6 +746,283 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region AI 路由推演
+
+    private async void SimulateRoute_Click(object sender, RoutedEventArgs e)
+    {
+        if (_routeSimulationCts != null || _shutdownStarted) return;
+        if (!_service.IsConfigurationWritable)
+        {
+            ShowProtectedRouteSimulationState();
+            return;
+        }
+
+        var query = CreateRouteDecisionQuery();
+        var snapshot = _service.Config;
+        var version = ++_routeSimulationVersion;
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(_lifetimeCts.Token);
+        _routeSimulationCts = cts;
+        BeginRouteSimulationUi();
+        var currentTask = RunRouteSimulationAsync(snapshot, query, version, cts);
+        _routeSimulationDrainTask = Task.WhenAll(_routeSimulationDrainTask, currentTask);
+        await currentTask;
+    }
+
+    private async Task RunRouteSimulationAsync(
+        AppConfig snapshot,
+        RouteDecisionQuery query,
+        int version,
+        CancellationTokenSource cts)
+    {
+        try
+        {
+            var report = await Task.Run(
+                () => PolicyIntelligence.SimulateRoute(snapshot, query, cts.Token),
+                cts.Token);
+            if (cts.IsCancellationRequested || version != _routeSimulationVersion || _shutdownStarted)
+                return;
+
+            if (!report.IsSnapshotBound)
+            {
+                _currentRouteDecisionReport = null;
+                _currentRouteDecisionQuery = null;
+                ShowRouteDecisionReport(report);
+                return;
+            }
+
+            var stillCurrent = await Task.Run(
+                () => PolicyIntelligence.MatchesRouteSnapshot(report, _service.Config, query, cts.Token),
+                cts.Token);
+            if (!stillCurrent)
+            {
+                InvalidateRouteDecision("推演期间配置已经变化；旧结果已隐藏，请重新推演。");
+                return;
+            }
+
+            _currentRouteDecisionReport = report;
+            _currentRouteDecisionQuery = query;
+            ShowRouteDecisionReport(report);
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            if (version == _routeSimulationVersion && !_shutdownStarted)
+                RouteDecisionStatusText.Text = "本地推演已取消；配置和 sing-box 均未变化。";
+        }
+        catch (Exception ex)
+        {
+            if (version == _routeSimulationVersion && !_shutdownStarted)
+            {
+                InvalidateRouteDecision("本地推演失败；未生成路由结论。", markStale: false);
+                RouteDecisionReasonText.Text = SingBoxRuntime.RedactSecrets(ex.Message);
+            }
+        }
+        finally
+        {
+            if (ReferenceEquals(_routeSimulationCts, cts))
+            {
+                _routeSimulationCts = null;
+                cts.Dispose();
+                if (!_shutdownStarted)
+                {
+                    RouteSimulateButton.IsEnabled = _service.IsConfigurationWritable;
+                    RouteDecisionCancelButton.IsEnabled = false;
+                }
+            }
+        }
+    }
+
+    private void BeginRouteSimulationUi()
+    {
+        _currentRouteDecisionReport = null;
+        _currentRouteDecisionQuery = null;
+        _routeDecisionTrace.Clear();
+        RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
+        RouteDecisionTraceCountText.Text = "0 条";
+        RouteDecisionBadgeText.Text = "推演中";
+        RouteDecisionActionText.Text = "…";
+        RouteDecisionSourceText.Text = "正在按生产规则的规范顺序进行有界求值。";
+        RouteDecisionReasonText.Text = "尚未得出结论。";
+        RouteDecisionSnapshotText.Text = "正在绑定配置快照与规范化查询。";
+        RouteDecisionStatusText.Text = "正在后台执行本地静态 what-if；不会联网、探测代理或读取真实连接。";
+        RouteDecisionLocateButton.IsEnabled = false;
+        RouteSimulateButton.IsEnabled = false;
+        RouteDecisionCancelButton.IsEnabled = true;
+    }
+
+    private void ShowRouteDecisionReport(RouteDecisionReport report)
+    {
+        _routeDecisionTrace.Clear();
+        foreach (var step in report.Trace)
+            _routeDecisionTrace.Add(RouteDecisionTraceLine.FromStep(step));
+        RouteDecisionTraceCountText.Text = $"{report.Trace.Count} 条";
+        RouteDecisionTraceEmptyText.Visibility = report.Trace.Count == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        RouteDecisionBadgeText.Text = report.Kind switch
+        {
+            RouteDecisionKind.MatchedRule => "已证明 · 规则命中",
+            RouteDecisionKind.GlobalFallback => "已证明 · 全局默认",
+            RouteDecisionKind.Indeterminate => "信息不足",
+            RouteDecisionKind.InvalidQuery => "输入无效",
+            RouteDecisionKind.InvalidPolicy => "策略无效",
+            _ => "未得出结论"
+        };
+        RouteDecisionActionText.Text = report.Action switch
+        {
+            ProxyMode.Proxy => "代理",
+            ProxyMode.Direct => "直连",
+            ProxyMode.Block => "阻止",
+            _ => "未证明"
+        };
+        RouteDecisionSourceText.Text = report.Kind switch
+        {
+            RouteDecisionKind.MatchedRule =>
+                $"规范顺序 #{report.MatchedEvaluationOrder}: {report.MatchedRuleDisplayName}",
+            RouteDecisionKind.GlobalFallback => "所有活动规则均可明确排除，使用当前全局默认。",
+            RouteDecisionKind.Indeterminate => $"在求值 {report.EvaluatedRuleCount} 条活动规则后保守停止。",
+            RouteDecisionKind.InvalidQuery => "查询不满足版本 1 的具体输入契约。",
+            RouteDecisionKind.InvalidPolicy => "生产配置构建器拒绝了当前策略。",
+            _ => "没有可展示的决策来源。"
+        };
+        RouteDecisionReasonText.Text = GetRouteDecisionReasonText(report.Reason) +
+            (string.IsNullOrWhiteSpace(report.Error)
+                ? string.Empty
+                : " " + SingBoxRuntime.RedactSecrets(report.Error));
+        RouteDecisionSnapshotText.Text = string.IsNullOrWhiteSpace(report.Fingerprint)
+            ? "无有效快照指纹。"
+            : $"快照与查询指纹 {report.Fingerprint[..12]}…；已核对当前配置。";
+        RouteDecisionLocateButton.IsEnabled = report.Kind == RouteDecisionKind.MatchedRule &&
+            !string.IsNullOrWhiteSpace(report.MatchedRuleId);
+        RouteDecisionStatusText.Text = report.Kind switch
+        {
+            RouteDecisionKind.MatchedRule or RouteDecisionKind.GlobalFallback =>
+                "本地静态推演完成并得出可证明结论；这仍不是实际连接、DNS、代理连通性或真实流量证据。",
+            RouteDecisionKind.Indeterminate =>
+                "本地静态推演已保守停止；补充缺失的域名或解析后 IP 上下文前，不会猜测后续规则。",
+            RouteDecisionKind.InvalidQuery =>
+                "请修正输入后重试；未读取网络或运行时状态。",
+            RouteDecisionKind.InvalidPolicy =>
+                "当前策略无法按生产支持语义构建；未返回可能误导的动作。",
+            _ => "未生成路由结论。"
+        };
+    }
+
+    private RouteDecisionQuery CreateRouteDecisionQuery()
+    {
+        _ = int.TryParse(RoutePortBox.Text, out var port);
+        return new RouteDecisionQuery(
+            RouteProcessBox.Text,
+            RouteDestinationKindCombo.SelectedIndex == 1 ? RouteDestinationKind.Ip : RouteDestinationKind.Domain,
+            RouteDestinationBox.Text,
+            port,
+            RouteTransportCombo.SelectedIndex == 1 ? RouteTransport.Udp : RouteTransport.Tcp);
+    }
+
+    private void RouteDestinationKind_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (RouteDestinationLabel != null)
+            RouteDestinationLabel.Text = RouteDestinationKindCombo.SelectedIndex == 1 ? "具体 IP 地址" : "具体域名";
+        RouteQuery_Changed(sender, e);
+    }
+
+    private void RouteQuery_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_currentRouteDecisionReport == null && _routeSimulationCts == null) return;
+        _routeSimulationCts?.Cancel();
+        _routeSimulationVersion++;
+        InvalidateRouteDecision("输入已变化；旧结果已隐藏，请重新推演。", cancelActive: false);
+    }
+
+    private void CancelRouteSimulation_Click(object sender, RoutedEventArgs e) =>
+        _routeSimulationCts?.Cancel();
+
+    private void LocateRouteDecisionRule_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshRouteDecisionFreshness();
+        var ruleId = _currentRouteDecisionReport?.MatchedRuleId;
+        if (string.IsNullOrWhiteSpace(ruleId)) return;
+
+        NavRules.IsChecked = true;
+        SearchBox.Text = string.Empty;
+        ShowPage("NavRules");
+        LoadRules();
+        var rule = _rules.FirstOrDefault(item => item.Id == ruleId);
+        if (rule == null) return;
+        RulesList.SelectedItem = rule;
+        RulesList.ScrollIntoView(rule);
+        RulesList.Focus();
+    }
+
+    private void RefreshRouteDecisionFreshness()
+    {
+        if (_currentRouteDecisionReport == null || _currentRouteDecisionQuery == null) return;
+        try
+        {
+            if (!PolicyIntelligence.MatchesRouteSnapshot(
+                    _currentRouteDecisionReport,
+                    _service.Config,
+                    _currentRouteDecisionQuery,
+                    _lifetimeCts.Token))
+            {
+                InvalidateRouteDecision("配置已变化；旧结果已隐藏，请重新推演。");
+            }
+        }
+        catch (OperationCanceledException) when (_lifetimeCts.IsCancellationRequested)
+        {
+            // Window shutdown superseded the freshness check.
+        }
+    }
+
+    private void InvalidateRouteDecision(
+        string status,
+        bool markStale = true,
+        bool cancelActive = true)
+    {
+        if (cancelActive) _routeSimulationCts?.Cancel();
+        _currentRouteDecisionReport = null;
+        _currentRouteDecisionQuery = null;
+        _routeDecisionTrace.Clear();
+        if (RouteDecisionTraceEmptyText == null) return;
+        RouteDecisionTraceEmptyText.Visibility = Visibility.Visible;
+        RouteDecisionTraceCountText.Text = "0 条";
+        RouteDecisionBadgeText.Text = markStale ? "需要重新推演" : "推演失败";
+        RouteDecisionActionText.Text = "—";
+        RouteDecisionSourceText.Text = "未展示旧决策。";
+        RouteDecisionReasonText.Text = status;
+        RouteDecisionSnapshotText.Text = "未绑定当前配置快照。";
+        RouteDecisionLocateButton.IsEnabled = false;
+        RouteDecisionStatusText.Text = status;
+    }
+
+    private void ShowProtectedRouteSimulationState()
+    {
+        _routeSimulationVersion++;
+        InvalidateRouteDecision(
+            "配置处于恢复保护状态；已阻止对空占位配置进行推演。请先恢复或明确重置配置。",
+            markStale: false);
+        RouteDecisionBadgeText.Text = "配置保护中";
+        RouteSimulateButton.IsEnabled = false;
+        RouteDecisionCancelButton.IsEnabled = false;
+    }
+
+    private static string GetRouteDecisionReasonText(RouteDecisionReason reason) => reason switch
+    {
+        RouteDecisionReason.Matched => "已满足首条获胜规则或全局默认的全部可证明条件。",
+        RouteDecisionReason.ProcessMismatch => "进程名称明确不匹配。",
+        RouteDecisionReason.TransportMismatch => "TCP/UDP 条件明确不匹配。",
+        RouteDecisionReason.PortMismatch => "目标端口明确不在规则范围内。",
+        RouteDecisionReason.DestinationMismatch => "具体目标明确不匹配该规则的目标条件。",
+        RouteDecisionReason.ResolvedIpRequired => "该较早规则还包含 IP/CIDR 条件；没有解析后 IP 就不能排除它。",
+        RouteDecisionReason.DomainContextRequired => "该较早规则还包含域名条件；没有域名上下文就不能排除它。",
+        RouteDecisionReason.EvaluationBudgetExceeded => "活动规则超过单次 500 条的有界求值预算。",
+        RouteDecisionReason.InvalidQuery => "必须提供精确进程名、具体域名或字面量 IP、1–65535 端口，以及 TCP 或 UDP。",
+        RouteDecisionReason.InvalidPolicy => "当前配置未通过与生产构建器相同的支持语义校验。",
+        _ => "无法确定本次判定依据。"
+    };
+
+    #endregion
+
     #region 规则管理
 
     private void LoadRules()
@@ -739,6 +1030,8 @@ public partial class MainWindow : Window
         _allRules = PolicyRuntimeOrder.All(_service.Config.Rules).ToList();
         ApplyFilter();
         UpdateStats();
+        if (IsLoaded)
+            InvalidateRouteDecision("配置规则已刷新；请基于当前快照重新推演。");
         _ = RefreshPolicyAnalysisAsync();
     }
 
@@ -936,6 +1229,8 @@ public partial class MainWindow : Window
     private void Mode_Changed(object sender, RoutedEventArgs e)
     {
         _service.SetGlobalMode(ModeProxy.IsChecked == true ? GlobalMode.ProxyAll : GlobalMode.DirectAll);
+        if (IsLoaded)
+            InvalidateRouteDecision("全局默认已变化；请基于当前快照重新推演。");
         _ = RefreshPolicyAnalysisAsync();
     }
 
@@ -1019,6 +1314,7 @@ public partial class MainWindow : Window
                 port,
                 ProxyUsername.Text,
                 ProxyPassword.Password);
+            InvalidateRouteDecision("代理配置已变化；请基于当前快照重新推演。");
             _ = RefreshPolicyAnalysisAsync();
             ProxyHost.Text = LocalProxyEndpoint.NormalizeOrThrow(ProxyHost.Text, port);
             StatusDetail.Text = $"本地 {proxyType} 代理已保存: {ProxyHost.Text}:{port}";
@@ -1156,6 +1452,7 @@ public partial class MainWindow : Window
         PageRules.IsEnabled = writable;
         PageAiAssistant.IsEnabled = writable;
         PagePolicyIntelligence.IsEnabled = writable;
+        PageRouteSimulator.IsEnabled = writable;
         RuntimeSettingsCard.IsEnabled = writable;
         ProxySettingsCard.IsEnabled = writable;
         ModeDirect.IsEnabled = writable;
@@ -1163,6 +1460,7 @@ public partial class MainWindow : Window
 
         if (!writable)
         {
+            ShowProtectedRouteSimulationState();
             var backup = _service.ConfigurationRecoveryBackupPath;
             var recoveryCopyAvailable = !string.IsNullOrWhiteSpace(backup) && File.Exists(backup);
             ResetConfigButton.IsEnabled = recoveryCopyAvailable;
@@ -1185,6 +1483,7 @@ public partial class MainWindow : Window
         {
             ResetConfigButton.IsEnabled = false;
             RecoverConfigButton.IsEnabled = false;
+            RouteSimulateButton.IsEnabled = _routeSimulationCts == null;
         }
     }
 
@@ -1337,13 +1636,15 @@ public partial class MainWindow : Window
         _aiModelRefreshVersion++;
         _policyModelRefreshVersion++;
         _policyAnalysisVersion++;
+        _routeSimulationVersion++;
         _aiGenerationCts?.Cancel();
         _policyAnalysisCts?.Cancel();
         _policyExplanationCts?.Cancel();
+        _routeSimulationCts?.Cancel();
         _runtimeReadinessCts?.Cancel();
         try
         {
-            await _policyAnalysisDrainTask;
+            await Task.WhenAll(_policyAnalysisDrainTask, _routeSimulationDrainTask);
         }
         catch (Exception ex)
         {
@@ -1379,6 +1680,7 @@ public partial class MainWindow : Window
         {
             _aiGenerationCts?.Dispose();
             _policyExplanationCts?.Dispose();
+            _routeSimulationCts?.Dispose();
             _runtimeReadinessCts?.Dispose();
             _lifetimeCts.Dispose();
             _aiProviderGate.Dispose();
@@ -1418,6 +1720,25 @@ public partial class MainWindow : Window
     }
 
     private sealed record RuntimeLogLine(string Time, string Message);
+
+    private sealed record RouteDecisionTraceLine(
+        string Order,
+        string RuleName,
+        string Evaluation,
+        string Reason)
+    {
+        public static RouteDecisionTraceLine FromStep(RouteDecisionTraceStep step) => new(
+            $"#{step.EvaluationOrder}",
+            step.DisplayName,
+            step.Evaluation switch
+            {
+                RouteRuleEvaluation.ProvenMatch => "命中",
+                RouteRuleEvaluation.ProvenMiss => "不命中",
+                RouteRuleEvaluation.Indeterminate => "信息不足",
+                _ => "未知"
+            },
+            GetRouteDecisionReasonText(step.Reason));
+    }
 
     private sealed record AiRulePreviewLine(
         string ProcessName,

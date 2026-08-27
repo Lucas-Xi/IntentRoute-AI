@@ -9,6 +9,7 @@
 - Confidentiality of local process names and runtime diagnostics.
 - Confidentiality of the OpenAI API key and user-authored AI intent.
 - Confidentiality of existing rule values while requesting an optional policy explanation.
+- Confidentiality of local Route Decision Queries, rule traces, and simulated results.
 - Integrity of the boundary between untrusted model output and routing state.
 
 ## Trusted components
@@ -52,11 +53,19 @@ Another local process can impersonate an Ollama service by binding the selected 
 
 Existing rule values and notes can contain prompt-injection text. They remain on the local side of the Policy Disclosure seam, so neither provider receives or interprets them during policy explanation.
 
+Route Decision Simulation has no provider interface. Its hypothetical process/domain/IP/port input, local trace, matched rule identity, resolved proxy identity, and result remain in memory for local display only and are never added to OpenAI or Ollama requests.
+
 ### Policy-analysis overclaim
 
 Policy Intelligence analyzes static supported configuration, not packets, DNS results, proxy authentication, TUN state, or live connections. It shares Canonical Runtime Order with the builder and models the documented sing-box default-rule grouping: destination matcher types are ORed, ports/port ranges are ORed, and the remaining groups are ANDed. Empty legacy protocol, `Both`, and `TCP/UDP` are compiled as TCP plus UDP so sing-box v1.13 ICMP support is not silently included.
 
 Containment findings are conservative: a shadow is reported only when an earlier enabled rule is proven to contain a later enabled rule on every supported matching dimension. Disabled rules are prospective only. Uncertain partial overlap is omitted in v1 rather than described as disjoint or proven. Same-priority overlap is reported because secondary creation/source ordering otherwise decides evaluation. A clean report is explicitly not a connectivity or correctness guarantee.
+
+### Route-simulation overclaim
+
+The Route Decision Simulator evaluates a detached static snapshot and never observes a connection. It first requires the same production builder to accept the snapshot, uses Canonical Runtime Order, evaluates at most 500 active rules, and returns no action for invalid input, invalid policy, or missing cross-kind destination context. A matching domain or CIDR can prove the destination OR group, but a miss in one matcher kind cannot exclude an earlier rule that also contains the other kind without the corresponding resolved-IP or domain context. Evaluation stops at that first uncertainty instead of selecting a later rule.
+
+The query contract rejects wildcards, paths, CIDRs as query values, scoped IPv6, and ambiguous short/leading-zero IPv4 forms. The simulator performs no DNS lookup, reverse lookup, proxy probe, process inspection, runtime-log read, filesystem write, packet capture, sing-box execution, or configuration mutation. Results are fingerprinted to the policy plus normalized query, rechecked before display, hidden when input/configuration changes, and disabled entirely during Recovery Protection. The UI repeatedly labels them static what-if results rather than observed routes, live traffic, or connectivity evidence.
 
 ### Upgrade migration interference
 
@@ -99,4 +108,5 @@ sing-box output is untrusted text. It is displayed as text rather than interpret
 - Protection against an attacker who can read another process's memory as administrator.
 - Guaranteed cleanup after disk failure, ACL interference, deliberate state-file tampering, or a crash before the next IntentRoute AI launch.
 - Correctness or completeness of AI-generated service-domain knowledge.
+- Proof that a simulated route occurred, that DNS resolved as assumed, or that the selected proxy/TUN path is reachable.
 - Security, privacy, licensing, or behavior of an installed Ollama model or upstream AI provider.

@@ -32,6 +32,7 @@ CI also runs `test-pinned-sing-box.ps1` without a path. That explicit test comma
 6. Run the local gates and complete the pull request checklist.
 7. Provider tests must use mocked HTTP handlers; never add a real API key, paid API call, model download, or network dependency to CI.
 8. Treat AI output as untrusted data. Do not weaken strict schema parsing, local semantic validation, preview, or the separate enable action.
+9. Treat Route Decision Simulation as static what-if only. Never label a simulated result as observed traffic, and keep hypothetical queries, rule traces, and local identifiers out of provider requests.
 
 Maintainers may ask for changes when a contribution expands administrator privileges, process execution, configuration file exposure, or network-routing scope.
 

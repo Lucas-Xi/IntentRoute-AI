@@ -16,6 +16,7 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 - Maintainer instructions that prohibit secrets, fake telemetry, silent semantic fallbacks, and bundled network binaries.
 - Provider-independent AI contracts, mocked provider tests, strict structured-output parsing, and public data-boundary documentation.
 - Local-first Policy Intelligence that separates deterministic facts from optional model explanation, exposes exact per-request disclosure, rejects stale output, and has canary tests for every excluded existing-policy field.
+- A conservative local Route Decision Simulator that shares production ordering/builder semantics, distinguishes proven decisions from missing context, keeps the full what-if query and trace out of provider requests, and rejects stale or Recovery Protection results.
 - One documented Canonical Runtime Order plus explicit TCP/UDP `Both` semantics, reducing the chance that UI, tests, analysis, and generated sing-box behavior drift apart.
 - A public CI/Release gate that verifies the official sing-box v1.13.19 archive hash and passes representative production-builder output through the real `sing-box check` without bundling the test dependency.
 
@@ -24,6 +25,7 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 - v0.2.0 is a new preview and does not yet have demonstrated broad adoption.
 - sing-box supplies the TUN data plane and is a separate project.
 - OpenAI and Ollama supply optional model inference; AI does not autonomously control the data plane.
+- Route Decision Simulation is static local policy reasoning, not per-connection telemetry, DNS evidence, or proof of proxy/TUN reachability.
 - Current maintenance is primarily by one maintainer unless repository activity later demonstrates otherwise.
 - Usage, contributors, issue response, releases, and downstream impact must be taken from current public GitHub evidence at application time; never estimate or inflate them.
 

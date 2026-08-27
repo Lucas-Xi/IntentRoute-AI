@@ -142,6 +142,105 @@ public sealed class PolicyDisclosure
     public IReadOnlyList<PolicyDisclosureFinding> Findings { get; }
 }
 
+public enum RouteDestinationKind
+{
+    Domain,
+    Ip
+}
+
+public enum RouteTransport
+{
+    Tcp,
+    Udp
+}
+
+public enum RouteDecisionKind
+{
+    MatchedRule,
+    GlobalFallback,
+    Indeterminate,
+    InvalidQuery,
+    InvalidPolicy
+}
+
+public enum RouteRuleEvaluation
+{
+    ProvenMatch,
+    ProvenMiss,
+    Indeterminate
+}
+
+public enum RouteDecisionReason
+{
+    Matched,
+    ProcessMismatch,
+    TransportMismatch,
+    PortMismatch,
+    DestinationMismatch,
+    ResolvedIpRequired,
+    DomainContextRequired,
+    EvaluationBudgetExceeded,
+    InvalidQuery,
+    InvalidPolicy
+}
+
+public sealed record RouteDecisionQuery(
+    string ProcessName,
+    RouteDestinationKind DestinationKind,
+    string Destination,
+    int Port,
+    RouteTransport Transport);
+
+public sealed record RouteDecisionTraceStep(
+    int EvaluationOrder,
+    string RuleId,
+    string DisplayName,
+    RouteRuleEvaluation Evaluation,
+    RouteDecisionReason Reason);
+
+public sealed class RouteDecisionReport
+{
+    internal RouteDecisionReport(
+        string fingerprint,
+        RouteDecisionKind kind,
+        ProxyMode? action,
+        string? resolvedProxyId,
+        int? matchedEvaluationOrder,
+        string? matchedRuleId,
+        string? matchedRuleDisplayName,
+        RouteDecisionReason reason,
+        int evaluatedRuleCount,
+        IReadOnlyList<RouteDecisionTraceStep> trace,
+        string? error)
+    {
+        Fingerprint = fingerprint;
+        Kind = kind;
+        Action = action;
+        ResolvedProxyId = resolvedProxyId;
+        MatchedEvaluationOrder = matchedEvaluationOrder;
+        MatchedRuleId = matchedRuleId;
+        MatchedRuleDisplayName = matchedRuleDisplayName;
+        Reason = reason;
+        EvaluatedRuleCount = evaluatedRuleCount;
+        Trace = trace;
+        Error = error;
+    }
+
+    public string Fingerprint { get; }
+    public RouteDecisionKind Kind { get; }
+    public ProxyMode? Action { get; }
+    public string? ResolvedProxyId { get; }
+    public int? MatchedEvaluationOrder { get; }
+    public string? MatchedRuleId { get; }
+    public string? MatchedRuleDisplayName { get; }
+    public RouteDecisionReason Reason { get; }
+    public int EvaluatedRuleCount { get; }
+    public IReadOnlyList<RouteDecisionTraceStep> Trace { get; }
+    public string? Error { get; }
+    public bool IsProven => Kind is RouteDecisionKind.MatchedRule or RouteDecisionKind.GlobalFallback;
+    public bool IsSnapshotBound => Fingerprint.Length > 0;
+}
+
 /// <summary>
 /// Performs conservative, read-only analysis of the exact ordering and matching shapes emitted by
 /// <see cref="SingBoxConfigBuilder"/>. Local findings may contain rule labels; the separate
@@ -152,6 +251,7 @@ public static class PolicyIntelligence
     public const int MaxRulesAnalyzedPerState = 500;
     public const int MaxLocalFindings = 500;
     public const int MaxPairComparisons = 250_000;
+    public const int MaxRouteRulesEvaluated = 500;
 
     private static readonly char[] ListSeparators = [',', ';', '|', '\n', '\r', '\t', ' '];
 
@@ -460,6 +560,268 @@ public static class PolicyIntelligence
             StringComparison.Ordinal);
     }
 
+    public static RouteDecisionReport SimulateRoute(
+        AppConfig snapshot,
+        RouteDecisionQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(query);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!TryNormalizeRouteQuery(query, out var normalized, out var queryError))
+        {
+            return new RouteDecisionReport(
+                string.Empty,
+                RouteDecisionKind.InvalidQuery,
+                action: null,
+                resolvedProxyId: null,
+                matchedEvaluationOrder: null,
+                matchedRuleId: null,
+                matchedRuleDisplayName: null,
+                RouteDecisionReason.InvalidQuery,
+                evaluatedRuleCount: 0,
+                trace: [],
+                queryError);
+        }
+
+        var fingerprint = CreateRouteFingerprint(snapshot, normalized, cancellationToken);
+        if (!Enum.IsDefined(snapshot.GlobalMode))
+        {
+            return InvalidRoutePolicy(fingerprint, "配置包含不支持的全局模式。");
+        }
+
+        var build = SingBoxConfigBuilder.Build(snapshot, cancellationToken);
+        if (!build.Success)
+            return InvalidRoutePolicy(fingerprint, build.Error ?? "当前策略无法通过本地构建校验。");
+
+        var enabledProxyIds = (snapshot.ProxyServers ?? [])
+            .Where(server => server != null && server.Enabled)
+            .Select(server => server.Id ?? string.Empty)
+            .ToList();
+        var defaultProxyId = enabledProxyIds.FirstOrDefault();
+        var ordered = PolicyRuntimeOrder.Enabled(snapshot.Rules ?? []);
+        var trace = new List<RouteDecisionTraceStep>();
+        var evaluatedCount = 0;
+
+        foreach (var item in ordered.Take(MaxRouteRulesEvaluated))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var evaluated = EvaluatedRule.TryCreate(
+                item.Rule,
+                item.SourceIndex,
+                item.EvaluationOrder,
+                defaultProxyId);
+            if (evaluated == null)
+                return InvalidRoutePolicy(fingerprint, "活动规则包含无法按当前支持语义求值的条件。");
+
+            evaluatedCount++;
+            var scopeEvaluation = evaluated.Scope.Evaluate(normalized);
+            trace.Add(new RouteDecisionTraceStep(
+                item.EvaluationOrder,
+                item.Rule.Id,
+                string.IsNullOrWhiteSpace(item.Rule.ExeName) ? "(未命名规则)" : item.Rule.ExeName,
+                scopeEvaluation.Evaluation,
+                scopeEvaluation.Reason));
+
+            if (scopeEvaluation.Evaluation == RouteRuleEvaluation.Indeterminate)
+            {
+                return new RouteDecisionReport(
+                    fingerprint,
+                    RouteDecisionKind.Indeterminate,
+                    action: null,
+                    resolvedProxyId: null,
+                    matchedEvaluationOrder: null,
+                    matchedRuleId: null,
+                    matchedRuleDisplayName: null,
+                    scopeEvaluation.Reason,
+                    evaluatedCount,
+                    trace,
+                    error: null);
+            }
+
+            if (scopeEvaluation.Evaluation != RouteRuleEvaluation.ProvenMatch)
+                continue;
+
+            return new RouteDecisionReport(
+                fingerprint,
+                RouteDecisionKind.MatchedRule,
+                evaluated.Outcome.Mode,
+                evaluated.Outcome.Mode == ProxyMode.Proxy ? evaluated.Outcome.ProxyId : null,
+                item.EvaluationOrder,
+                item.Rule.Id,
+                string.IsNullOrWhiteSpace(item.Rule.ExeName) ? "(未命名规则)" : item.Rule.ExeName,
+                RouteDecisionReason.Matched,
+                evaluatedCount,
+                trace,
+                error: null);
+        }
+
+        if (ordered.Count > MaxRouteRulesEvaluated)
+        {
+            return new RouteDecisionReport(
+                fingerprint,
+                RouteDecisionKind.Indeterminate,
+                action: null,
+                resolvedProxyId: null,
+                matchedEvaluationOrder: null,
+                matchedRuleId: null,
+                matchedRuleDisplayName: null,
+                RouteDecisionReason.EvaluationBudgetExceeded,
+                evaluatedCount,
+                trace,
+                error: null);
+        }
+
+        var fallbackAction = snapshot.GlobalMode == GlobalMode.ProxyAll
+            ? ProxyMode.Proxy
+            : ProxyMode.Direct;
+        return new RouteDecisionReport(
+            fingerprint,
+            RouteDecisionKind.GlobalFallback,
+            fallbackAction,
+            fallbackAction == ProxyMode.Proxy ? defaultProxyId : null,
+            matchedEvaluationOrder: null,
+            matchedRuleId: null,
+            matchedRuleDisplayName: null,
+            RouteDecisionReason.Matched,
+            evaluatedCount,
+            trace,
+            error: null);
+    }
+
+    public static bool MatchesRouteSnapshot(
+        RouteDecisionReport report,
+        AppConfig snapshot,
+        RouteDecisionQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(query);
+        if (!TryNormalizeRouteQuery(query, out var normalized, out _)) return false;
+        return string.Equals(
+            report.Fingerprint,
+            CreateRouteFingerprint(snapshot, normalized, cancellationToken),
+            StringComparison.Ordinal);
+    }
+
+    private static RouteDecisionReport InvalidRoutePolicy(string fingerprint, string error) => new(
+        fingerprint,
+        RouteDecisionKind.InvalidPolicy,
+        action: null,
+        resolvedProxyId: null,
+        matchedEvaluationOrder: null,
+        matchedRuleId: null,
+        matchedRuleDisplayName: null,
+        RouteDecisionReason.InvalidPolicy,
+        evaluatedRuleCount: 0,
+        trace: [],
+        error);
+
+    private static bool TryNormalizeRouteQuery(
+        RouteDecisionQuery query,
+        out NormalizedRouteQuery normalized,
+        out string error)
+    {
+        normalized = default!;
+        error = string.Empty;
+        if (!Enum.IsDefined(query.DestinationKind) || !Enum.IsDefined(query.Transport))
+        {
+            error = "目标类型或传输协议不受支持。";
+            return false;
+        }
+
+        var processName = (query.ProcessName ?? string.Empty).Trim();
+        if (processName.Length == 0 || processName == "*" ||
+            processName.IndexOfAny(['*', '?', '[', ']', '/', '\\', ':']) >= 0)
+        {
+            error = "what-if 查询必须提供一个精确进程名称，不能使用通配符或路径。";
+            return false;
+        }
+        if (query.Port is < 1 or > 65535)
+        {
+            error = "端口必须位于 1 到 65535。";
+            return false;
+        }
+
+        var destination = (query.Destination ?? string.Empty).Trim();
+        string? domain = null;
+        IpNetwork? ip = null;
+        if (query.DestinationKind == RouteDestinationKind.Domain)
+        {
+            domain = destination.TrimEnd('.').ToLowerInvariant();
+            if (domain.Length == 0 ||
+                IPAddress.TryParse(domain, out _) ||
+                domain.IndexOfAny(['*', '?', '/', '\\', ' ']) >= 0 ||
+                Uri.CheckHostName(domain) != UriHostNameType.Dns)
+            {
+                error = "域名查询必须是一个不含通配符的具体 DNS 名称。";
+                return false;
+            }
+        }
+        else
+        {
+            if (!TryParseConcreteIp(destination, out var parsedIp) ||
+                !IpNetwork.TryParse(parsedIp.ToString(), out var parsedNetwork))
+            {
+                error = "IP 查询必须是一个具体 IPv4 或 IPv6 地址，不能使用 CIDR。";
+                return false;
+            }
+            ip = parsedNetwork;
+        }
+
+        normalized = new NormalizedRouteQuery(
+            processName.ToLowerInvariant(),
+            query.DestinationKind,
+            domain,
+            ip,
+            query.Port,
+            query.Transport == RouteTransport.Tcp ? NetworkClass.Tcp : NetworkClass.Udp);
+        return true;
+    }
+
+    private static bool TryParseConcreteIp(string value, out IPAddress address)
+    {
+        address = null!;
+        if (value.Contains('%') || !IPAddress.TryParse(value, out var parsed)) return false;
+        if (parsed.AddressFamily == AddressFamily.InterNetwork)
+        {
+            var octets = value.Split('.');
+            if (octets.Length != 4 || octets.Any(octet =>
+                    octet.Length == 0 ||
+                    (octet.Length > 1 && octet[0] == '0') ||
+                    !byte.TryParse(octet, NumberStyles.None, CultureInfo.InvariantCulture, out _)))
+            {
+                return false;
+            }
+        }
+        else if (parsed.AddressFamily != AddressFamily.InterNetworkV6 || !value.Contains(':'))
+        {
+            return false;
+        }
+
+        address = parsed;
+        return true;
+    }
+
+    private static string CreateRouteFingerprint(
+        AppConfig snapshot,
+        NormalizedRouteQuery query,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var policyFingerprint = CreateFingerprint(snapshot, cancellationToken);
+        var queryValue = new StringBuilder(policyFingerprint)
+            .Append('|').Append(query.ProcessName)
+            .Append('|').Append((int)query.DestinationKind)
+            .Append('|').Append(query.Domain ?? query.IpNetwork?.SortKey ?? string.Empty)
+            .Append('|').Append(query.Port)
+            .Append('|').Append((int)query.Network)
+            .ToString();
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(queryValue)));
+    }
+
     private static AppConfig CreateDisabledValidationBase(AppConfig snapshot)
     {
         var candidate = JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(snapshot))
@@ -540,6 +902,18 @@ public static class PolicyIntelligence
         (raw ?? string.Empty).Split(
             ListSeparators,
             StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private sealed record NormalizedRouteQuery(
+        string ProcessName,
+        RouteDestinationKind DestinationKind,
+        string? Domain,
+        IpNetwork? IpNetwork,
+        int Port,
+        NetworkClass Network);
+
+    private readonly record struct ScopeEvaluation(
+        RouteRuleEvaluation Evaluation,
+        RouteDecisionReason Reason);
 
     private sealed record EvaluatedRule(
         ProxyRule Rule,
@@ -655,6 +1029,33 @@ public static class PolicyIntelligence
             if (!NetworkContains(Network, later.Network)) return false;
             if (!ContainsPorts(Ports, later.Ports)) return false;
             return ContainsDestinations(this, later);
+        }
+
+        public ScopeEvaluation Evaluate(NormalizedRouteQuery query)
+        {
+            if (ProcessName != null && !string.Equals(ProcessName, query.ProcessName, StringComparison.OrdinalIgnoreCase))
+                return new ScopeEvaluation(RouteRuleEvaluation.ProvenMiss, RouteDecisionReason.ProcessMismatch);
+            if (!NetworkContains(Network, query.Network))
+                return new ScopeEvaluation(RouteRuleEvaluation.ProvenMiss, RouteDecisionReason.TransportMismatch);
+            if (Ports.Count > 0 && !Ports.Any(range => range.Contains(query.Port)))
+                return new ScopeEvaluation(RouteRuleEvaluation.ProvenMiss, RouteDecisionReason.PortMismatch);
+            if (!HasDestinationFilter)
+                return new ScopeEvaluation(RouteRuleEvaluation.ProvenMatch, RouteDecisionReason.Matched);
+
+            if (query.DestinationKind == RouteDestinationKind.Domain)
+            {
+                if (Domains.Any(matcher => matcher.Matches(query.Domain!)))
+                    return new ScopeEvaluation(RouteRuleEvaluation.ProvenMatch, RouteDecisionReason.Matched);
+                return IpNetworks.Count > 0
+                    ? new ScopeEvaluation(RouteRuleEvaluation.Indeterminate, RouteDecisionReason.ResolvedIpRequired)
+                    : new ScopeEvaluation(RouteRuleEvaluation.ProvenMiss, RouteDecisionReason.DestinationMismatch);
+            }
+
+            if (IpNetworks.Any(network => network.Contains(query.IpNetwork!.Value)))
+                return new ScopeEvaluation(RouteRuleEvaluation.ProvenMatch, RouteDecisionReason.Matched);
+            return Domains.Count > 0
+                ? new ScopeEvaluation(RouteRuleEvaluation.Indeterminate, RouteDecisionReason.DomainContextRequired)
+                : new ScopeEvaluation(RouteRuleEvaluation.ProvenMiss, RouteDecisionReason.DestinationMismatch);
         }
 
         public bool Equals(MatchScope? other)
@@ -798,6 +1199,10 @@ public static class PolicyIntelligence
 
     private readonly record struct DomainMatcher(string Value, bool IsSuffix)
     {
+        public bool Matches(string domain) => IsSuffix
+            ? string.Equals(Value, domain, StringComparison.Ordinal) || domain.EndsWith('.' + Value, StringComparison.Ordinal)
+            : string.Equals(Value, domain, StringComparison.Ordinal);
+
         public bool Contains(DomainMatcher later)
         {
             if (!IsSuffix) return !later.IsSuffix && string.Equals(Value, later.Value, StringComparison.Ordinal);
@@ -815,6 +1220,7 @@ public static class PolicyIntelligence
     private readonly record struct PortRange(int Start, int End)
     {
         public bool Contains(PortRange later) => Start <= later.Start && End >= later.End;
+        public bool Contains(int port) => Start <= port && End >= port;
 
         public static bool TryParse(string token, out PortRange range)
         {

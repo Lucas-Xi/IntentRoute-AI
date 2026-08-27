@@ -21,9 +21,12 @@ public static class SingBoxConfigBuilder
 
     private static readonly char[] ListSeparators = [',', ';', '|', '\n', '\r', '\t', ' '];
 
-    public static SingBoxConfigBuildResult Build(AppConfig config)
+    public static SingBoxConfigBuildResult Build(
+        AppConfig config,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(config);
+        cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
@@ -50,6 +53,7 @@ public static class SingBoxConfigBuilder
             string? defaultProxyTag = null;
             for (var index = 0; index < enabledServers.Count; index++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var server = enabledServers[index];
                 var normalizedHost = ValidateServer(server);
                 var tag = MakeOutboundTag(server, index);
@@ -69,6 +73,7 @@ public static class SingBoxConfigBuilder
 
             foreach (var rule in orderedRules)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var built = TryBuildRouteRule(rule, outboundTagsByServerId, defaultProxyTag);
                 if (!built.Success)
                     return SingBoxConfigBuildResult.Fail(built.Error!);
@@ -115,6 +120,10 @@ public static class SingBoxConfigBuilder
         catch (SingBoxConfigException ex)
         {
             return SingBoxConfigBuildResult.Fail(ex.Message);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

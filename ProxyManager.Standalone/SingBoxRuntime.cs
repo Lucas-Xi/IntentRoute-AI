@@ -279,7 +279,7 @@ public sealed class SingBoxRuntime : IDisposable, IAsyncDisposable
             var exe = readiness.ExecutablePath;
             var version = readiness.Version;
 
-            var build = SingBoxConfigBuilder.Build(config);
+            var build = SingBoxConfigBuilder.Build(config, cancellationToken);
             if (!build.Success || string.IsNullOrEmpty(build.ConfigJson))
             {
                 return FailApply(

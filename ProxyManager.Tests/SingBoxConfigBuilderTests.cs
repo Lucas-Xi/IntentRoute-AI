@@ -7,6 +7,16 @@ namespace ProxyManager.Tests;
 public sealed class SingBoxConfigBuilderTests
 {
     [Fact]
+    public void Build_HonorsCancellationBeforeWorkBegins()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            SingBoxConfigBuilder.Build(BaseConfig(), cancellation.Token));
+    }
+
+    [Fact]
     public void Build_MapsProcessDestinationAndProxyWithoutLeakingPassword()
     {
         var config = BaseConfig();

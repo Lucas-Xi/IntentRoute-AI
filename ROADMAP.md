@@ -33,6 +33,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Strict OpenAI and literal-loopback Ollama policy explanation that cannot mutate configuration
 - [x] Policy fingerprint invalidation for responses that return after configuration changes
 - [x] Privacy canaries, matcher containment, provider payload, and canonical-order tests
+- [x] Static Route Decision Simulator with conservative three-state evaluation, local trace, stale-result rejection, and Recovery Protection
 
 ## Candidate next work
 
