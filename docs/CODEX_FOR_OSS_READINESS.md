@@ -22,7 +22,7 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 
 ## Facts that must remain honest in a future application
 
-- v0.2.0 is a new preview and does not yet have demonstrated broad adoption.
+- v0.3.0 is a new preview and does not yet have demonstrated broad adoption.
 - sing-box supplies the TUN data plane and is a separate project.
 - OpenAI and Ollama supply optional model inference; AI does not autonomously control the data plane.
 - Route Decision Simulation is static local policy reasoning, not per-connection telemetry, DNS evidence, or proof of proxy/TUN reachability.

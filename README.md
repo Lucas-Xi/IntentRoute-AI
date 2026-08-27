@@ -6,9 +6,9 @@
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.2.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.3.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-The `main` branch contains the unreleased v0.3.0 maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, authenticated loopback-proxy editing, local-first Policy Intelligence with optional AI explanation, and a conservative static Route Decision Simulator. Tagged v0.2.0 archives do not contain these unreleased changes.
+v0.3.0 ships the previously unreleased maturity work: fail-closed configuration recovery, sing-box path/version readiness, real runtime-state indication, authenticated loopback-proxy editing, local-first Policy Intelligence with optional AI explanation, and a conservative static Route Decision Simulator. Downloadable v0.3.0 archives contain all of these changes.
 
 ## Why this project exists
 
@@ -33,7 +33,7 @@ The application does not capture packets itself. It generates a validated [sing-
 
 AI never directly enables rules, invokes commands, selects files, installs models, downloads sing-box, or applies an unreviewed configuration.
 
-## AI Policy Intelligence workflow (unreleased `main`)
+## AI Policy Intelligence workflow
 
 1. Open **AI Policy Intelligence**. A cancellation-aware background worker analyzes a detached configuration snapshot without blocking the WPF dispatcher; this performs no provider request, filesystem write, runtime apply, executable probe, proxy connection, DNS lookup, or traffic observation.
 2. Findings use the same Canonical Runtime Order as the generated sing-box route: priority ascending, creation timestamp ascending, then persisted source order. The rules page uses that order too.
@@ -45,7 +45,7 @@ AI never directly enables rules, invokes commands, selects files, installs model
 
 Policy Intelligence describes static configuration semantics, not real connection behavior. A clean report is not proof that TUN creation, a proxy listener, authentication, upstream reachability, DNS behavior, or a particular connection succeeded.
 
-## AI Route Decision Simulator (unreleased `main`)
+## AI Route Decision Simulator
 
 1. Open **AI Route Simulator** and enter one exact process name, one concrete domain or literal IPv4/IPv6 address, one port, and TCP or UDP.
 2. A bounded background worker validates the detached Configuration Snapshot through the production `SingBoxConfigBuilder`, then evaluates enabled rules in Canonical Runtime Order.
@@ -77,7 +77,7 @@ Install [Ollama](https://ollama.com/), start its local service, and install a mo
 ollama pull qwen3:8b
 ```
 
-IntentRoute AI queries only literal HTTP `127.0.0.1` (the default) or `::1`. v0.2.0 rejects hostnames, other loopback addresses, credentialed endpoints, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
+IntentRoute AI queries only literal HTTP `127.0.0.1` (the default) or `::1`. It rejects hostnames, other loopback addresses, credentialed endpoints, HTTPS, LAN, and public Ollama endpoints; disables proxy use and redirects for these requests; and never pulls a model or launches Ollama automatically. The UI lists models already installed through `GET /api/tags`.
 
 ## AI data boundary
 
@@ -125,22 +125,22 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.2.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.3.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.
-5. Ensure an existing proxy service is listening on a literal loopback IP such as `127.0.0.1` or `::1`. The unreleased Settings page can save SOCKS5/HTTP/HTTPS username and password values and can check whether the local TCP port accepts a connection.
+5. Ensure an existing proxy service is listening on a literal loopback IP such as `127.0.0.1` or `::1`. The Settings page can save SOCKS5/HTTP/HTTPS username and password values and can check whether the local TCP port accepts a connection.
 6. Run `IntentRouteAI.exe` as administrator. TUN creation requires elevation.
 
 The self-contained release targets Windows x64 and does not require a separate .NET runtime.
 
 ## Configuration and upgrade migration
 
-Current data is stored under `%APPDATA%\IntentRouteAI`. On first v0.2.0 launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. Copying holds a per-directory exclusive migration lock and uses an in-progress marker plus atomic per-file moves, so an interrupted migration retries only missing known files on the next launch and never overwrites a completed copy. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
+Current data is stored under `%APPDATA%\IntentRouteAI`. On first launch, if the new directory has no current configuration, the application copies only `config.json` and `*.profile.json` from `%APPDATA%\ProxyManager`. Copying holds a per-directory exclusive migration lock and uses an in-progress marker plus atomic per-file moves, so an interrupted migration retries only missing known files on the next launch and never overwrites a completed copy. It deliberately does not copy generated sing-box configs, runtime leases, locks, or candidates, and it never deletes the legacy directory automatically.
 
 Proxy passwords are protected at rest with DPAPI `CurrentUser`. Passwords entered in the UI are always treated as plaintext before storage, including legitimate values that begin with the reserved on-disk `dpapi:` marker. The generated `%APPDATA%\IntentRouteAI\sing-box.generated.json` necessarily contains any configured credential in plaintext while sing-box is running. The application removes it on stop, clean exit, and unexpected child exit; the next launch performs bounded orphan recovery and stale-artifact cleanup. Cleanup remains best effort under disk, ACL, administrator, or abrupt-crash interference.
 
-On the unreleased `main` branch, malformed JSON, invalid UTF-8, a null document or collection entry, a rule without a non-empty process name, duplicate rule/server IDs, an explicitly null/empty ID **or an omitted `Id` JSON property**, any non-empty proxy-chain definition, or a `dpapi:` password that cannot be decrypted for the current Windows user makes the configuration **unusable**, not empty. Persisted object IDs are required JSON members; model initializers may create IDs for new in-memory objects but cannot repair imported data silently. Proxy chains remain parseable only so legacy or imported data can be rejected explicitly; IntentRoute AI does not persist or silently ignore them until an actual sing-box runtime mapping exists. A global rule must use the explicit `*` process name; a missing name is never interpreted as global routing. IntentRoute AI leaves the original file untouched, attempts to create a timestamped `config.json.corrupt-*.bak` copy, blocks all save and runtime-apply paths, and shows explicit import/reset recovery controls. Import validates the supported endpoint and routing semantics before replacement. Both import replacement and reset are disabled unless the recovery copy still exists. If the copy could not be created, the user must first make a manual copy and restart the application so preservation can be verified before replacement.
+Since v0.3.0, malformed JSON, invalid UTF-8, a null document or collection entry, a rule without a non-empty process name, duplicate rule/server IDs, an explicitly null/empty ID **or an omitted `Id` JSON property**, any non-empty proxy-chain definition, or a `dpapi:` password that cannot be decrypted for the current Windows user makes the configuration **unusable**, not empty. Persisted object IDs are required JSON members; model initializers may create IDs for new in-memory objects but cannot repair imported data silently. Proxy chains remain parseable only so legacy or imported data can be rejected explicitly; IntentRoute AI does not persist or silently ignore them until an actual sing-box runtime mapping exists. A global rule must use the explicit `*` process name; a missing name is never interpreted as global routing. IntentRoute AI leaves the original file untouched, attempts to create a timestamped `config.json.corrupt-*.bak` copy, blocks all save and runtime-apply paths, and shows explicit import/reset recovery controls. Import validates the supported endpoint and routing semantics before replacement. Both import replacement and reset are disabled unless the recovery copy still exists. If the copy could not be created, the user must first make a manual copy and restart the application so preservation can be verified before replacement.
 
 Normal edits, rule imports, AI-draft acceptance, Profile replacement, recovery, and reset use one Configuration Workspace transaction. The application clones the active configuration, applies and validates the complete candidate, atomically saves it, and only then publishes a new detached snapshot. A validation or save failure leaves memory and disk unchanged. Local edits preserve a current-session sing-box approval only while the executable path is unchanged; Profile replacement, recovery, and reset always clear it. Clearing approval cancels any queued replacement apply. If cancellation arrives after a candidate process has started, IntentRoute AI restores the prior generated configuration and restarts its prior process before publishing `RunningStale`; cancellation and green-state publication are serialized so a late Apply cannot overwrite the warning. The executable must be explicitly approved again before the current configuration can be applied.
 

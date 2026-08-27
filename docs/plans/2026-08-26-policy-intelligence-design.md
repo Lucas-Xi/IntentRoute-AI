@@ -1,6 +1,6 @@
 # Policy Intelligence v1 design
 
-**Status:** Implemented on unreleased `main`
+**Status:** Implemented in v0.3.0
 **Date:** 2026-08-26
 **Product:** IntentRoute AI
 **Release target:** v0.3.0 preview

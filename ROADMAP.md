@@ -23,7 +23,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Non-destructive, interruption-safe migration from the v0.1 data directory
 - [x] Mocked provider, validation, persistence, and migration tests
 
-## v0.3 — Policy Intelligence maturity work (unreleased `main`)
+## v0.3 — Policy Intelligence maturity work
 
 - [x] Canonical Runtime Order shared by generated routes and read-only views
 - [x] Explicit TCP + UDP compilation for `Both`, excluding implicit ICMP broadening
