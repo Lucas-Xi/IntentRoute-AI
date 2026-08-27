@@ -448,13 +448,20 @@ public partial class MainWindow : Window
     private async void ExplainPolicy_Click(object sender, RoutedEventArgs e)
     {
         if (_policyExplanationCts != null || _currentPolicyReport == null) return;
+        if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config))
+        {
+            RefreshPolicyAnalysis();
+            PolicyStatusText.Text = "策略已变化；已阻止预览旧摘要，请在最新体检中重新选择发现。";
+            return;
+        }
+
         var model = PolicyModelCombo.SelectedItem as string;
         var selectedCodes = PolicyFindingsList.SelectedItems
             .OfType<PolicyFindingPreviewLine>()
             .Select(finding => finding.Code)
             .Distinct(StringComparer.Ordinal)
             .ToList();
-        if (string.IsNullOrWhiteSpace(model) || selectedCodes.Count == 0)
+        if (string.IsNullOrWhiteSpace(model) || selectedCodes.Count is < 1 or > PolicyDisclosure.MaxFindings)
         {
             PolicyStatusText.Text = "请先在本地发现列表中选择 1–20 项，再选择 AI 模型。";
             return;
@@ -480,6 +487,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config))
+        {
+            RefreshPolicyAnalysis();
+            PolicyStatusText.Text = "确认期间策略已变化；未发送旧摘要，请在最新体检中重新选择发现。";
+            return;
+        }
+
         var cts = new CancellationTokenSource();
         using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, _lifetimeCts.Token);
         _policyExplanationCts = cts;
@@ -500,8 +514,8 @@ public partial class MainWindow : Window
                     token),
                 requestCts.Token);
 
-            var latest = PolicyIntelligence.Analyze(_service.Config);
-            if (!string.Equals(reportFingerprint, latest.Fingerprint, StringComparison.Ordinal))
+            if (!PolicyIntelligence.MatchesSnapshot(_currentPolicyReport, _service.Config) ||
+                !string.Equals(reportFingerprint, _currentPolicyReport.Fingerprint, StringComparison.Ordinal))
             {
                 RefreshPolicyAnalysis();
                 PolicyStatusText.Text = "AI 解读返回前配置已变化；旧结果已丢弃，请基于最新体检重新解读。";

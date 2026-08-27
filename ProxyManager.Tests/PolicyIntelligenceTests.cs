@@ -218,6 +218,31 @@ public sealed class PolicyIntelligenceTests
     }
 
     [Fact]
+    public void MatchesSnapshot_RejectsGlobalModeAndProxyOrderChanges()
+    {
+        var config = BaseConfig();
+        config.ProxyServers.Add(new ProxyServer
+        {
+            Id = "secondary-proxy",
+            Name = "Secondary",
+            Host = "127.0.0.1",
+            Port = 2080,
+            Enabled = true
+        });
+        config.Rules = [Rule("chrome.exe", ProxyMode.Proxy)];
+        var report = PolicyIntelligence.Analyze(config);
+
+        Assert.True(PolicyIntelligence.MatchesSnapshot(report, config));
+
+        config.GlobalMode = GlobalMode.ProxyAll;
+        Assert.False(PolicyIntelligence.MatchesSnapshot(report, config));
+        config.GlobalMode = GlobalMode.DirectAll;
+
+        config.ProxyServers.Reverse();
+        Assert.False(PolicyIntelligence.MatchesSnapshot(report, config));
+    }
+
+    [Fact]
     public void Analyze_BoundsLargePoliciesAndMarksReportIncomplete()
     {
         var config = BaseConfig();

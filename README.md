@@ -40,7 +40,7 @@ AI never directly enables rules, invokes commands, selects files, installs model
 4. Local rows may show real rule labels and can navigate to an affected rule. They are never serialized to a provider.
 5. To request an explanation, select 1–20 findings and click **Explain selected summary with AI**. A confirmation dialog shows the exact logical JSON, provider, and exclusion list for that single request.
 6. The closed Policy Disclosure contains only aggregate counts plus finding code, category, severity, relationship, and affected-rule count. The AI response must use a strict schema and reference only those finding codes.
-7. AI explanation is plain, untrusted, read-only text. It cannot change local findings, write a note, create/enable/reorder a rule, save configuration, or apply sing-box. If the policy changes while a request is in flight, the returned explanation is discarded as stale.
+7. AI explanation is plain, untrusted, read-only text. It cannot change local findings, write a note, create/enable/reorder a rule, save configuration, or apply sing-box. The local fingerprint is rechecked before preview, after confirmation but before sending, and after the response; stale summaries are not sent and stale responses are discarded.
 
 Policy Intelligence describes static configuration semantics, not real connection behavior. A clean report is not proof that TUN creation, a proxy listener, authentication, upstream reachability, DNS behavior, or a particular connection succeeded.
 

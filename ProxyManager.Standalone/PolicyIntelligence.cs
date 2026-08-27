@@ -436,6 +436,13 @@ public static class PolicyIntelligence
             findings);
     }
 
+    public static bool MatchesSnapshot(PolicyAnalysisReport report, AppConfig snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        return string.Equals(report.Fingerprint, CreateFingerprint(snapshot), StringComparison.Ordinal);
+    }
+
     private static AppConfig CreateDisabledValidationBase(AppConfig snapshot)
     {
         var candidate = JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(snapshot))

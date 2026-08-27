@@ -36,7 +36,7 @@ All notable changes are documented here. The project follows semantic versioning
 ### Security
 
 - Keep local Policy Finding labels/evidence separate from the closed Policy Disclosure type; providers never receive existing process names, domains, IPs, ports, IDs, notes, paths, proxy data, credentials, logs, generated JSON, runtime identity, or process inventory.
-- Require request-scoped selected-finding confirmation for policy explanation, use strict code-referenced output with no tools or mutation interface, and discard a response when the local policy fingerprint changed in flight.
+- Require request-scoped selected-finding confirmation for policy explanation, recheck the local policy fingerprint before preview, after confirmation, and after the response, use strict code-referenced output with no tools or mutation interface, and never send or display a stale explanation.
 - Preserve an unreadable `config.json` byte-for-byte, create a timestamped recovery copy when possible, block every configuration save path, and skip sing-box application until the user explicitly recovers or resets.
 - Treat malformed or undecryptable `dpapi:` proxy passwords as an unusable configuration instead of silently replacing them with empty credentials.
 - Fail closed when sing-box version output is missing, unreadable, timed out, or older than v1.13; no candidate configuration is written and no child process is started.

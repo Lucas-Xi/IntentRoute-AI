@@ -35,7 +35,7 @@
 6. A confirmation dialog displays the exact logical JSON that will be sent and the provider-specific data notice. Cancel produces no request and no persistent authorization exists.
 7. `OpenAiRuleProvider` or `OllamaRuleProvider` implements the separate `IAiPolicyExplainer` seam. OpenAI uses strict Responses API output with `store=false` and no tools; Ollama uses the existing literal-loopback-only, non-streaming transport.
 8. `AiPolicyContract` rejects unknown output properties, unknown/duplicate finding codes, null/oversize fields, and out-of-range confidence. Model text is rendered as plain text and has no Configuration Workspace interface.
-9. A local fingerprint binds explanation to the analyzed snapshot. A configuration change before response acceptance discards the stale result while keeping the newest local report.
+9. A local fingerprint binds explanation to the analyzed snapshot. It is checked before preview, after confirmation but before sending, and after the response; a stale summary is never sent and a stale result is discarded while keeping the newest local report.
 
 ## Trust boundaries
 

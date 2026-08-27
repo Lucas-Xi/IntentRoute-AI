@@ -88,6 +88,7 @@ Acceptance criteria:
 Acceptance criteria:
 
 - A local fingerprint binds the request to the analyzed policy.
+- The fingerprint is checked before preview and again after confirmation but before any provider request; a stale summary is not sent.
 - If configuration changes before the provider response is accepted, the response is discarded and the report is refreshed.
 - Cancellation, timeout, provider failure, and invalid output leave the local report and configuration intact.
 
