@@ -83,4 +83,102 @@
   <data name="AboutFeature7" xml:space="preserve"><value>• Local policy checks with optional de-identified AI explanation</value></data>
   <data name="AboutFeature8" xml:space="preserve"><value>• sing-box TUN data plane (installed separately)</value></data>
   <data name="AboutFooter" xml:space="preserve"><value>Built on .NET 8 + WPF</value></data>
+  <data name="RecoveryBannerTitle" xml:space="preserve"><value>Configuration protection active</value></data>
+  <data name="RecoveryOpenFolder" xml:space="preserve"><value>Open folder</value></data>
+  <data name="RecoveryImport" xml:space="preserve"><value>Import valid config</value></data>
+  <data name="RecoveryReset" xml:space="preserve"><value>Explicit reset</value></data>
+  <data name="RulesSearchPlaceholder" xml:space="preserve"><value>🔍 Search rules...</value></data>
+  <data name="RulesAdd" xml:space="preserve"><value>➕ Add rule</value></data>
+  <data name="RulesImport" xml:space="preserve"><value>📥 Import</value></data>
+  <data name="RulesExport" xml:space="preserve"><value>📤 Export</value></data>
+  <data name="RulesClear" xml:space="preserve"><value>🗑 Clear</value></data>
+  <data name="RulesHeaderApp" xml:space="preserve"><value>Application</value></data>
+  <data name="RulesHeaderMode" xml:space="preserve"><value>Mode</value></data>
+  <data name="RulesHeaderStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="RulesHeaderTime" xml:space="preserve"><value>Added</value></data>
+  <data name="RulesRowMenuHint" xml:space="preserve"><value>Select a row and right-click to manage the rule</value></data>
+  <data name="RulesEmptyPrimary" xml:space="preserve"><value>Drag an .exe file here</value></data>
+  <data name="RulesEmptySecondary" xml:space="preserve"><value>or use the "Add rule" button above</value></data>
+  <data name="RulesDropOverlay" xml:space="preserve"><value>Release to add the rule</value></data>
+  <data name="AiProviderLabel" xml:space="preserve"><value>AI provider</value></data>
+  <data name="ModelLabel" xml:space="preserve"><value>Model</value></data>
+  <data name="RefreshModelsLabel" xml:space="preserve"><value>Refresh models</value></data>
+  <data name="AiPrivacyInitial" xml:space="preserve"><value>Only your intent text and the static rule format are sent; never proxy credentials, existing rules, logs, or process lists.</value></data>
+  <data name="AiIntentTitle" xml:space="preserve"><value>Describe your routing intent in natural language</value></data>
+  <data name="AiIntentExample" xml:space="preserve"><value>Example: Route Chrome and Cursor traffic to GitHub and OpenAI through the proxy; keep everything else direct.</value></data>
+  <data name="AiCancelGeneration" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AiGenerateLabel" xml:space="preserve"><value>Generate and validate locally</value></data>
+  <data name="AiDraftHeaderTitle" xml:space="preserve"><value>AI draft preview (not written, not enabled; fields are editable)</value></data>
+  <data name="AiDraftEditHint" xml:space="preserve"><value>Every edit re-runs the same local deterministic validation (including a sing-box candidate dry-run); acceptance stays blocked until it passes.</value></data>
+  <data name="AiColProcess" xml:space="preserve"><value>Process</value></data>
+  <data name="ActionLabel" xml:space="preserve"><value>Action</value></data>
+  <data name="AiColDomain" xml:space="preserve"><value>Domain</value></data>
+  <data name="AiColIp" xml:space="preserve"><value>IP/CIDR</value></data>
+  <data name="PortLabel" xml:space="preserve"><value>Port</value></data>
+  <data name="AiColProtocol" xml:space="preserve"><value>Protocol</value></data>
+  <data name="AiColRationale" xml:space="preserve"><value>Rationale</value></data>
+  <data name="AiColConfidence" xml:space="preserve"><value>Confidence</value></data>
+  <data name="AiStatusInitial" xml:space="preserve"><value>AI output must pass local validation and human confirmation.</value></data>
+  <data name="AiAcceptLabel" xml:space="preserve"><value>Add as disabled rules</value></data>
+  <data name="PolicyStatActive" xml:space="preserve"><value>Active rules</value></data>
+  <data name="PolicyStatCritical" xml:space="preserve"><value>Critical</value></data>
+  <data name="PolicyStatWarning" xml:space="preserve"><value>Review</value></data>
+  <data name="PolicyStatDisabled" xml:space="preserve"><value>Disabled drafts</value></data>
+  <data name="PolicyReanalyze" xml:space="preserve"><value>Re-analyze</value></data>
+  <data name="PolicyLocate" xml:space="preserve"><value>Locate rule</value></data>
+  <data name="PolicyPrivacyNote" xml:space="preserve"><value>The local list shows real rules; the AI receives only counts, finding codes, categories, severities, and relations — no process names, targets, ports, IDs, paths, or proxy data.</value></data>
+  <data name="PolicyFindingsTitle" xml:space="preserve"><value>Local deterministic findings</value></data>
+  <data name="PolicyColSeverity" xml:space="preserve"><value>Severity</value></data>
+  <data name="PolicyColCode" xml:space="preserve"><value>Code</value></data>
+  <data name="PolicyColIssue" xml:space="preserve"><value>Issue</value></data>
+  <data name="PolicyColAffected" xml:space="preserve"><value>Affected rules</value></data>
+  <data name="PolicyColGuidance" xml:space="preserve"><value>Evidence and next step</value></data>
+  <data name="PolicyEmpty" xml:space="preserve"><value>No determinable issues found. A policy check is not proof of real-traffic behavior.</value></data>
+  <data name="PolicyAiSummaryTitle" xml:space="preserve"><value>AI explanation summary (read-only)</value></data>
+  <data name="PolicyAiSummaryInitial" xml:space="preserve"><value>Finish the local check first; you explicitly decide whether to send the structured summary to an AI.</value></data>
+  <data name="PolicyAdviceTitle" xml:space="preserve"><value>Priority advice keyed by local finding codes</value></data>
+  <data name="PolicyAdviceColExplanation" xml:space="preserve"><value>Explanation</value></data>
+  <data name="PolicyAdviceColNext" xml:space="preserve"><value>Safe next step</value></data>
+  <data name="PolicyStatusInitial" xml:space="preserve"><value>The check runs entirely locally, calls no AI, and modifies no configuration.</value></data>
+  <data name="PolicyCancelExplanation" xml:space="preserve"><value>Cancel explanation</value></data>
+  <data name="PolicyExplain" xml:space="preserve"><value>Explain the selected summary with AI</value></data>
+  <data name="RouteBannerTitle" xml:space="preserve"><value>Static what-if · not a record of real connections</value></data>
+  <data name="RouteBannerBody" xml:space="preserve"><value>Reads only the current configuration snapshot and evaluates in production rule order. It resolves no DNS, probes no proxy, reads no runtime log, enumerates no connections, starts sing-box, and changes no configuration; the result cannot prove real traffic behavior.</value></data>
+  <data name="RouteProcessLabel" xml:space="preserve"><value>Exact process name</value></data>
+  <data name="RouteProcessTooltip" xml:space="preserve"><value>e.g. chrome.exe; no wildcards</value></data>
+  <data name="RouteDestinationKindLabel" xml:space="preserve"><value>Destination type</value></data>
+  <data name="RouteDestinationDomain" xml:space="preserve"><value>Domain</value></data>
+  <data name="RouteDestinationIp" xml:space="preserve"><value>IP address</value></data>
+  <data name="RouteDestinationLabelDomain" xml:space="preserve"><value>Concrete domain</value></data>
+  <data name="RouteDestinationTooltip" xml:space="preserve"><value>Domains cannot contain wildcards; IP addresses cannot use CIDR</value></data>
+  <data name="RouteTransportLabel" xml:space="preserve"><value>Transport</value></data>
+  <data name="RouteSimulate" xml:space="preserve"><value>Run local simulation</value></data>
+  <data name="RouteSimulateName" xml:space="preserve"><value>Run the local route simulation</value></data>
+  <data name="RouteResultTitle" xml:space="preserve"><value>Decision</value></data>
+  <data name="RouteBadgeInitial" xml:space="preserve"><value>Not simulated</value></data>
+  <data name="RouteSourceLabel" xml:space="preserve"><value>Decision source</value></data>
+  <data name="RouteSourceInitial" xml:space="preserve"><value>Enter a concrete hypothesis to start.</value></data>
+  <data name="RouteReasonLabel" xml:space="preserve"><value>Basis</value></data>
+  <data name="RouteReasonInitial" xml:space="preserve"><value>No result yet.</value></data>
+  <data name="RouteSnapshotLabel" xml:space="preserve"><value>Snapshot state</value></data>
+  <data name="RouteSnapshotInitial" xml:space="preserve"><value>No configuration snapshot bound.</value></data>
+  <data name="RouteLocate" xml:space="preserve"><value>Locate in rule management</value></data>
+  <data name="RouteLocateName" xml:space="preserve"><value>Locate the rule matched by the simulation</value></data>
+  <data name="RouteTraceTitle" xml:space="preserve"><value>Local rule evaluation trace</value></data>
+  <data name="RouteTraceColOrder" xml:space="preserve"><value>Order</value></data>
+  <data name="RouteTraceColRule" xml:space="preserve"><value>Rule</value></data>
+  <data name="RouteTraceColConclusion" xml:space="preserve"><value>Conclusion</value></data>
+  <data name="RouteTraceColReason" xml:space="preserve"><value>Basis</value></data>
+  <data name="RouteTraceEmpty" xml:space="preserve"><value>No local evaluation trace yet.</value></data>
+  <data name="RouteStatusInitial" xml:space="preserve"><value>Waiting for input; no network access, no real connection telemetry read or produced.</value></data>
+  <data name="MonitorTitle" xml:space="preserve"><value>sing-box runtime log</value></data>
+  <data name="MonitorClear" xml:space="preserve"><value>Clear</value></data>
+  <data name="MonitorColTime" xml:space="preserve"><value>Time</value></data>
+  <data name="MonitorColMessage" xml:space="preserve"><value>Message</value></data>
+  <data name="ProcessTitle" xml:space="preserve"><value>Running processes</value></data>
+  <data name="ProcessRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="ProcessColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ProcessColName" xml:space="preserve"><value>Process name</value></data>
+  <data name="ProcessColPath" xml:space="preserve"><value>Path</value></data>
+  <data name="ProcessColStatus" xml:space="preserve"><value>Candidate (not evaluated per destination)</value></data>
 </root>

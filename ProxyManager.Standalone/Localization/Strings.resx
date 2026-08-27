@@ -83,4 +83,102 @@
   <data name="AboutFeature7" xml:space="preserve"><value>• 本地策略体检与可选的去标识 AI 解读</value></data>
   <data name="AboutFeature8" xml:space="preserve"><value>• sing-box TUN 数据面（需单独安装）</value></data>
   <data name="AboutFooter" xml:space="preserve"><value>基于 .NET 8 + WPF 构建</value></data>
+  <data name="RecoveryBannerTitle" xml:space="preserve"><value>配置保护已启动</value></data>
+  <data name="RecoveryOpenFolder" xml:space="preserve"><value>打开目录</value></data>
+  <data name="RecoveryImport" xml:space="preserve"><value>导入有效配置</value></data>
+  <data name="RecoveryReset" xml:space="preserve"><value>明确重置</value></data>
+  <data name="RulesSearchPlaceholder" xml:space="preserve"><value>🔍 搜索规则...</value></data>
+  <data name="RulesAdd" xml:space="preserve"><value>➕ 添加规则</value></data>
+  <data name="RulesImport" xml:space="preserve"><value>📥 导入</value></data>
+  <data name="RulesExport" xml:space="preserve"><value>📤 导出</value></data>
+  <data name="RulesClear" xml:space="preserve"><value>🗑 清空</value></data>
+  <data name="RulesHeaderApp" xml:space="preserve"><value>应用程序</value></data>
+  <data name="RulesHeaderMode" xml:space="preserve"><value>模式</value></data>
+  <data name="RulesHeaderStatus" xml:space="preserve"><value>状态</value></data>
+  <data name="RulesHeaderTime" xml:space="preserve"><value>添加时间</value></data>
+  <data name="RulesRowMenuHint" xml:space="preserve"><value>选择后右键管理规则</value></data>
+  <data name="RulesEmptyPrimary" xml:space="preserve"><value>拖拽 .exe 文件到此处</value></data>
+  <data name="RulesEmptySecondary" xml:space="preserve"><value>或点击上方「添加规则」按钮</value></data>
+  <data name="RulesDropOverlay" xml:space="preserve"><value>释放以添加规则</value></data>
+  <data name="AiProviderLabel" xml:space="preserve"><value>AI 提供商</value></data>
+  <data name="ModelLabel" xml:space="preserve"><value>模型</value></data>
+  <data name="RefreshModelsLabel" xml:space="preserve"><value>刷新模型</value></data>
+  <data name="AiPrivacyInitial" xml:space="preserve"><value>只发送你输入的意图和静态规则格式；不会发送代理凭据、现有规则、日志或进程列表。</value></data>
+  <data name="AiIntentTitle" xml:space="preserve"><value>用自然语言描述分流意图</value></data>
+  <data name="AiIntentExample" xml:space="preserve"><value>示例：让 Chrome 和 Cursor 访问 GitHub、OpenAI 时走代理，其他流量保持直连。</value></data>
+  <data name="AiCancelGeneration" xml:space="preserve"><value>取消</value></data>
+  <data name="AiGenerateLabel" xml:space="preserve"><value>生成并本地校验</value></data>
+  <data name="AiDraftHeaderTitle" xml:space="preserve"><value>AI 草案预览（未写入、未启用；字段可直接编辑）</value></data>
+  <data name="AiDraftEditHint" xml:space="preserve"><value>每次编辑后会自动重新执行同一套本地确定性校验（含 sing-box 候选干跑）；未通过时无法接纳。</value></data>
+  <data name="AiColProcess" xml:space="preserve"><value>进程</value></data>
+  <data name="ActionLabel" xml:space="preserve"><value>动作</value></data>
+  <data name="AiColDomain" xml:space="preserve"><value>域名</value></data>
+  <data name="AiColIp" xml:space="preserve"><value>IP/CIDR</value></data>
+  <data name="PortLabel" xml:space="preserve"><value>端口</value></data>
+  <data name="AiColProtocol" xml:space="preserve"><value>协议</value></data>
+  <data name="AiColRationale" xml:space="preserve"><value>理由</value></data>
+  <data name="AiColConfidence" xml:space="preserve"><value>置信度</value></data>
+  <data name="AiStatusInitial" xml:space="preserve"><value>AI 生成的内容必须经过本地校验和人工确认。</value></data>
+  <data name="AiAcceptLabel" xml:space="preserve"><value>添加为禁用规则</value></data>
+  <data name="PolicyStatActive" xml:space="preserve"><value>活动规则</value></data>
+  <data name="PolicyStatCritical" xml:space="preserve"><value>高风险</value></data>
+  <data name="PolicyStatWarning" xml:space="preserve"><value>需复核</value></data>
+  <data name="PolicyStatDisabled" xml:space="preserve"><value>禁用草案</value></data>
+  <data name="PolicyReanalyze" xml:space="preserve"><value>重新体检</value></data>
+  <data name="PolicyLocate" xml:space="preserve"><value>定位规则</value></data>
+  <data name="PolicyPrivacyNote" xml:space="preserve"><value>本地列表显示真实规则；AI 只收到计数、发现编号、类型、等级和关系，不含进程、目标、端口、ID、路径或代理信息。</value></data>
+  <data name="PolicyFindingsTitle" xml:space="preserve"><value>本地确定性发现</value></data>
+  <data name="PolicyColSeverity" xml:space="preserve"><value>等级</value></data>
+  <data name="PolicyColCode" xml:space="preserve"><value>编号</value></data>
+  <data name="PolicyColIssue" xml:space="preserve"><value>问题</value></data>
+  <data name="PolicyColAffected" xml:space="preserve"><value>受影响规则</value></data>
+  <data name="PolicyColGuidance" xml:space="preserve"><value>证据与下一步</value></data>
+  <data name="PolicyEmpty" xml:space="preserve"><value>未发现可确定的问题。策略体检不等同于真实流量验证。</value></data>
+  <data name="PolicyAiSummaryTitle" xml:space="preserve"><value>AI 解读摘要（只读）</value></data>
+  <data name="PolicyAiSummaryInitial" xml:space="preserve"><value>先完成本地体检，再由你明确选择是否发送结构摘要给 AI。</value></data>
+  <data name="PolicyAdviceTitle" xml:space="preserve"><value>按本地发现编号给出的优先建议</value></data>
+  <data name="PolicyAdviceColExplanation" xml:space="preserve"><value>解释</value></data>
+  <data name="PolicyAdviceColNext" xml:space="preserve"><value>安全下一步</value></data>
+  <data name="PolicyStatusInitial" xml:space="preserve"><value>体检完全在本地运行，不调用 AI，也不修改配置。</value></data>
+  <data name="PolicyCancelExplanation" xml:space="preserve"><value>取消解读</value></data>
+  <data name="PolicyExplain" xml:space="preserve"><value>让 AI 解读所选摘要</value></data>
+  <data name="RouteBannerTitle" xml:space="preserve"><value>静态 what-if · 不是实际连接记录</value></data>
+  <data name="RouteBannerBody" xml:space="preserve"><value>只读取当前配置快照并按生产规则顺序推演。不会解析 DNS、探测代理、读取运行日志、枚举连接、启动 sing-box 或修改配置；结果不能证明真实流量去向。</value></data>
+  <data name="RouteProcessLabel" xml:space="preserve"><value>精确进程名</value></data>
+  <data name="RouteProcessTooltip" xml:space="preserve"><value>例如 chrome.exe；不支持通配符</value></data>
+  <data name="RouteDestinationKindLabel" xml:space="preserve"><value>目标类型</value></data>
+  <data name="RouteDestinationDomain" xml:space="preserve"><value>域名</value></data>
+  <data name="RouteDestinationIp" xml:space="preserve"><value>IP 地址</value></data>
+  <data name="RouteDestinationLabelDomain" xml:space="preserve"><value>具体域名</value></data>
+  <data name="RouteDestinationTooltip" xml:space="preserve"><value>域名不能含通配符；IP 地址不能使用 CIDR</value></data>
+  <data name="RouteTransportLabel" xml:space="preserve"><value>传输协议</value></data>
+  <data name="RouteSimulate" xml:space="preserve"><value>开始本地推演</value></data>
+  <data name="RouteSimulateName" xml:space="preserve"><value>开始本地路由推演</value></data>
+  <data name="RouteResultTitle" xml:space="preserve"><value>推演结论</value></data>
+  <data name="RouteBadgeInitial" xml:space="preserve"><value>尚未推演</value></data>
+  <data name="RouteSourceLabel" xml:space="preserve"><value>决策来源</value></data>
+  <data name="RouteSourceInitial" xml:space="preserve"><value>输入一个具体假设后开始推演。</value></data>
+  <data name="RouteReasonLabel" xml:space="preserve"><value>判定依据</value></data>
+  <data name="RouteReasonInitial" xml:space="preserve"><value>尚无结果。</value></data>
+  <data name="RouteSnapshotLabel" xml:space="preserve"><value>快照状态</value></data>
+  <data name="RouteSnapshotInitial" xml:space="preserve"><value>未绑定配置快照。</value></data>
+  <data name="RouteLocate" xml:space="preserve"><value>在规则管理中定位</value></data>
+  <data name="RouteLocateName" xml:space="preserve"><value>定位推演命中的规则</value></data>
+  <data name="RouteTraceTitle" xml:space="preserve"><value>本地规则求值轨迹</value></data>
+  <data name="RouteTraceColOrder" xml:space="preserve"><value>顺序</value></data>
+  <data name="RouteTraceColRule" xml:space="preserve"><value>规则</value></data>
+  <data name="RouteTraceColConclusion" xml:space="preserve"><value>结论</value></data>
+  <data name="RouteTraceColReason" xml:space="preserve"><value>依据</value></data>
+  <data name="RouteTraceEmpty" xml:space="preserve"><value>尚未产生本地求值轨迹。</value></data>
+  <data name="RouteStatusInitial" xml:space="preserve"><value>等待输入；不会联网，也不会读取或产生真实连接遥测。</value></data>
+  <data name="MonitorTitle" xml:space="preserve"><value>sing-box 运行日志</value></data>
+  <data name="MonitorClear" xml:space="preserve"><value>清空</value></data>
+  <data name="MonitorColTime" xml:space="preserve"><value>时间</value></data>
+  <data name="MonitorColMessage" xml:space="preserve"><value>消息</value></data>
+  <data name="ProcessTitle" xml:space="preserve"><value>运行中的进程</value></data>
+  <data name="ProcessRefresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="ProcessColPid" xml:space="preserve"><value>PID</value></data>
+  <data name="ProcessColName" xml:space="preserve"><value>进程名</value></data>
+  <data name="ProcessColPath" xml:space="preserve"><value>路径</value></data>
+  <data name="ProcessColStatus" xml:space="preserve"><value>配置候选（未按目标求值）</value></data>
 </root>

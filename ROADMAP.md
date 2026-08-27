@@ -49,8 +49,8 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [x] Per-Monitor V2 DPI awareness declared in the manifest and asserted in the smoke gate
 - [ ] Visual layout validation across mixed-DPI displays
-- [x] Localization infrastructure with a Settings-page pilot (Chinese default, explicit English, applied at restart)
-- [ ] Complete string extraction across all pages and dynamic messages
+- [x] Localization infrastructure with static XAML text fully extracted (Chinese default, explicit English, applied at restart)
+- [ ] Localize dynamic code-behind strings (status messages, rule-row text, count labels)
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 
