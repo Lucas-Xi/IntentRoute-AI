@@ -40,6 +40,7 @@ public partial class MainWindow : Window
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
     private System.Windows.Threading.DispatcherTimer? _draftRevalidationTimer;
+    private bool _languageUiLoading;
     private PolicyAnalysisReport? _currentPolicyReport;
     private RouteDecisionReport? _currentRouteDecisionReport;
     private RouteDecisionQuery? _currentRouteDecisionQuery;
@@ -1347,6 +1348,29 @@ public partial class MainWindow : Window
         RuntimePathBox.Text = config.SingBoxExecutablePath;
         ModeProxy.IsChecked = config.GlobalMode == GlobalMode.ProxyAll;
         ModeDirect.IsChecked = config.GlobalMode == GlobalMode.DirectAll;
+
+        _languageUiLoading = true;
+        try
+        {
+            LanguageCombo.SelectedIndex = UiPreferences.GetLanguage() switch
+            {
+                UiPreferences.English => 1,
+                UiPreferences.FollowSystem => 2,
+                _ => 0
+            };
+        }
+        finally
+        {
+            _languageUiLoading = false;
+        }
+    }
+
+    private void Language_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_languageUiLoading || _shutdownStarted) return;
+        if (LanguageCombo.SelectedItem is not ComboBoxItem item || item.Tag is not string value) return;
+        UiPreferences.SetLanguage(value);
+        LanguageSavedHint.Text = ProxyManager.Standalone.Localization.Strings.SettingsLanguageRestartHint;
     }
 
     private void SaveProxy_Click(object sender, RoutedEventArgs e)

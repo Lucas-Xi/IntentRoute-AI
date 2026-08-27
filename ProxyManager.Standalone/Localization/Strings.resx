@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SettingsRuntimeTitle" xml:space="preserve"><value>sing-box 就绪状态</value></data>
+  <data name="SettingsRuntimeIntro" xml:space="preserve"><value>IntentRoute AI 不包含也不会下载 sing-box。每次启动都需通过“浏览…”重新批准你单独安装并验证过的 v1.13+ 可执行文件。</value></data>
+  <data name="SettingsRuntimePathTooltip" xml:space="preserve"><value>已批准路径，或尚待你通过“浏览…”按钮批准的发现候选</value></data>
+  <data name="SettingsRuntimeBrowse" xml:space="preserve"><value>浏览…</value></data>
+  <data name="SettingsRuntimeRecheck" xml:space="preserve"><value>重新检查</value></data>
+  <data name="SettingsRuntimeClear" xml:space="preserve"><value>清除选择</value></data>
+  <data name="SettingsRuntimeVersionUnchecked" xml:space="preserve"><value>版本：尚未检查</value></data>
+  <data name="SettingsRuntimeChecking" xml:space="preserve"><value>正在检查…</value></data>
+  <data name="SettingsAiHealthTitle" xml:space="preserve"><value>AI 提供方健康诊断</value></data>
+  <data name="SettingsAiHealthIntro" xml:space="preserve"><value>按 AI 页当前选择的提供方与模型执行无凭据检查：OpenAI 只报告密钥存在性，不显示内容、不发送请求；Ollama 只访问本机字面量环回地址。</value></data>
+  <data name="SettingsAiHealthRun" xml:space="preserve"><value>运行诊断</value></data>
+  <data name="SettingsAiHealthNotRun" xml:space="preserve"><value>尚未运行诊断。</value></data>
+  <data name="SettingsProxyTitle" xml:space="preserve"><value>本地代理设置</value></data>
+  <data name="SettingsProxyIntro" xml:space="preserve"><value>仅支持已经运行在本机字面量回环地址上的 SOCKS5 / HTTP / HTTPS 代理；不提供代理节点或账号。</value></data>
+  <data name="SettingsProxyType" xml:space="preserve"><value>类型</value></data>
+  <data name="SettingsProxyHost" xml:space="preserve"><value>回环 IP 地址</value></data>
+  <data name="SettingsProxyPort" xml:space="preserve"><value>端口</value></data>
+  <data name="SettingsProxyUsername" xml:space="preserve"><value>用户名（可选）</value></data>
+  <data name="SettingsProxyPassword" xml:space="preserve"><value>密码（可选，使用 Windows DPAPI 保存）</value></data>
+  <data name="SettingsProxySave" xml:space="preserve"><value>保存代理设置</value></data>
+  <data name="SettingsProxyTest" xml:space="preserve"><value>测试端口</value></data>
+  <data name="SettingsProxyTestHint" xml:space="preserve"><value>测试只检查本机端口能否连接，不会发送凭据，也不代表认证或真实流量成功。</value></data>
+  <data name="SettingsLanguageTitle" xml:space="preserve"><value>语言</value></data>
+  <data name="SettingsLanguageIntro" xml:space="preserve"><value>显示语言在重启后生效。默认中文；切换到 English 后设置页静态文本以英文显示，其余页面与动态消息仍为中文。</value></data>
+  <data name="SettingsLanguageChinese" xml:space="preserve"><value>中文（默认）</value></data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="SettingsLanguageFollowSystem" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="SettingsLanguageRestartHint" xml:space="preserve"><value>已保存语言设置，重启应用后生效。</value></data>
+</root>

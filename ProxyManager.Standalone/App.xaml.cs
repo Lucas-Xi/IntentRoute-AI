@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -10,6 +12,7 @@ public partial class App : Application
 
     private void App_Startup(object sender, StartupEventArgs e)
     {
+        ApplyLanguagePreference();
         ConfigureSmokeDiagnostics();
         try
         {
@@ -35,6 +38,23 @@ public partial class App : Application
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);
+        }
+    }
+
+    // Applied before any window is created so XAML x:Static strings resolve once,
+    // in the user's chosen display language. A failure here must never block startup;
+    // the neutral Chinese resources remain in effect.
+    private static void ApplyLanguagePreference()
+    {
+        try
+        {
+            var culture = UiPreferences.ResolveLanguageCulture(UiPreferences.GetLanguage());
+            Thread.CurrentThread.CurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+        }
+        catch (Exception)
+        {
+            // Keep the default culture.
         }
     }
 

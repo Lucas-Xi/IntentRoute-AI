@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="SettingsRuntimeTitle" xml:space="preserve"><value>sing-box readiness</value></data>
+  <data name="SettingsRuntimeIntro" xml:space="preserve"><value>IntentRoute AI does not include or download sing-box. Every launch requires re-approving your separately installed and verified v1.13+ executable through Browse.</value></data>
+  <data name="SettingsRuntimePathTooltip" xml:space="preserve"><value>Approved path, or a discovery candidate awaiting your approval through Browse</value></data>
+  <data name="SettingsRuntimeBrowse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="SettingsRuntimeRecheck" xml:space="preserve"><value>Re-check</value></data>
+  <data name="SettingsRuntimeClear" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="SettingsRuntimeVersionUnchecked" xml:space="preserve"><value>Version: not checked</value></data>
+  <data name="SettingsRuntimeChecking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="SettingsAiHealthTitle" xml:space="preserve"><value>AI provider health diagnostics</value></data>
+  <data name="SettingsAiHealthIntro" xml:space="preserve"><value>Runs a credential-free check against the provider and model selected on the AI page: OpenAI reports only whether the key is present and never sends a request; Ollama touches only the literal loopback address.</value></data>
+  <data name="SettingsAiHealthRun" xml:space="preserve"><value>Run diagnostics</value></data>
+  <data name="SettingsAiHealthNotRun" xml:space="preserve"><value>Diagnostics have not been run.</value></data>
+  <data name="SettingsProxyTitle" xml:space="preserve"><value>Local proxy settings</value></data>
+  <data name="SettingsProxyIntro" xml:space="preserve"><value>Only SOCKS5 / HTTP / HTTPS proxies already listening on a literal loopback address are supported; no proxy nodes or accounts are provided.</value></data>
+  <data name="SettingsProxyType" xml:space="preserve"><value>Type</value></data>
+  <data name="SettingsProxyHost" xml:space="preserve"><value>Loopback IP address</value></data>
+  <data name="SettingsProxyPort" xml:space="preserve"><value>Port</value></data>
+  <data name="SettingsProxyUsername" xml:space="preserve"><value>Username (optional)</value></data>
+  <data name="SettingsProxyPassword" xml:space="preserve"><value>Password (optional, stored with Windows DPAPI)</value></data>
+  <data name="SettingsProxySave" xml:space="preserve"><value>Save proxy settings</value></data>
+  <data name="SettingsProxyTest" xml:space="preserve"><value>Test port</value></data>
+  <data name="SettingsProxyTestHint" xml:space="preserve"><value>The test only checks whether the local port accepts a connection. It sends no credentials and does not imply authentication or real-traffic success.</value></data>
+  <data name="SettingsLanguageTitle" xml:space="preserve"><value>Language</value></data>
+  <data name="SettingsLanguageIntro" xml:space="preserve"><value>The display language applies after restart. Chinese is the default; after switching to English the Settings page static text is shown in English while other pages and dynamic messages remain Chinese.</value></data>
+  <data name="SettingsLanguageChinese" xml:space="preserve"><value>Chinese (default)</value></data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="SettingsLanguageFollowSystem" xml:space="preserve"><value>Follow system</value></data>
+  <data name="SettingsLanguageRestartHint" xml:space="preserve"><value>Language preference saved. It takes effect after restarting the app.</value></data>
+</root>
