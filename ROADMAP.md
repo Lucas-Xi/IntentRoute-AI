@@ -40,7 +40,8 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Guided sing-box discovery with version reporting
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
-- [ ] Accessible keyboard navigation and high-DPI test coverage
+- [x] Accessible keyboard navigation with visible focus states, UIA names, and smoke-level Tab/arrow coverage
+- [ ] High-DPI test coverage
 - [ ] Localized UI resources instead of hard-coded strings
 - [x] Editable AI draft fields before acceptance, with revalidation after every edit
 - [x] Provider health diagnostics that remain credential-free

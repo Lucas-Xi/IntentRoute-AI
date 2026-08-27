@@ -52,13 +52,17 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="border" Background="{TemplateBinding Background}"
-                                CornerRadius="8" Padding="14,10" Margin="0,2">
+                                CornerRadius="8" Padding="14,10" Margin="0,2"
+                                BorderThickness="1" BorderBrush="Transparent">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
@@ -84,12 +88,16 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
-                                Padding="{TemplateBinding Padding}">
+                                Padding="{TemplateBinding Padding}"
+                                BorderThickness="1" BorderBrush="Transparent">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource TextBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
@@ -121,6 +129,9 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -208,24 +219,32 @@
                     <!-- 导航菜单 -->
                     <StackPanel Grid.Row="1" Margin="10,16,10,0">
                         <RadioButton x:Name="NavRules" Content="📋  规则管理" GroupName="Nav" IsChecked="True"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavRules" AutomationProperties.Name="规则管理导航"/>
                         <RadioButton x:Name="NavPolicy" Content="◈  AI 策略体检" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavPolicy" AutomationProperties.Name="AI 策略体检导航"/>
                         <RadioButton x:Name="NavRouteSimulator" Content="◇  AI 路由推演" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavRouteSimulator" AutomationProperties.Name="AI 路由推演导航"/>
                         <RadioButton x:Name="NavAi" Content="✦  AI 规则助手" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavAi" AutomationProperties.Name="AI 规则助手导航"/>
                         <RadioButton x:Name="NavMonitor" Content="📋  运行日志" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavMonitor" AutomationProperties.Name="运行日志导航"/>
                         <RadioButton x:Name="NavProcess" Content="⚙️  进程列表" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavProcess" AutomationProperties.Name="进程列表导航"/>
                         <RadioButton x:Name="NavSettings" Content="🔧  设置" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavSettings" AutomationProperties.Name="设置导航"/>
 
                         <Border Height="1" Background="{StaticResource BorderBrush}" Margin="8,16,8,12"/>
 
                         <RadioButton x:Name="NavAbout" Content="ℹ️  关于" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"/>
+                                     Style="{StaticResource NavButton}" Click="Nav_Click"
+                                     AutomationProperties.AutomationId="NavAbout" AutomationProperties.Name="关于导航"/>
                     </StackPanel>
 
                     <!-- 底部状态 -->
@@ -280,12 +299,15 @@
                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                             <Button Content="—" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="16" Width="32" Height="28" Cursor="Hand"
+                                    AutomationProperties.AutomationId="WindowMinimize" AutomationProperties.Name="最小化窗口"
                                     Click="Minimize_Click"/>
                             <Button Content="□" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                                    AutomationProperties.AutomationId="WindowMaximize" AutomationProperties.Name="最大化或还原窗口"
                                     Click="Maximize_Click"/>
                             <Button Content="✕" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
                                     BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                                    AutomationProperties.AutomationId="WindowClose" AutomationProperties.Name="关闭窗口"
                                     Click="Close_Click"/>
                         </StackPanel>
                     </Grid>
@@ -539,9 +561,11 @@
                                          MaxLength="2000"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                                     <Button x:Name="AiCancelButton" Content="取消" Style="{StaticResource SecondaryBtn}"
-                                            IsEnabled="False" Click="CancelAi_Click" Margin="0,0,8,0"/>
+                                            IsEnabled="False" Click="CancelAi_Click" Margin="0,0,8,0"
+                                            AutomationProperties.AutomationId="AiCancel" AutomationProperties.Name="取消 AI 规则生成"/>
                                     <Button x:Name="AiGenerateButton" Content="生成并本地校验" Style="{StaticResource PrimaryBtn}"
-                                            Click="GenerateAi_Click"/>
+                                            Click="GenerateAi_Click"
+                                            AutomationProperties.AutomationId="AiGenerate" AutomationProperties.Name="生成 AI 草案并本地校验"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -640,7 +664,8 @@
                                 <TextBlock x:Name="AiStatusText" Text="AI 生成的内容必须经过本地校验和人工确认。"
                                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,170,0"/>
                                 <Button x:Name="AiAcceptButton" Content="添加为禁用规则" Style="{StaticResource PrimaryBtn}"
-                                        IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Click="AcceptAiRules_Click"/>
+                                        IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Center" Click="AcceptAiRules_Click"
+                                        AutomationProperties.AutomationId="AiAccept" AutomationProperties.Name="将 AI 草案添加为禁用规则"/>
                             </Grid>
                         </Border>
                     </Grid>
@@ -1033,6 +1058,7 @@
                                         <TextBlock Text="按 AI 页当前选择的提供方与模型执行无凭据检查：OpenAI 只报告密钥存在性，不显示内容、不发送请求；Ollama 只访问本机字面量环回地址。"
                                                    TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10"/>
                                         <Button x:Name="AiHealthCheckButton" Content="运行诊断" Style="{StaticResource SecondaryBtn}" HorizontalAlignment="Left"
+                                                AutomationProperties.AutomationId="AiHealthCheck" AutomationProperties.Name="运行 AI 提供方健康诊断"
                                                 Click="AiHealthCheck_Click"/>
                                         <TextBlock x:Name="AiHealthText" Text="尚未运行诊断。" TextWrapping="Wrap" FontSize="11"
                                                    Foreground="{StaticResource TextMutedBrush}" Margin="0,10,0,0"/>

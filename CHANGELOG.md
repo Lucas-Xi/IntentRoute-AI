@@ -6,6 +6,7 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
+- Added visible keyboard-focus states to the custom navigation, primary, and secondary button styles, UI Automation ids and assistive-technology names for navigation, window controls, and primary AI actions, and extended the packaged-WPF smoke gate to assert an assistive-technology window name, a minimum count of keyboard-focusable controls, Tab traversal, and arrow-key movement within the navigation group.
 - Made every AI draft field editable in the preview (process, action, domains, IP/CIDR, ports, protocol, rationale). Each edit schedules an automatic revalidation through the same deterministic validator used for generated drafts — including the enabled-clone sing-box dry-run — and acceptance stays blocked until the edited draft passes.
 - Added a credential-free AI provider health diagnostics panel in Settings. OpenAI checks report only whether `OPENAI_API_KEY` is present — the key is never displayed and no network request is sent; Ollama checks reuse the literal-loopback model listing to report service reachability, installed-model count, and whether the selected model is installed.
 - Added a conservative `PartialOverlap` Policy Finding: two enabled rules whose scopes provably intersect without either containing the other are reported as an explicitly non-proven hint (Warning when outcomes differ, Info when they match). Domain-versus-IP constraints, disjoint ports, and different processes are never claimed as overlapping.

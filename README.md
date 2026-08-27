@@ -191,8 +191,9 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 - Preview quality; compatibility varies by Windows, firewall, endpoint-security, and sing-box versions.
 - Version readiness recognizes the standard `sing-box version X.Y.Z` output and fails closed on unrecognized vendor output; it does not verify a third-party binary signature or checksum.
 - AI suggestions are not authoritative and may omit service domains or misunderstand intent.
-- Policy Intelligence proves only supported static containment/equality relations; it intentionally omits uncertain partial-overlap claims and does not observe live traffic.
+- Policy Intelligence proves only supported static containment/equality relations; provable partial overlaps are reported as explicitly non-proven hints, unprovable overlap claims are omitted, and live traffic is never observed.
 - Route simulation accepts only one exact process, one concrete domain or literal IP, one port, and TCP/UDP. It deliberately returns Indeterminate instead of resolving DNS, inferring a domain from an IP, or claiming a later rule wins when an earlier mixed destination rule cannot be excluded.
+- Keyboard navigation ships with visible focus states, assistive-technology names on navigation and primary actions, and smoke-level Tab/arrow-key coverage; comprehensive screen-reader behavior and high-DPI validation are not yet claimed.
 - Very large policies are bounded to keep the WPF UI responsive; a visible incomplete-analysis finding is emitted instead of silently presenting a partial report as complete.
 - No autonomous activation, traffic self-healing, live connection attribution, arbitrary executable wildcards, or remote Ollama endpoints.
 - No proxy node distribution or connectivity guarantee.
