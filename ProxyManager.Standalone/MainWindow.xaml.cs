@@ -1494,10 +1494,12 @@ public partial class MainWindow : Window
             var startInfo = new ProcessStartInfo
             {
                 FileName = "explorer.exe",
-                UseShellExecute = false
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
             startInfo.ArgumentList.Add(_service.ConfigDirectory);
-            Process.Start(startInfo);
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
         }
         catch
         {
