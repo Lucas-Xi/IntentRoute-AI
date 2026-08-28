@@ -47,14 +47,16 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Per-Monitor V2 DPI awareness declared in the manifest and asserted in the smoke gate
 - [x] Localization infrastructure with static XAML text fully extracted (Chinese default, explicit English, applied at restart)
 
+## v0.6 — localization and display-stack completion (2026-08-27)
+
+- [x] Localization: every window-layer string (statics, display values, status messages, dialogs) follows a Chinese/English preference; 371 resource keys with parity tests
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [ ] Visual layout validation across mixed-DPI displays
-- [x] Localize dynamic display values (rule rows, counts, severities, verdicts, badges)
-- [x] Localize all window-layer strings (statics, display values, status messages, dialogs)
 - [ ] Localize AppService and runtime-error text
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
