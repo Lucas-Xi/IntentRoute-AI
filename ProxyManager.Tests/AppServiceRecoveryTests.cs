@@ -252,7 +252,7 @@ public sealed class AppServiceRecoveryTests
             Assert.False(service.IsSingBoxExecutableApprovedForSession);
             Assert.False(readiness.IsReady);
             Assert.Equal(Path.GetFullPath(candidatePath), readiness.ExecutablePath);
-            Assert.Contains("本次启动中批准", readiness.Error, StringComparison.Ordinal);
+            Assert.Contains(ProxyManager.Standalone.Localization.Strings.RtNotApproved, readiness.Error, StringComparison.Ordinal);
             Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
         }
         finally
@@ -287,7 +287,7 @@ public sealed class AppServiceRecoveryTests
 
             Assert.False(service.IsSingBoxExecutableApprovedForSession);
             Assert.False(readiness.IsReady);
-            Assert.Contains("本次启动中批准", readiness.Error, StringComparison.Ordinal);
+            Assert.Contains(ProxyManager.Standalone.Localization.Strings.RtNotApproved, readiness.Error, StringComparison.Ordinal);
             Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
         }
         finally

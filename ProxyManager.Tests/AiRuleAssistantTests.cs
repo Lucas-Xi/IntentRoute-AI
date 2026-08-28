@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using ProxyManager.Standalone;
+using ProxyManager.Standalone.Localization;
 using Xunit;
 
 namespace ProxyManager.Tests;
@@ -273,7 +274,8 @@ public sealed class AiRuleAssistantTests
         var result = AiRuleDraftValidator.Validate(suggestion, ConfigWithEnabledProxy());
 
         Assert.False(result.Success);
-        Assert.Contains(result.Errors, error => error.Contains("本次草案", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, error => error.Contains(
+            Strings.ValDuplicateInDraftFormat.Split("{0}")[1], StringComparison.Ordinal));
     }
 
     [Fact]
@@ -300,7 +302,8 @@ public sealed class AiRuleAssistantTests
         var result = AiRuleDraftValidator.Validate(suggestion, config);
 
         Assert.False(result.Success);
-        Assert.Contains(result.Errors, error => error.Contains("已启用", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, error => error.Contains(
+            Strings.ValProxyRequired, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -319,7 +322,8 @@ public sealed class AiRuleAssistantTests
         var result = AiRuleDraftValidator.Validate(suggestion, config);
 
         Assert.False(result.Success);
-        Assert.Contains(result.Errors, error => error.Contains("现有规则重复", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, error => error.Contains(
+            Strings.ValDuplicateExistingFormat.Split("{0}")[1], StringComparison.Ordinal));
     }
 
     [Fact]
