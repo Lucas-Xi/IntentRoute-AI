@@ -105,7 +105,7 @@ public sealed class AppConfigStoreTests
             var result = AppConfigStore.LoadPreservingInvalidFile(path);
 
             Assert.Equal(AppConfigLoadStatus.Unusable, result.Status);
-            Assert.Contains("无法解密", result.Error, StringComparison.Ordinal);
+            Assert.Contains(ProxyManager.Standalone.Localization.Strings.CfgUndecryptable, result.Error, StringComparison.Ordinal);
             Assert.Equal(json, File.ReadAllText(path));
         }
         finally

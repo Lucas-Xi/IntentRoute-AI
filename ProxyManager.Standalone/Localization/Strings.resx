@@ -452,4 +452,38 @@
   <data name="RtStateFailedPrefix" xml:space="preserve"><value>sing-box 未运行</value></data>
   <data name="RtStateStopped" xml:space="preserve"><value>sing-box 已停止</value></data>
   <data name="ErrCloneRuleCandidate" xml:space="preserve"><value>无法创建规则候选副本。</value></data>
+  <data name="PolErrEmptyOrOversize" xml:space="preserve"><value>AI 策略解读为空或超过安全大小限制。</value></data>
+  <data name="PolErrNotStrictFormat" xml:space="preserve"><value>AI 策略解读不符合严格格式或引用了未知发现。</value></data>
+  <data name="PolErrBadDisclosure" xml:space="preserve"><value>本地策略披露不符合安全结构。</value></data>
+  <data name="PolErrOpenAiTimeout" xml:space="preserve"><value>OpenAI 策略解读请求超时。</value></data>
+  <data name="PolErrOpenAiNoResult" xml:space="preserve"><value>OpenAI 未返回策略解读。</value></data>
+  <data name="PolErrOpenAiUnparsable" xml:space="preserve"><value>OpenAI 返回了无法解析的策略解读。</value></data>
+  <data name="PolErrOllamaTimeout" xml:space="preserve"><value>Ollama 策略解读超时。</value></data>
+  <data name="PolErrOllamaModelMissing" xml:space="preserve"><value>所选 Ollama 模型未安装。</value></data>
+  <data name="PolErrOllamaNoResult" xml:space="preserve"><value>Ollama 未能生成策略解读。</value></data>
+  <data name="PolErrOllamaEmptyResult" xml:space="preserve"><value>Ollama 未返回策略解读。</value></data>
+  <data name="PolErrOllamaUnparsable" xml:space="preserve"><value>Ollama 返回了无法解析的策略解读。</value></data>
+  <data name="WsBadGlobalMode" xml:space="preserve"><value>配置包含不支持的全局模式。</value></data>
+  <data name="WsBadDnsMode" xml:space="preserve"><value>配置包含不支持的 DNS 模式。</value></data>
+  <data name="WsNullEntry" xml:space="preserve"><value>配置集合不能包含空条目。</value></data>
+  <data name="WsRuleIdRequired" xml:space="preserve"><value>规则必须包含非空 ID。</value></data>
+  <data name="WsRuleProcessRequired" xml:space="preserve"><value>规则必须包含进程名称；全局规则请明确使用 *。</value></data>
+  <data name="WsBadRuleMode" xml:space="preserve"><value>配置包含不支持的规则模式。</value></data>
+  <data name="WsDuplicateRuleId" xml:space="preserve"><value>规则 ID 不能重复。</value></data>
+  <data name="WsServerIdRequired" xml:space="preserve"><value>代理服务器必须包含非空 ID。</value></data>
+  <data name="WsBadProxyType" xml:space="preserve"><value>配置包含不支持的代理类型。</value></data>
+  <data name="WsDuplicateServerId" xml:space="preserve"><value>代理服务器 ID 不能重复。</value></data>
+  <data name="WsChainsRejected" xml:space="preserve"><value>当前版本尚未实现代理链运行时映射，因此拒绝保存代理链定义。</value></data>
+  <data name="WsUnsupportedSemanticsPrefix" xml:space="preserve"><value>配置不符合当前支持的安全语义: </value></data>
+  <data name="WsCloneConfigFailed" xml:space="preserve"><value>无法创建配置候选副本。</value></data>
+  <data name="WsUnreadableSaveBlocked" xml:space="preserve"><value>配置文件不可安全读取，已阻止覆盖保存。请先导入有效配置或明确重置。</value></data>
+  <data name="WsRecoveryCopyUnavailable" xml:space="preserve"><value>恢复副本不可用，已阻止替换唯一的原始配置。请先手动复制原文件并重新启动应用。</value></data>
+  <data name="CfgUndecryptable" xml:space="preserve"><value>当前 Windows 用户无法解密已保存的代理凭据。</value></data>
+  <data name="CfgUnreadable" xml:space="preserve"><value>配置文件无法安全读取。文件可能已损坏或被截断。</value></data>
+  <data name="StartupSecondInstance" xml:space="preserve"><value>IntentRoute AI 已在运行，或者上一实例仍持有 sing-box 管理锁。请先关闭已有实例后再试。</value></data>
+  <data name="StartupSecondInstanceTitle" xml:space="preserve"><value>无法启动第二个实例</value></data>
+  <data name="StartupFailedFormat" xml:space="preserve"><value>IntentRoute AI 无法安全启动。
+
+{0}</value></data>
+  <data name="StartupFailedTitle" xml:space="preserve"><value>启动失败</value></data>
 </root>

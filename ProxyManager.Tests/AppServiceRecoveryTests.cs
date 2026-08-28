@@ -83,7 +83,7 @@ public sealed class AppServiceRecoveryTests
 
             var error = Assert.Throws<InvalidOperationException>(() => service.ResetUnusableConfiguration());
 
-            Assert.Contains("恢复副本", error.Message, StringComparison.Ordinal);
+            Assert.Contains(ProxyManager.Standalone.Localization.Strings.WsRecoveryCopyUnavailable, error.Message, StringComparison.Ordinal);
             Assert.False(service.IsConfigurationWritable);
             Assert.Equal("unique-corrupt-source", File.ReadAllText(configPath));
         }
@@ -218,7 +218,7 @@ public sealed class AppServiceRecoveryTests
             var error = Assert.Throws<InvalidOperationException>(() =>
                 service.RecoverConfigurationFromFile(importPath));
 
-            Assert.Contains("恢复副本", error.Message, StringComparison.Ordinal);
+            Assert.Contains(ProxyManager.Standalone.Localization.Strings.WsRecoveryCopyUnavailable, error.Message, StringComparison.Ordinal);
             Assert.False(service.IsConfigurationWritable);
             Assert.Equal("unique-corrupt-source", File.ReadAllText(configPath));
         }

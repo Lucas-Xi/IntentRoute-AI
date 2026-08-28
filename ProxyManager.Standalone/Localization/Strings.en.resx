@@ -452,4 +452,38 @@
   <data name="RtStateFailedPrefix" xml:space="preserve"><value>sing-box is not running</value></data>
   <data name="RtStateStopped" xml:space="preserve"><value>sing-box stopped</value></data>
   <data name="ErrCloneRuleCandidate" xml:space="preserve"><value>Cannot create a rule candidate copy.</value></data>
+  <data name="PolErrEmptyOrOversize" xml:space="preserve"><value>The AI policy explanation is empty or exceeds the safety size limit.</value></data>
+  <data name="PolErrNotStrictFormat" xml:space="preserve"><value>The AI policy explanation does not match the strict format or references unknown findings.</value></data>
+  <data name="PolErrBadDisclosure" xml:space="preserve"><value>The local policy disclosure does not match the safe structure.</value></data>
+  <data name="PolErrOpenAiTimeout" xml:space="preserve"><value>The OpenAI policy explanation request timed out.</value></data>
+  <data name="PolErrOpenAiNoResult" xml:space="preserve"><value>OpenAI returned no policy explanation.</value></data>
+  <data name="PolErrOpenAiUnparsable" xml:space="preserve"><value>OpenAI returned an unparsable policy explanation.</value></data>
+  <data name="PolErrOllamaTimeout" xml:space="preserve"><value>Ollama timed out producing the policy explanation.</value></data>
+  <data name="PolErrOllamaModelMissing" xml:space="preserve"><value>The selected Ollama model is not installed.</value></data>
+  <data name="PolErrOllamaNoResult" xml:space="preserve"><value>Ollama failed to produce a policy explanation.</value></data>
+  <data name="PolErrOllamaEmptyResult" xml:space="preserve"><value>Ollama returned no policy explanation.</value></data>
+  <data name="PolErrOllamaUnparsable" xml:space="preserve"><value>Ollama returned an unparsable policy explanation.</value></data>
+  <data name="WsBadGlobalMode" xml:space="preserve"><value>The configuration contains an unsupported global mode.</value></data>
+  <data name="WsBadDnsMode" xml:space="preserve"><value>The configuration contains an unsupported DNS mode.</value></data>
+  <data name="WsNullEntry" xml:space="preserve"><value>A configuration collection contains a null entry.</value></data>
+  <data name="WsRuleIdRequired" xml:space="preserve"><value>A rule must have a non-empty ID.</value></data>
+  <data name="WsRuleProcessRequired" xml:space="preserve"><value>A rule must have a process name; use an explicit * for a global rule.</value></data>
+  <data name="WsBadRuleMode" xml:space="preserve"><value>The configuration contains an unsupported rule mode.</value></data>
+  <data name="WsDuplicateRuleId" xml:space="preserve"><value>Rule IDs must be unique.</value></data>
+  <data name="WsServerIdRequired" xml:space="preserve"><value>A proxy server must have a non-empty ID.</value></data>
+  <data name="WsBadProxyType" xml:space="preserve"><value>The configuration contains an unsupported proxy type.</value></data>
+  <data name="WsDuplicateServerId" xml:space="preserve"><value>Proxy server IDs must be unique.</value></data>
+  <data name="WsChainsRejected" xml:space="preserve"><value>Proxy chain runtime mapping is not implemented in this version, so proxy chain definitions are rejected.</value></data>
+  <data name="WsUnsupportedSemanticsPrefix" xml:space="preserve"><value>The configuration does not satisfy the currently supported safety semantics: </value></data>
+  <data name="WsCloneConfigFailed" xml:space="preserve"><value>Cannot create a configuration candidate copy.</value></data>
+  <data name="WsUnreadableSaveBlocked" xml:space="preserve"><value>The configuration file cannot be read safely; overwriting saves are blocked. Import a valid configuration or reset explicitly first.</value></data>
+  <data name="WsRecoveryCopyUnavailable" xml:space="preserve"><value>No recovery copy is available; replacing the only original configuration is blocked. Copy the file manually and restart the app.</value></data>
+  <data name="CfgUndecryptable" xml:space="preserve"><value>The saved proxy credentials cannot be decrypted for the current Windows user.</value></data>
+  <data name="CfgUnreadable" xml:space="preserve"><value>The configuration file cannot be read safely. It may be corrupted or truncated.</value></data>
+  <data name="StartupSecondInstance" xml:space="preserve"><value>IntentRoute AI is already running, or a previous instance still holds the sing-box management lock. Close the existing instance first.</value></data>
+  <data name="StartupSecondInstanceTitle" xml:space="preserve"><value>Cannot start a second instance</value></data>
+  <data name="StartupFailedFormat" xml:space="preserve"><value>IntentRoute AI cannot start safely.
+
+{0}</value></data>
+  <data name="StartupFailedTitle" xml:space="preserve"><value>Startup failed</value></data>
 </root>

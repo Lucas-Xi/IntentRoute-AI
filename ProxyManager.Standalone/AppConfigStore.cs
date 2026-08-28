@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Security;
 using System.Text;
 using Newtonsoft.Json;
+using Strings = ProxyManager.Standalone.Localization.Strings;
 
 namespace ProxyManager.Standalone;
 
@@ -60,8 +61,8 @@ public static class AppConfigStore
             return AppConfigLoadResult.Unusable(
                 backupPath,
                 ex is AppConfigProtectionException
-                    ? "当前 Windows 用户无法解密已保存的代理凭据。"
-                    : "配置文件无法安全读取。文件可能已损坏或被截断。");
+                    ? Strings.CfgUndecryptable
+                    : Strings.CfgUnreadable);
         }
     }
 

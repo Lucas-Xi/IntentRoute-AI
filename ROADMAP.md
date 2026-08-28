@@ -62,7 +62,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [ ] Visual layout validation across mixed-DPI displays (manual procedure documented in docs/mixed-dpi-verification.md; requires multi-monitor hardware — not claimed until a maintainer records a run)
 - [x] Localize AppService runtime-status and readiness text (the persisted default proxy name stays Chinese as configuration data)
-- [ ] Decide: keep Policy Intelligence finding titles Chinese as stable deterministic-analysis identifiers, or localize them alongside their tests and privacy canaries- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
+- [x] Decision: Policy Intelligence finding titles stay Chinese as stable deterministic-analysis identifiers (referenced by privacy-canary tests and cross-language user reports); they are analysis output, not UI chrome- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 
 ## Explicitly not promised

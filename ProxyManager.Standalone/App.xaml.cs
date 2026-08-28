@@ -23,8 +23,8 @@ public partial class App : Application
         catch (SingBoxRuntimeOwnershipException)
         {
             MessageBox.Show(
-                "IntentRoute AI 已在运行，或者上一实例仍持有 sing-box 管理锁。请先关闭已有实例后再试。",
-                "无法启动第二个实例",
+                Localization.Strings.StartupSecondInstance,
+                Localization.Strings.StartupSecondInstanceTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             Shutdown(2);
@@ -33,8 +33,8 @@ public partial class App : Application
         {
             WriteConfiguredSmokeDiagnostic(ex);
             MessageBox.Show(
-                "IntentRoute AI 无法安全启动。\n\n" + SingBoxRuntime.RedactSecrets(ex.Message),
-                "启动失败",
+                string.Format(Localization.Strings.StartupFailedFormat, SingBoxRuntime.RedactSecrets(ex.Message)),
+                Localization.Strings.StartupFailedTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);

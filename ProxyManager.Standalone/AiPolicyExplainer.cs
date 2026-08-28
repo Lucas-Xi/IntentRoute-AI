@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using JsonRequired = System.Text.Json.Serialization.JsonRequiredAttribute;
+using Strings = ProxyManager.Standalone.Localization.Strings;
 
 namespace ProxyManager.Standalone;
 
@@ -160,7 +161,7 @@ internal static class AiPolicyContract
     {
         ValidateDisclosure(disclosure);
         if (string.IsNullOrWhiteSpace(json) || json.Length > MaxResponseChars)
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "AI 策略解读为空或超过安全大小限制。");
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrEmptyOrOversize);
 
         try
         {
@@ -192,7 +193,7 @@ internal static class AiPolicyContract
         }
         catch (System.Text.Json.JsonException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "AI 策略解读不符合严格格式或引用了未知发现。", ex);
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrNotStrictFormat, ex);
         }
     }
 
@@ -200,7 +201,7 @@ internal static class AiPolicyContract
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model) || request.Model.Length > 128)
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "请选择有效的 AI 模型。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrPickModel);
         ValidateDisclosure(request.Disclosure);
     }
 
@@ -224,7 +225,7 @@ internal static class AiPolicyContract
             disclosure.Findings.Select(finding => finding.Code).Distinct(StringComparer.Ordinal).Count() !=
                 disclosure.Findings.Count)
         {
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "本地策略披露不符合安全结构。");
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrBadDisclosure);
         }
     }
 }
@@ -237,13 +238,13 @@ public sealed partial class OpenAiRuleProvider
     {
         AiPolicyContract.ValidateRequest(request);
         if (!SupportedModels.Contains(request.Model, StringComparer.Ordinal))
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "所选 OpenAI 模型不在此版本的允许列表中。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOpenAiNotAllowlisted);
 
         var apiKey = _apiKeyProvider();
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new AiProviderException(
                 AiProviderErrorKind.NotConfigured,
-                "未检测到 OPENAI_API_KEY。请设置当前用户环境变量后重新打开应用。");
+                Strings.ErrOpenAiNoKey);
 
         var payload = new JObject
         {
@@ -279,11 +280,11 @@ public sealed partial class OpenAiRuleProvider
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiProviderException(AiProviderErrorKind.Timeout, "OpenAI 策略解读请求超时。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Timeout, Strings.PolErrOpenAiTimeout, ex);
         }
         catch (HttpRequestException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.Unavailable, "无法连接 OpenAI。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOpenAiUnreachable, ex);
         }
 
         using (response)
@@ -305,12 +306,12 @@ public sealed partial class OpenAiRuleProvider
                         StringComparison.Ordinal))?["text"]
                     ?.Value<string>();
                 if (string.IsNullOrWhiteSpace(outputText))
-                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "OpenAI 未返回策略解读。");
+                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrOpenAiNoResult);
                 return AiPolicyContract.ParseExplanation(outputText, request.Disclosure);
             }
             catch (Newtonsoft.Json.JsonException ex)
             {
-                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "OpenAI 返回了无法解析的策略解读。", ex);
+                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrOpenAiUnparsable, ex);
             }
         }
     }
@@ -324,7 +325,7 @@ public sealed partial class OllamaRuleProvider
     {
         AiPolicyContract.ValidateRequest(request);
         if (!IsSafeModelName(request.Model))
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "Ollama 模型名称无效。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOllamaBadModelName);
 
         var payload = new JObject
         {
@@ -354,19 +355,19 @@ public sealed partial class OllamaRuleProvider
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiProviderException(AiProviderErrorKind.Timeout, "Ollama 策略解读超时。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Timeout, Strings.PolErrOllamaTimeout, ex);
         }
         catch (HttpRequestException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.Unavailable, "无法连接本机 Ollama。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaUnreachable, ex);
         }
 
         using (response)
         {
             if (response.StatusCode == HttpStatusCode.NotFound)
-                throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "所选 Ollama 模型未安装。");
+                throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.PolErrOllamaModelMissing);
             if (!response.IsSuccessStatusCode)
-                throw new AiProviderException(AiProviderErrorKind.Unavailable, "Ollama 未能生成策略解读。");
+                throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.PolErrOllamaNoResult);
 
             var responseJson = await AiHttp.ReadBoundedStringAsync(
                 response.Content,
@@ -377,12 +378,12 @@ public sealed partial class OllamaRuleProvider
                 var root = JObject.Parse(responseJson);
                 var content = (string?)root["message"]?["content"];
                 if (string.IsNullOrWhiteSpace(content))
-                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "Ollama 未返回策略解读。");
+                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrOllamaEmptyResult);
                 return AiPolicyContract.ParseExplanation(content, request.Disclosure);
             }
             catch (Newtonsoft.Json.JsonException ex)
             {
-                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "Ollama 返回了无法解析的策略解读。", ex);
+                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.PolErrOllamaUnparsable, ex);
             }
         }
     }

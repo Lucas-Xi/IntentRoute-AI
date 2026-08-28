@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Localized the last user-visible service-layer strings: policy-explanation provider errors, configuration-workspace validation and recovery exceptions, config-store load errors, and the startup dialogs (second-instance lock and safe-start failure). With the documented exceptions of Policy Intelligence finding titles and the persisted default proxy name, every user-visible string in the application now follows the language preference (481 resource keys).
+
 ## [0.7.0] - 2026-08-28
 
 ### Added

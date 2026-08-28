@@ -1,5 +1,6 @@
 using System.IO;
 using Newtonsoft.Json;
+using Strings = ProxyManager.Standalone.Localization.Strings;
 
 namespace ProxyManager.Standalone;
 
@@ -133,47 +134,47 @@ internal sealed class ConfigurationWorkspace
     private static void Validate(AppConfig candidate)
     {
         if (!Enum.IsDefined(candidate.GlobalMode))
-            throw new InvalidDataException("配置包含不支持的全局模式。");
+            throw new InvalidDataException(Strings.WsBadGlobalMode);
         if (!Enum.IsDefined(candidate.DnsMode))
-            throw new InvalidDataException("配置包含不支持的 DNS 模式。");
+            throw new InvalidDataException(Strings.WsBadDnsMode);
         if (candidate.Rules.Any(rule => rule is null) ||
             candidate.ProxyServers.Any(server => server is null) ||
             candidate.ProxyChains.Any(chain => chain is null))
         {
-            throw new InvalidDataException("配置集合不能包含空条目。");
+            throw new InvalidDataException(Strings.WsNullEntry);
         }
 
         foreach (var rule in candidate.Rules)
         {
             if (string.IsNullOrWhiteSpace(rule.Id))
-                throw new InvalidDataException("规则必须包含非空 ID。");
+                throw new InvalidDataException(Strings.WsRuleIdRequired);
             if (string.IsNullOrWhiteSpace(rule.ExeName))
-                throw new InvalidDataException("规则必须包含进程名称；全局规则请明确使用 *。");
+                throw new InvalidDataException(Strings.WsRuleProcessRequired);
             if (!Enum.IsDefined(rule.Mode))
-                throw new InvalidDataException("配置包含不支持的规则模式。");
+                throw new InvalidDataException(Strings.WsBadRuleMode);
         }
 
         if (HasDuplicateIds(candidate.Rules.Select(rule => rule.Id)))
-            throw new InvalidDataException("规则 ID 不能重复。");
+            throw new InvalidDataException(Strings.WsDuplicateRuleId);
 
         foreach (var server in candidate.ProxyServers)
         {
             if (string.IsNullOrWhiteSpace(server.Id))
-                throw new InvalidDataException("代理服务器必须包含非空 ID。");
+                throw new InvalidDataException(Strings.WsServerIdRequired);
             if (!Enum.IsDefined(server.ProxyType))
-                throw new InvalidDataException("配置包含不支持的代理类型。");
+                throw new InvalidDataException(Strings.WsBadProxyType);
             server.Host = LocalProxyEndpoint.NormalizeOrThrow(server.Host, server.Port);
         }
 
         if (HasDuplicateIds(candidate.ProxyServers.Select(server => server.Id)))
-            throw new InvalidDataException("代理服务器 ID 不能重复。");
+            throw new InvalidDataException(Strings.WsDuplicateServerId);
 
         if (candidate.ProxyChains.Count > 0)
-            throw new InvalidDataException("当前版本尚未实现代理链运行时映射，因此拒绝保存代理链定义。");
+                throw new InvalidDataException(Strings.WsChainsRejected);
 
         var build = SingBoxConfigBuilder.Build(candidate);
         if (!build.Success)
-            throw new InvalidDataException("配置不符合当前支持的安全语义: " + build.Error);
+            throw new InvalidDataException(Strings.WsUnsupportedSemanticsPrefix + build.Error);
     }
 
     private static void Normalize(AppConfig config, bool addDefaultProxyWhenEmpty)
@@ -231,7 +232,7 @@ internal sealed class ConfigurationWorkspace
 
     private static AppConfig Clone(AppConfig config) =>
         JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(config))
-        ?? throw new InvalidDataException("无法创建配置候选副本。");
+        ?? throw new InvalidDataException(Strings.WsCloneConfigFailed);
 
     private static bool HasDuplicateIds(IEnumerable<string> ids) =>
         ids.GroupBy(id => id, StringComparer.Ordinal).Any(group => group.Count() > 1);
@@ -241,7 +242,7 @@ internal sealed class ConfigurationWorkspace
         if (!IsWritable)
         {
             throw new InvalidOperationException(
-                "配置文件不可安全读取，已阻止覆盖保存。请先导入有效配置或明确重置。");
+                Strings.WsUnreadableSaveBlocked);
         }
     }
 
@@ -251,7 +252,7 @@ internal sealed class ConfigurationWorkspace
             !File.Exists(RecoveryBackupPath))
         {
             throw new InvalidOperationException(
-                "恢复副本不可用，已阻止替换唯一的原始配置。请先手动复制原文件并重新启动应用。");
+                Strings.WsRecoveryCopyUnavailable);
         }
     }
 
