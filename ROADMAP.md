@@ -55,6 +55,10 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 - [x] Localized AI-provider errors, draft validation messages, provider diagnostics, and AppService runtime/status text (450 resource keys total)
 
+## v0.8 — localization end to end (2026-08-28)
+
+- [x] Every user-visible string localized (window layer, provider errors, validation, diagnostics, runtime status, configuration errors, startup dialogs); Policy Intelligence finding titles and the persisted default proxy name stay Chinese by design
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

@@ -44,4 +44,25 @@ Clear conventional-style subjects are encouraged, for example:
 - `fix: preserve running instance after invalid config`
 - `docs: document TUN recovery steps`
 
+## Adding or changing localized strings
+
+The UI is bilingual (Chinese-neutral plus English) through hand-maintained resx files
+and a hand-written accessor — there is no Visual Studio designer step, so CI builds
+straight from the repository.
+
+1. Add the key with its Chinese value to `ProxyManager.Standalone/Localization/Strings.resx`
+   and the English value to `Strings.en.resx` in the same change. Escape XML entities
+   (`&lt;` for `<`) — a raw `<` breaks the build.
+2. Add a property to `Strings.cs`: `public static string KeyName => GetString(nameof(KeyName));`
+3. Reference it from code behind via the `Strings` alias or from XAML via
+   `{x:Static loc:Strings.KeyName}`.
+4. Both files must contain exactly the same key set with non-empty values; the parity
+   and non-empty tests fail otherwise. Duplicate `<data>` names are not caught by the
+   toolchain — pick a unique key.
+5. Tests that assert on a localized message must derive the expected text from
+   `Strings` (or a culture-stable fragment such as a format suffix), never a
+   hard-coded Chinese literal — CI runs under en-US while your machine may not.
+6. By design, Policy Intelligence finding titles and the persisted default proxy
+   name stay Chinese; do not localize them without a maintainer discussion.
+
 By contributing, you agree that your contribution is licensed under the MIT License.

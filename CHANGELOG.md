@@ -2,7 +2,7 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
-## [Unreleased]
+## [0.8.0] - 2026-08-28
 
 ### Added
 

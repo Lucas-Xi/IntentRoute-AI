@@ -41,7 +41,7 @@
   <data name="NavItemProcess" xml:space="preserve"><value>⚙️  Process list</value></data>
   <data name="NavItemSettings" xml:space="preserve"><value>🔧  Settings</value></data>
   <data name="NavItemAbout" xml:space="preserve"><value>ℹ️  About</value></data>
-  <data name="SidebarVersion" xml:space="preserve"><value>v0.7.0 development preview</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.8.0 development preview</value></data>
   <data name="StatusFooterLabel" xml:space="preserve"><value>Runtime status</value></data>
   <data name="StatusFooterInitial" xml:space="preserve"><value>Checking sing-box…</value></data>
   <data name="ModeDirectLabel" xml:space="preserve"><value>Direct by default</value></data>
@@ -72,7 +72,7 @@
   <data name="MenuMoveUp" xml:space="preserve"><value>⬆ Move up</value></data>
   <data name="MenuMoveDown" xml:space="preserve"><value>⬇ Move down</value></data>
   <data name="MenuDelete" xml:space="preserve"><value>❌ Delete</value></data>
-  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.7.0</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.8.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>Features</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• Drag an application to add rules</value></data>
   <data name="AboutFeature2" xml:space="preserve"><value>• Proxy / direct / block routing modes</value></data>

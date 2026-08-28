@@ -19,10 +19,11 @@ IntentRoute AI addresses an understandable open-source maintenance problem: Wind
 - A conservative local Route Decision Simulator that shares production ordering/builder semantics, distinguishes proven decisions from missing context, keeps the full what-if query and trace out of provider requests, and rejects stale or Recovery Protection results.
 - One documented Canonical Runtime Order plus explicit TCP/UDP `Both` semantics, reducing the chance that UI, tests, analysis, and generated sing-box behavior drift apart.
 - A public CI/Release gate that verifies the official sing-box v1.13.19 archive hash and passes representative production-builder output through the real `sing-box check` without bundling the test dependency.
+- End-to-end localization: every user-visible string is bilingual (481 resource keys with parity and non-empty tests); keyboard navigation ships visible focus states, UIA names, and smoke-level Tab/arrow coverage; Per-Monitor V2 DPI awareness is declared and asserted by the smoke gate, with a documented manual mixed-DPI procedure awaiting hardware-in-the-loop verification.
 
 ## Facts that must remain honest in a future application
 
-- v0.7.0 is a new preview and does not yet have demonstrated broad adoption.
+- v0.8.0 is a new preview and does not yet have demonstrated broad adoption.
 - sing-box supplies the TUN data plane and is a separate project.
 - OpenAI and Ollama supply optional model inference; AI does not autonomously control the data plane.
 - Route Decision Simulation is static local policy reasoning, not per-connection telemetry, DNS evidence, or proof of proxy/TUN reachability.
