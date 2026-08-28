@@ -6,9 +6,9 @@
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.8.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.9.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-v0.8.0 completes localization end to end: every user-visible string — window layer, provider errors, validation messages, diagnostics, runtime status, configuration errors, and startup dialogs — follows the Chinese/English preference (481 resource keys with parity tests), with Policy Intelligence finding titles and the persisted default proxy name kept Chinese by design. Downloadable v0.8.0 archives contain all of these changes.
+v0.9.0 adds an unsigned build-provenance inventory: every archive now embeds `provenance.json` with the exact version, commit, builder, SDK, and the full resolved dependency set with content hashes; the package gate fails without it. Code signing itself still requires a certificate. Downloadable v0.9.0 archives contain all of these changes.
 
 ## Why this project exists
 
@@ -129,7 +129,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.8.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.9.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.

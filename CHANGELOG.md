@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [0.9.0] - 2026-08-28
+
+### Added
+
+- Added an unsigned build-provenance inventory to every package: `provenance.json` records the version, exact commit, builder (GitHub Actions run URL or local build), pinned SDK, target framework, and the complete resolved NuGet dependency set (22 packages with content hashes) from the lock files. `verify-package.ps1` now fails when the inventory is missing or incomplete. This is an inventory manifest, not a signature — code signing still requires a certificate.
+
 ## [0.8.0] - 2026-08-28
 
 ### Added

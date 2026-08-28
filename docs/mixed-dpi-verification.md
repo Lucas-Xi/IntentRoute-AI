@@ -35,3 +35,5 @@ a maintainer follows before claiming mixed-DPI validation.
 - Single-monitor CI cannot execute this procedure; until a maintainer records a
   run, mixed-DPI visual validation is **not claimed**.
 - RDP sessions virtualize DPI differently; results over RDP do not count.
+- Recorded check 2026-08-28: the current maintainer machine has two displays but
+  both run at 100% scale, so it cannot execute this procedure either.

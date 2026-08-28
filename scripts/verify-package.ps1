@@ -30,4 +30,18 @@ if ($forbidden) {
     throw "Published package contains forbidden runtime or secret-bearing files: $($relativeNames -join ', ')"
 }
 
-Write-Host "Verified package contents at $resolvedOutput (no bundled sing-box or generated runtime files)."
+$provenancePath = Join-Path $resolvedOutput 'provenance.json'
+if (-not (Test-Path -LiteralPath $provenancePath -PathType Leaf)) {
+    throw 'Published package is missing provenance.json (unsigned build inventory).'
+}
+$provenance = Get-Content -LiteralPath $provenancePath -Raw | ConvertFrom-Json
+foreach ($required in @('schema', 'version', 'commit', 'generatedAtUtc', 'builtBy', 'dependencies')) {
+    if ($null -eq $provenance.$required) {
+        throw "provenance.json is missing the required field '$required'."
+    }
+}
+if ($provenance.dependencies.Count -lt 1) {
+    throw 'provenance.json lists no dependencies; the inventory looks incomplete.'
+}
+
+Write-Host "Verified package contents at $resolvedOutput (no bundled sing-box or generated runtime files; provenance inventory present)."

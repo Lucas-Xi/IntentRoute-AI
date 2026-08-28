@@ -59,6 +59,10 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 - [x] Every user-visible string localized (window layer, provider errors, validation, diagnostics, runtime status, configuration errors, startup dialogs); Policy Intelligence finding titles and the persisted default proxy name stay Chinese by design
 
+## v0.9 — build provenance (2026-08-28)
+
+- [x] Unsigned build-provenance inventory embedded in every package (version, commit, builder, SDK, full dependency set with content hashes; enforced by the package gate)
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
@@ -67,7 +71,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [ ] Visual layout validation across mixed-DPI displays (manual procedure documented in docs/mixed-dpi-verification.md; requires multi-monitor hardware — not claimed until a maintainer records a run)
 - [x] Localize AppService runtime-status and readiness text (the persisted default proxy name stays Chinese as configuration data)
 - [x] Decision: Policy Intelligence finding titles stay Chinese as stable deterministic-analysis identifiers (referenced by privacy-canary tests and cross-language user reports); they are analysis output, not UI chrome- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
-- [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
+- [ ] Signed release artifacts when sustainable signing infrastructure exists (the unsigned provenance inventory shipped in v0.9.0)
 
 ## Explicitly not promised
 
