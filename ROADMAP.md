@@ -57,7 +57,7 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
 - [ ] Visual layout validation across mixed-DPI displays
-- [ ] Localize AppService and runtime-error text
+- [ ] Localize AppService and remaining runtime-error text
 - [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 

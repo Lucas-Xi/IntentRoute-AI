@@ -375,4 +375,56 @@
   <data name="ProcCandUnknown" xml:space="preserve"><value>未知</value></data>
   <data name="PolicyLineGlobalDefault" xml:space="preserve"><value>全局默认</value></data>
   <data name="PolicyLineDisabledFormat" xml:space="preserve"><value>禁用 {0}</value></data>
+  <data name="ErrEmptyOrOversize" xml:space="preserve"><value>AI 返回内容为空或超过安全大小限制。</value></data>
+  <data name="ErrNotStrictFormat" xml:space="preserve"><value>AI 返回内容不符合严格规则格式。</value></data>
+  <data name="ErrEmptyIntent" xml:space="preserve"><value>请输入需要转换的分流意图。</value></data>
+  <data name="ErrIntentTooLongFormat" xml:space="preserve"><value>分流意图不能超过 {0} 个字符。</value></data>
+  <data name="ErrPickModel" xml:space="preserve"><value>请选择有效的 AI 模型。</value></data>
+  <data name="ErrOpenAiNotAllowlisted" xml:space="preserve"><value>所选 OpenAI 模型不在此版本的允许列表中。</value></data>
+  <data name="ErrOpenAiNoKey" xml:space="preserve"><value>未检测到 OPENAI_API_KEY。请设置当前用户环境变量后重新打开应用。</value></data>
+  <data name="ErrOpenAiTimeout" xml:space="preserve"><value>OpenAI 请求超时。</value></data>
+  <data name="ErrOpenAiUnreachable" xml:space="preserve"><value>无法连接 OpenAI。</value></data>
+  <data name="ErrOpenAiNoDraft" xml:space="preserve"><value>OpenAI 未返回规则草案。</value></data>
+  <data name="ErrOpenAiUnparsable" xml:space="preserve"><value>OpenAI 返回了无法解析的响应。</value></data>
+  <data name="ErrOpenAiAuth" xml:space="preserve"><value>OpenAI API 身份验证失败。</value></data>
+  <data name="ErrOpenAiRateLimited" xml:space="preserve"><value>OpenAI 当前限流或额度不足。</value></data>
+  <data name="ErrOpenAiModelGone" xml:space="preserve"><value>OpenAI 模型不可用。</value></data>
+  <data name="ErrOpenAiDown" xml:space="preserve"><value>OpenAI 服务暂时不可用。</value></data>
+  <data name="ErrOpenAiRejected" xml:space="preserve"><value>OpenAI 拒绝了规则生成请求。</value></data>
+  <data name="ErrOllamaUnavailable" xml:space="preserve"><value>Ollama 本地服务不可用。</value></data>
+  <data name="ErrOllamaTimeout" xml:space="preserve"><value>连接 Ollama 超时。</value></data>
+  <data name="ErrOllamaNotDetected" xml:space="preserve"><value>未检测到本机 Ollama 服务。</value></data>
+  <data name="ErrOllamaBadModelName" xml:space="preserve"><value>Ollama 模型名称无效。</value></data>
+  <data name="ErrOllamaGenTimeout" xml:space="preserve"><value>Ollama 生成规则超时。</value></data>
+  <data name="ErrOllamaUnreachable" xml:space="preserve"><value>无法连接本机 Ollama。</value></data>
+  <data name="ErrOllamaModelMissing" xml:space="preserve"><value>所选 Ollama 模型未安装。请先使用 ollama pull 安装。</value></data>
+  <data name="ErrOllamaNoDraft" xml:space="preserve"><value>Ollama 未返回规则草案。</value></data>
+  <data name="ErrOllamaUnparsable" xml:space="preserve"><value>Ollama 返回了无法解析的响应。</value></data>
+  <data name="ErrOversizeResponse" xml:space="preserve"><value>AI 响应超过安全大小限制。</value></data>
+  <data name="ValSummaryTooLong" xml:space="preserve"><value>AI 摘要超过 500 个字符。</value></data>
+  <data name="ValRuleCountFormat" xml:space="preserve"><value>AI 草案必须包含 1–{0} 条规则。</value></data>
+  <data name="ValWarningsLimit" xml:space="preserve"><value>AI 警告数量或长度超过限制。</value></data>
+  <data name="ValRuleLabelFormat" xml:space="preserve"><value>第 {0} 条规则</value></data>
+  <data name="ValNotePrefix" xml:space="preserve"><value>AI 草案: </value></data>
+  <data name="ValDuplicateInDraftFormat" xml:space="preserve"><value>{0} 与本次草案中的另一条规则重复。</value></data>
+  <data name="ValDuplicateExistingFormat" xml:space="preserve"><value>{0} 与现有规则重复。</value></data>
+  <data name="ValProxyRequired" xml:space="preserve"><value>代理规则需要至少一个已启用的本地代理服务器。</value></data>
+  <data name="ValBuilderFailedPrefix" xml:space="preserve"><value>本地 sing-box 候选配置校验失败: </value></data>
+  <data name="ValBadProcessNameFormat" xml:space="preserve"><value>{0}的进程名无效；必须是精确的 .exe 文件名，不能包含路径或通配符。</value></data>
+  <data name="ValBadHostsFormat" xml:space="preserve"><value>{0}包含无效域名；仅支持精确域名或 *.suffix。</value></data>
+  <data name="ValIpsTooLongFormat" xml:space="preserve"><value>{0}的 IP/CIDR 字段过长。</value></data>
+  <data name="ValPortsTooLongFormat" xml:space="preserve"><value>{0}的端口字段过长。</value></data>
+  <data name="ValBadProtocolFormat" xml:space="preserve"><value>{0}的协议必须是 TCP、UDP 或 Both。</value></data>
+  <data name="ValBadActionFormat" xml:space="preserve"><value>{0}的动作必须是 Proxy、Direct 或 Block。</value></data>
+  <data name="ValRationaleTooLongFormat" xml:space="preserve"><value>{0}的生成理由超过 500 个字符。</value></data>
+  <data name="ValConfidenceRangeFormat" xml:space="preserve"><value>{0}的置信度必须位于 0–1 之间。</value></data>
+  <data name="DiagOpenAiNoKeyEnv" xml:space="preserve"><value>未检测到 OPENAI_API_KEY 环境变量。请设置当前用户环境变量后重新打开应用。</value></data>
+  <data name="DiagKeyPresentNoRequest" xml:space="preserve"><value>OPENAI_API_KEY 已配置（本检测只报告存在性，不显示密钥内容，也不发送网络请求）。</value></data>
+  <data name="DiagOpenAiPickModel" xml:space="preserve"><value>所选模型不在本版本的允许列表中，请重新选择模型。</value></data>
+  <data name="DiagOpenAiNoModelPicked" xml:space="preserve"><value>尚未选择模型。请打开 AI 页加载并选择允许列表中的模型。</value></data>
+  <data name="DiagOpenAiModelAllowlistedFormat" xml:space="preserve"><value>所选模型 {0} 在允许列表中。</value></data>
+  <data name="DiagOllamaLoopback" xml:space="preserve"><value>Ollama 本地服务可达（仅访问字面量环回地址，无凭据参与）。</value></data>
+  <data name="DiagOllamaModelsNoPickFormat" xml:space="preserve"><value>已安装 {0} 个模型，但尚未选择模型。</value></data>
+  <data name="DiagOllamaModelMissingFormat" xml:space="preserve"><value>已安装 {0} 个模型，但所选模型不在其中。</value></data>
+  <data name="DiagOllamaModelPresentFormat" xml:space="preserve"><value>已安装 {0} 个模型，所选模型已在本机安装。</value></data>
 </root>

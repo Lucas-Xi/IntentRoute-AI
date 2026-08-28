@@ -4,6 +4,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProxyManager.Standalone;
+using ProxyManager.Standalone.Localization;
 using Xunit;
 
 namespace ProxyManager.Tests;
@@ -64,7 +65,8 @@ public sealed class AiProviderDiagnosticsTests : IDisposable
         var check = await AiProviderDiagnostics.CheckAsync(provider, "llama3.2:latest");
 
         Assert.Equal(AiProviderHealthState.Ready, check.State);
-        Assert.Contains(check.Details, detail => detail.Contains("1 个模型", StringComparison.Ordinal));
+        Assert.Contains(check.Details, detail => detail.Contains(
+            string.Format(Strings.DiagOllamaModelPresentFormat, 1), StringComparison.Ordinal));
     }
 
     [Fact]
@@ -77,7 +79,8 @@ public sealed class AiProviderDiagnosticsTests : IDisposable
         var check = await AiProviderDiagnostics.CheckAsync(provider, "qwen3:latest");
 
         Assert.Equal(AiProviderHealthState.Misconfigured, check.State);
-        Assert.Contains(check.Details, detail => detail.Contains("不在其中", StringComparison.Ordinal));
+        Assert.Contains(check.Details, detail => detail.Contains(
+            string.Format(Strings.DiagOllamaModelMissingFormat, 1), StringComparison.Ordinal));
     }
 
     [Fact]

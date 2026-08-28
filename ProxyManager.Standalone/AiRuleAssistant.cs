@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using JsonRequired = System.Text.Json.Serialization.JsonRequiredAttribute;
+using Strings = ProxyManager.Standalone.Localization.Strings;
 
 namespace ProxyManager.Standalone;
 
@@ -184,7 +185,7 @@ internal static class AiRuleContract
     public static AiRuleSuggestion ParseSuggestion(string json)
     {
         if (string.IsNullOrWhiteSpace(json) || json.Length > MaxResponseChars)
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "AI 返回内容为空或超过安全大小限制。");
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrEmptyOrOversize);
 
         try
         {
@@ -207,7 +208,7 @@ internal static class AiRuleContract
         }
         catch (System.Text.Json.JsonException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "AI 返回内容不符合严格规则格式。", ex);
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrNotStrictFormat, ex);
         }
     }
 
@@ -215,11 +216,11 @@ internal static class AiRuleContract
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Intent))
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "请输入需要转换的分流意图。");
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrEmptyIntent);
         if (request.Intent.Length > MaxIntentLength)
-            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, $"分流意图不能超过 {MaxIntentLength} 个字符。");
+            throw new AiProviderException(AiProviderErrorKind.InvalidResponse, string.Format(Strings.ErrIntentTooLongFormat, MaxIntentLength));
         if (string.IsNullOrWhiteSpace(request.Model) || request.Model.Length > 128)
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "请选择有效的 AI 模型。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrPickModel);
     }
 }
 
@@ -254,13 +255,13 @@ public sealed partial class OpenAiRuleProvider : IAiRuleProvider, IAiPolicyExpla
     {
         AiRuleContract.ValidateRequest(request);
         if (!SupportedModels.Contains(request.Model, StringComparer.Ordinal))
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "所选 OpenAI 模型不在此版本的允许列表中。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOpenAiNotAllowlisted);
 
         var apiKey = _apiKeyProvider();
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new AiProviderException(
                 AiProviderErrorKind.NotConfigured,
-                "未检测到 OPENAI_API_KEY。请设置当前用户环境变量后重新打开应用。");
+                Strings.ErrOpenAiNoKey);
 
         var payload = new JObject
         {
@@ -297,11 +298,11 @@ public sealed partial class OpenAiRuleProvider : IAiRuleProvider, IAiPolicyExpla
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiProviderException(AiProviderErrorKind.Timeout, "OpenAI 请求超时。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Timeout, Strings.ErrOpenAiTimeout, ex);
         }
         catch (HttpRequestException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.Unavailable, "无法连接 OpenAI。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOpenAiUnreachable, ex);
         }
 
         using (response)
@@ -324,13 +325,13 @@ public sealed partial class OpenAiRuleProvider : IAiRuleProvider, IAiPolicyExpla
                     ?.Value<string>();
 
                 if (string.IsNullOrWhiteSpace(outputText))
-                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "OpenAI 未返回规则草案。");
+                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrOpenAiNoDraft);
 
                 return AiRuleContract.ParseSuggestion(outputText);
             }
             catch (Newtonsoft.Json.JsonException ex)
             {
-                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "OpenAI 返回了无法解析的响应。", ex);
+                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrOpenAiUnparsable, ex);
             }
         }
     }
@@ -349,14 +350,14 @@ public sealed partial class OpenAiRuleProvider : IAiRuleProvider, IAiPolicyExpla
     private static AiProviderException MapOpenAiStatus(HttpStatusCode statusCode) => statusCode switch
     {
         HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
-            new AiProviderException(AiProviderErrorKind.Authentication, "OpenAI API 身份验证失败。"),
+            new AiProviderException(AiProviderErrorKind.Authentication, Strings.ErrOpenAiAuth),
         HttpStatusCode.TooManyRequests =>
-            new AiProviderException(AiProviderErrorKind.RateLimited, "OpenAI 当前限流或额度不足。"),
+            new AiProviderException(AiProviderErrorKind.RateLimited, Strings.ErrOpenAiRateLimited),
         HttpStatusCode.NotFound =>
-            new AiProviderException(AiProviderErrorKind.ModelNotFound, "OpenAI 模型不可用。"),
+            new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOpenAiModelGone),
         _ when (int)statusCode >= 500 =>
-            new AiProviderException(AiProviderErrorKind.Unavailable, "OpenAI 服务暂时不可用。"),
-        _ => new AiProviderException(AiProviderErrorKind.InvalidResponse, "OpenAI 拒绝了规则生成请求。")
+            new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOpenAiDown),
+        _ => new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrOpenAiRejected)
     };
 }
 
@@ -388,7 +389,7 @@ public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExpla
         {
             using var response = await _client.GetAsync(new Uri(_baseUri, "api/tags"), timeout.Token);
             if (!response.IsSuccessStatusCode)
-                throw new AiProviderException(AiProviderErrorKind.Unavailable, "Ollama 本地服务不可用。");
+                throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaUnavailable);
 
             var json = await AiHttp.ReadBoundedStringAsync(response.Content, AiRuleContract.MaxResponseChars, timeout.Token);
             var root = JObject.Parse(json);
@@ -403,12 +404,12 @@ public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExpla
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiProviderException(AiProviderErrorKind.Timeout, "连接 Ollama 超时。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Timeout, Strings.ErrOllamaTimeout, ex);
         }
         catch (AiProviderException) { throw; }
         catch (Exception ex) when (ex is HttpRequestException or Newtonsoft.Json.JsonException)
         {
-            throw new AiProviderException(AiProviderErrorKind.Unavailable, "未检测到本机 Ollama 服务。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaNotDetected, ex);
         }
     }
 
@@ -418,7 +419,7 @@ public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExpla
     {
         AiRuleContract.ValidateRequest(request);
         if (!IsSafeModelName(request.Model))
-            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "Ollama 模型名称无效。");
+            throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOllamaBadModelName);
 
         var payload = new JObject
         {
@@ -448,19 +449,19 @@ public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExpla
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiProviderException(AiProviderErrorKind.Timeout, "Ollama 生成规则超时。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Timeout, Strings.ErrOllamaGenTimeout, ex);
         }
         catch (HttpRequestException ex)
         {
-            throw new AiProviderException(AiProviderErrorKind.Unavailable, "无法连接本机 Ollama。", ex);
+            throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaUnreachable, ex);
         }
 
         using (response)
         {
             if (response.StatusCode == HttpStatusCode.NotFound)
-                throw new AiProviderException(AiProviderErrorKind.ModelNotFound, "所选 Ollama 模型未安装。请先使用 ollama pull 安装。" );
+                throw new AiProviderException(AiProviderErrorKind.ModelNotFound, Strings.ErrOllamaModelMissing);
             if (!response.IsSuccessStatusCode)
-                throw new AiProviderException(AiProviderErrorKind.Unavailable, "Ollama 未能生成规则草案。");
+                throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaNoDraft);
 
             var responseJson = await AiHttp.ReadBoundedStringAsync(
                 response.Content,
@@ -471,12 +472,12 @@ public sealed partial class OllamaRuleProvider : IAiRuleProvider, IAiPolicyExpla
                 var root = JObject.Parse(responseJson);
                 var content = (string?)root["message"]?["content"];
                 if (string.IsNullOrWhiteSpace(content))
-                    throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "Ollama 未返回规则草案。");
+                    throw new AiProviderException(AiProviderErrorKind.Unavailable, Strings.ErrOllamaNoDraft);
                 return AiRuleContract.ParseSuggestion(content);
             }
             catch (Newtonsoft.Json.JsonException ex)
             {
-                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "Ollama 返回了无法解析的响应。", ex);
+                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrOllamaUnparsable, ex);
             }
         }
     }
@@ -540,11 +541,11 @@ public static class AiRuleDraftValidator
         var errors = new List<string>();
 
         if (suggestion.Summary.Length > 500)
-            errors.Add("AI 摘要超过 500 个字符。");
+            errors.Add(Strings.ValSummaryTooLong);
         if (suggestion.Rules.Count is < 1 or > AiRuleContract.MaxRules)
-            errors.Add($"AI 草案必须包含 1–{AiRuleContract.MaxRules} 条规则。");
+            errors.Add(string.Format(Strings.ValRuleCountFormat, AiRuleContract.MaxRules));
         if (suggestion.Warnings.Count > AiRuleContract.MaxWarnings || suggestion.Warnings.Any(w => w.Length > 500))
-            errors.Add("AI 警告数量或长度超过限制。");
+            errors.Add(Strings.ValWarningsLimit);
 
         var mapped = new List<ProxyRule>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -555,7 +556,7 @@ public static class AiRuleDraftValidator
         for (var index = 0; index < suggestion.Rules.Count && index < AiRuleContract.MaxRules; index++)
         {
             var draft = suggestion.Rules[index];
-            var label = $"第 {index + 1} 条规则";
+            var label = string.Format(Strings.ValRuleLabelFormat, index + 1);
             ValidateDraft(draft, label, errors);
 
             if (!TryMapMode(draft.Action, out var mode))
@@ -570,21 +571,21 @@ public static class AiRuleDraftValidator
                 TargetPorts = NormalizeList(draft.TargetPorts, lowerCase: false),
                 Protocol = draft.Protocol,
                 Mode = mode,
-                Note = "AI 草案: " + Truncate(draft.Rationale.Trim(), 240),
+                Note = Strings.ValNotePrefix + Truncate(draft.Rationale.Trim(), 240),
                 IsEnabled = false,
                 Priority = ((currentConfig.Rules?.Count ?? 0) + mapped.Count + 1) * 10
             };
 
             var key = CreateRuleKey(rule);
-            if (!seen.Add(key)) errors.Add($"{label} 与本次草案中的另一条规则重复。");
-            if (existing.Contains(key)) errors.Add($"{label} 与现有规则重复。");
+            if (!seen.Add(key)) errors.Add(string.Format(Strings.ValDuplicateInDraftFormat, label));
+            if (existing.Contains(key)) errors.Add(string.Format(Strings.ValDuplicateExistingFormat, label));
             mapped.Add(rule);
         }
 
         if (mapped.Any(rule => rule.Mode == ProxyMode.Proxy) &&
             !(currentConfig.ProxyServers ?? []).Any(server => server != null && server.Enabled))
         {
-            errors.Add("代理规则需要至少一个已启用的本地代理服务器。");
+            errors.Add(Strings.ValProxyRequired);
         }
 
         if (errors.Count > 0)
@@ -600,7 +601,7 @@ public static class AiRuleDraftValidator
 
         var build = SingBoxConfigBuilder.Build(dryRun);
         if (!build.Success)
-            return AiRuleValidationResult.Fail(["本地 sing-box 候选配置校验失败: " + build.Error]);
+            return AiRuleValidationResult.Fail([Strings.ValBuilderFailedPrefix + build.Error]);
 
         return AiRuleValidationResult.Ok(mapped);
     }
@@ -608,21 +609,21 @@ public static class AiRuleDraftValidator
     private static void ValidateDraft(AiRuleDraft draft, string label, List<string> errors)
     {
         if (!IsValidProcessName(draft.ProcessName))
-            errors.Add($"{label}的进程名无效；必须是精确的 .exe 文件名，不能包含路径或通配符。");
+            errors.Add(string.Format(Strings.ValBadProcessNameFormat, label));
         if (draft.TargetHosts.Length > 1_000 || !ValidateHosts(draft.TargetHosts))
-            errors.Add($"{label}包含无效域名；仅支持精确域名或 *.suffix。");
+            errors.Add(string.Format(Strings.ValBadHostsFormat, label));
         if (draft.TargetIps.Length > 1_000)
-            errors.Add($"{label}的 IP/CIDR 字段过长。");
+            errors.Add(string.Format(Strings.ValIpsTooLongFormat, label));
         if (draft.TargetPorts.Length > 500)
-            errors.Add($"{label}的端口字段过长。");
+            errors.Add(string.Format(Strings.ValPortsTooLongFormat, label));
         if (draft.Protocol is not ("TCP" or "UDP" or "Both"))
-            errors.Add($"{label}的协议必须是 TCP、UDP 或 Both。");
+            errors.Add(string.Format(Strings.ValBadProtocolFormat, label));
         if (draft.Action is not ("Proxy" or "Direct" or "Block"))
-            errors.Add($"{label}的动作必须是 Proxy、Direct 或 Block。");
+            errors.Add(string.Format(Strings.ValBadActionFormat, label));
         if (draft.Rationale.Length > 500)
-            errors.Add($"{label}的生成理由超过 500 个字符。");
+            errors.Add(string.Format(Strings.ValRationaleTooLongFormat, label));
         if (double.IsNaN(draft.Confidence) || double.IsInfinity(draft.Confidence) || draft.Confidence is < 0 or > 1)
-            errors.Add($"{label}的置信度必须位于 0–1 之间。");
+            errors.Add(string.Format(Strings.ValConfidenceRangeFormat, label));
     }
 
     private static bool IsValidProcessName(string value)
@@ -711,7 +712,7 @@ internal static class AiHttp
             var read = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
             if (read == 0) break;
             if (result.Length + read > maxChars)
-                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, "AI 响应超过安全大小限制。");
+                throw new AiProviderException(AiProviderErrorKind.InvalidResponse, Strings.ErrOversizeResponse);
             result.Append(buffer, 0, read);
         }
         return result.ToString();

@@ -375,4 +375,56 @@
   <data name="ProcCandUnknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="PolicyLineGlobalDefault" xml:space="preserve"><value>Global default</value></data>
   <data name="PolicyLineDisabledFormat" xml:space="preserve"><value>Disabled {0}</value></data>
+  <data name="ErrEmptyOrOversize" xml:space="preserve"><value>AI response content is empty or exceeds the safety size limit.</value></data>
+  <data name="ErrNotStrictFormat" xml:space="preserve"><value>AI response does not match the strict rule format.</value></data>
+  <data name="ErrEmptyIntent" xml:space="preserve"><value>Enter a routing intent to convert.</value></data>
+  <data name="ErrIntentTooLongFormat" xml:space="preserve"><value>The routing intent cannot exceed {0} characters.</value></data>
+  <data name="ErrPickModel" xml:space="preserve"><value>Select a valid AI model.</value></data>
+  <data name="ErrOpenAiNotAllowlisted" xml:space="preserve"><value>The selected OpenAI model is not in this version's allowlist.</value></data>
+  <data name="ErrOpenAiNoKey" xml:space="preserve"><value>OPENAI_API_KEY was not detected. Set the current-user environment variable and reopen the app.</value></data>
+  <data name="ErrOpenAiTimeout" xml:space="preserve"><value>The OpenAI request timed out.</value></data>
+  <data name="ErrOpenAiUnreachable" xml:space="preserve"><value>Cannot connect to OpenAI.</value></data>
+  <data name="ErrOpenAiNoDraft" xml:space="preserve"><value>OpenAI returned no rule draft.</value></data>
+  <data name="ErrOpenAiUnparsable" xml:space="preserve"><value>OpenAI returned an unparsable response.</value></data>
+  <data name="ErrOpenAiAuth" xml:space="preserve"><value>OpenAI API authentication failed.</value></data>
+  <data name="ErrOpenAiRateLimited" xml:space="preserve"><value>OpenAI is rate limiting or the quota is exhausted.</value></data>
+  <data name="ErrOpenAiModelGone" xml:space="preserve"><value>The OpenAI model is unavailable.</value></data>
+  <data name="ErrOpenAiDown" xml:space="preserve"><value>The OpenAI service is temporarily unavailable.</value></data>
+  <data name="ErrOpenAiRejected" xml:space="preserve"><value>OpenAI rejected the rule generation request.</value></data>
+  <data name="ErrOllamaUnavailable" xml:space="preserve"><value>The local Ollama service is unavailable.</value></data>
+  <data name="ErrOllamaTimeout" xml:space="preserve"><value>Timed out connecting to Ollama.</value></data>
+  <data name="ErrOllamaNotDetected" xml:space="preserve"><value>No local Ollama service was detected.</value></data>
+  <data name="ErrOllamaBadModelName" xml:space="preserve"><value>Invalid Ollama model name.</value></data>
+  <data name="ErrOllamaGenTimeout" xml:space="preserve"><value>Ollama timed out generating rules.</value></data>
+  <data name="ErrOllamaUnreachable" xml:space="preserve"><value>Cannot connect to the local Ollama.</value></data>
+  <data name="ErrOllamaModelMissing" xml:space="preserve"><value>The selected Ollama model is not installed. Install it with ollama pull first.</value></data>
+  <data name="ErrOllamaNoDraft" xml:space="preserve"><value>Ollama returned no rule draft.</value></data>
+  <data name="ErrOllamaUnparsable" xml:space="preserve"><value>Ollama returned an unparsable response.</value></data>
+  <data name="ErrOversizeResponse" xml:space="preserve"><value>The AI response exceeds the safety size limit.</value></data>
+  <data name="ValSummaryTooLong" xml:space="preserve"><value>The AI summary exceeds 500 characters.</value></data>
+  <data name="ValRuleCountFormat" xml:space="preserve"><value>The AI draft must contain 1–{0} rules.</value></data>
+  <data name="ValWarningsLimit" xml:space="preserve"><value>The AI warnings exceed the count or length limit.</value></data>
+  <data name="ValRuleLabelFormat" xml:space="preserve"><value>Rule {0}</value></data>
+  <data name="ValNotePrefix" xml:space="preserve"><value>AI draft: </value></data>
+  <data name="ValDuplicateInDraftFormat" xml:space="preserve"><value>{0} duplicates another rule in this draft.</value></data>
+  <data name="ValDuplicateExistingFormat" xml:space="preserve"><value>{0} duplicates an existing rule.</value></data>
+  <data name="ValProxyRequired" xml:space="preserve"><value>Proxy rules require at least one enabled local proxy server.</value></data>
+  <data name="ValBuilderFailedPrefix" xml:space="preserve"><value>Local sing-box candidate configuration failed validation: </value></data>
+  <data name="ValBadProcessNameFormat" xml:space="preserve"><value>{0} has an invalid process name; it must be an exact .exe file name without paths or wildcards.</value></data>
+  <data name="ValBadHostsFormat" xml:space="preserve"><value>{0} contains invalid domains; only exact domains or *.suffix are supported.</value></data>
+  <data name="ValIpsTooLongFormat" xml:space="preserve"><value>{0} has an over-long IP/CIDR field.</value></data>
+  <data name="ValPortsTooLongFormat" xml:space="preserve"><value>{0} has an over-long port field.</value></data>
+  <data name="ValBadProtocolFormat" xml:space="preserve"><value>{0} must use TCP, UDP, or Both.</value></data>
+  <data name="ValBadActionFormat" xml:space="preserve"><value>{0} must use Proxy, Direct, or Block.</value></data>
+  <data name="ValRationaleTooLongFormat" xml:space="preserve"><value>{0} has a rationale exceeding 500 characters.</value></data>
+  <data name="ValConfidenceRangeFormat" xml:space="preserve"><value>{0} has a confidence outside 0–1.</value></data>
+  <data name="DiagOpenAiNoKeyEnv" xml:space="preserve"><value>OPENAI_API_KEY environment variable not detected. Set the current-user environment variable and reopen the app.</value></data>
+  <data name="DiagKeyPresentNoRequest" xml:space="preserve"><value>OPENAI_API_KEY is configured (this check reports presence only; it never displays the key or sends a network request).</value></data>
+  <data name="DiagOpenAiPickModel" xml:space="preserve"><value>The selected model is not in this version's allowlist; pick a model again.</value></data>
+  <data name="DiagOpenAiNoModelPicked" xml:space="preserve"><value>No model selected yet. Open the AI page and pick one from the allowlist.</value></data>
+  <data name="DiagOpenAiModelAllowlistedFormat" xml:space="preserve"><value>The selected model {0} is in the allowlist.</value></data>
+  <data name="DiagOllamaLoopback" xml:space="preserve"><value>The local Ollama service is reachable (literal loopback address only; no credentials involved).</value></data>
+  <data name="DiagOllamaModelsNoPickFormat" xml:space="preserve"><value>{0} models installed, but none selected.</value></data>
+  <data name="DiagOllamaModelMissingFormat" xml:space="preserve"><value>{0} models installed, but the selected model is not among them.</value></data>
+  <data name="DiagOllamaModelPresentFormat" xml:space="preserve"><value>{0} models installed; the selected model is installed locally.</value></data>
 </root>

@@ -243,7 +243,8 @@ public sealed class AiRuleAssistantTests
         var result = AiRuleDraftValidator.Validate(suggestion, ConfigWithEnabledProxy());
 
         Assert.False(result.Success);
-        Assert.Contains(result.Errors, error => error.Contains("进程名无效", StringComparison.Ordinal));
+        // The process-name rule is the only validation message that mentions ".exe".
+        Assert.Contains(result.Errors, error => error.Contains(".exe", StringComparison.Ordinal));
     }
 
     [Theory]
@@ -359,7 +360,8 @@ public sealed class AiRuleAssistantTests
         suggestion.Rules[0].ProcessName = "not a valid name";
         var edited = AiRuleDraftValidator.Validate(suggestion, config);
         Assert.False(edited.Success);
-        Assert.Contains(edited.Errors, error => error.Contains("进程名无效", StringComparison.Ordinal));
+        // The process-name rule is the only validation message that mentions ".exe".
+        Assert.Contains(edited.Errors, error => error.Contains(".exe", StringComparison.Ordinal));
 
         suggestion.Rules[0].ProcessName = "chrome.exe";
         var restored = AiRuleDraftValidator.Validate(suggestion, config);

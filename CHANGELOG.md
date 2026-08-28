@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Localized the AI-provider domain layer: every provider exception message (OpenAI and Ollama request lifecycle errors) and the AI-draft validator messages now follow the language preference, as do the provider-health diagnostic details. Test assertions on these strings were updated to resource-derived or culture-stable forms.
+
 ## [0.6.0] - 2026-08-27
 
 ### Added

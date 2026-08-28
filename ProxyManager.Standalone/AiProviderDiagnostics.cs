@@ -1,5 +1,7 @@
 namespace ProxyManager.Standalone;
 
+using Strings = ProxyManager.Standalone.Localization.Strings;
+
 public enum AiProviderHealthState
 {
     Ready,
@@ -33,7 +35,7 @@ public static class AiProviderDiagnostics
                 return new AiProviderHealthCheck(
                     AiProviderKind.OpenAI,
                     AiProviderHealthState.NotConfigured,
-                    ["未检测到 OPENAI_API_KEY 环境变量。请设置当前用户环境变量后重新打开应用。"]);
+                    [Strings.DiagOpenAiNoKeyEnv]);
             }
 
             var allowlist = await provider.ListModelsAsync(cancellationToken);
@@ -44,8 +46,8 @@ public static class AiProviderDiagnostics
                     AiProviderKind.OpenAI,
                     AiProviderHealthState.Misconfigured,
                     [
-                        "OPENAI_API_KEY 已配置（本检测只报告存在性，不显示密钥内容，也不发送网络请求）。",
-                        "尚未选择模型。请打开 AI 页加载并选择允许列表中的模型。"
+                        Strings.DiagKeyPresentNoRequest,
+                        Strings.DiagOpenAiNoModelPicked
                     ]);
             }
 
@@ -55,8 +57,8 @@ public static class AiProviderDiagnostics
                     AiProviderKind.OpenAI,
                     AiProviderHealthState.Misconfigured,
                     [
-                        "OPENAI_API_KEY 已配置（本检测只报告存在性，不显示密钥内容，也不发送网络请求）。",
-                        "所选模型不在本版本的允许列表中，请重新选择模型。"
+                        Strings.DiagKeyPresentNoRequest,
+                        Strings.DiagOpenAiPickModel
                     ]);
             }
 
@@ -64,8 +66,8 @@ public static class AiProviderDiagnostics
                 AiProviderKind.OpenAI,
                 AiProviderHealthState.Ready,
                 [
-                    "OPENAI_API_KEY 已配置（本检测只报告存在性，不显示密钥内容，也不发送网络请求）。",
-                    $"所选模型 {trimmed} 在允许列表中。"
+                    Strings.DiagKeyPresentNoRequest,
+                    string.Format(Strings.DiagOpenAiModelAllowlistedFormat, trimmed)
                 ]);
         }
 
@@ -89,8 +91,8 @@ public static class AiProviderDiagnostics
                 AiProviderKind.Ollama,
                 AiProviderHealthState.Misconfigured,
                 [
-                    "Ollama 本地服务可达（仅访问字面量环回地址，无凭据参与）。",
-                    $"已安装 {models.Count} 个模型，但尚未选择模型。"
+                    Strings.DiagOllamaLoopback,
+                    string.Format(Strings.DiagOllamaModelsNoPickFormat, models.Count)
                 ]);
         }
 
@@ -100,8 +102,8 @@ public static class AiProviderDiagnostics
                 AiProviderKind.Ollama,
                 AiProviderHealthState.Misconfigured,
                 [
-                    "Ollama 本地服务可达（仅访问字面量环回地址，无凭据参与）。",
-                    $"已安装 {models.Count} 个模型，但所选模型不在其中。"
+                    Strings.DiagOllamaLoopback,
+                    string.Format(Strings.DiagOllamaModelMissingFormat, models.Count)
                 ]);
         }
 
@@ -109,8 +111,8 @@ public static class AiProviderDiagnostics
             AiProviderKind.Ollama,
             AiProviderHealthState.Ready,
             [
-                "Ollama 本地服务可达（仅访问字面量环回地址，无凭据参与）。",
-                $"已安装 {models.Count} 个模型，所选模型已在本机安装。"
+                Strings.DiagOllamaLoopback,
+                string.Format(Strings.DiagOllamaModelPresentFormat, models.Count)
             ]);
     }
 }
