@@ -73,6 +73,8 @@ Legacy migration holds a per-directory exclusive lock, copies only top-level `co
 
 ### Secret disclosure
 
+The display-language preference is stored in `ui-preferences.json` next to the routing configuration, deliberately outside the Configuration Workspace: it holds a single `language` token (`zh`, `en`, or `system`), never routing data or credentials, is not covered by Recovery Protection, and any unreadable or unknown value falls back to the deterministic Chinese default.
+
 Stored passwords are DPAPI-protected. The in-memory model contains plaintext and every save creates a new DPAPI envelope, even when the literal password begins with `dpapi:`; only persisted values are interpreted as DPAPI envelopes during deserialization. UI/runtime error paths expose only redacted JSON or redacted output. Profile exports clear passwords. Tests assert these properties.
 
 The packaged-WPF CI smoke process can opt into a one-shot managed-exception diagnostic path through `INTENTROUTE_SMOKE_DIAGNOSTIC_PATH`. Only an explicit absolute path without relative-traversal segments is honored; relative or traversal-containing values are ignored. It covers unhandled failures and exceptions caught by the startup safety dialog, including an unexpected startup-window title. The file contains only the exception text after the standard secret redactor; it does not include configuration JSON, provider prompts, credentials, or runtime logs, and the smoke script removes it after the process exits or fails validation.
