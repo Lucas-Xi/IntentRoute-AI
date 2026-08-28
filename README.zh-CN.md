@@ -1,0 +1,200 @@
+# IntentRoute AI
+
+**[English](README.md)** | 中文
+
+[![CI](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Lucas-Xi/IntentRoute-AI?include_prereleases)](https://github.com/Lucas-Xi/IntentRoute-AI/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+IntentRoute AI 是一个 Windows 开源控制平面：把自然语言的网络分流意图，转换成经过本地校验的路由规则草案。它可以使用 OpenAI Responses API 或本机已运行的 Ollama 模型；接纳的规则交给与手工编辑器完全相同的确定性 sing-box TUN 配置管线。
+
+> **项目状态：v0.9.0 预览版。** IntentRoute AI 适合测试与早期采用，尚未经过大规模生产验证。AI 输出可能不完整或有误；每条生成的规则都经过本地校验、以禁用状态写入，必须由你显式启用。
+
+v0.9.0 为每个发布包内嵌未签名的构建溯源清单 `provenance.json`（版本、精确提交、构建者、SDK、完整依赖集及哈希），包校验缺少清单即失败。代码签名本身仍需要证书。
+
+## 为什么做这个项目
+
+很多 Windows 应用不提供可用的代理设置，而手工编写“哪个进程走哪个域名”的路由规则又容易出错。IntentRoute AI 提供互补的几条路径：
+
+- 常规、可检查的规则编辑器，用于确定性手工配置。
+- 可选的 AI 草案助手：把自然语言翻译成有边界、可审查的规则草案。
+- 本地策略体检：在请求任何 AI 解释之前，先在本地证明顺序、重复、冲突、遮蔽、范围过宽与禁用规则问题。
+- 本地路由推演：针对一个具体的“进程/目标/端口/协议”假设输入，说明当前策略**能证明什么**，而不假装观察了流量。
+
+应用本身不抓包。它生成经过校验的 [sing-box](https://github.com/SagerNet/sing-box) v1.13+ TUN 配置，启动并监管外部 sing-box 进程；在没有规则命中时保持默认直连。
+
+## AI 工作流
+
+1. 选择 **OpenAI** 或 **Ollama（本地）**。
+2. 输入意图，例如：“让 Chrome 和 Cursor 访问 GitHub、OpenAI 时走代理，其他流量保持直连。”
+3. 提供方返回严格结构化草案：进程、主机/IP、端口、协议、动作、理由、置信度与警告。
+4. IntentRoute AI 把结果当作**不可信输入**，校验字段上限、可执行文件名、域名、CIDR、端口、协议、动作、重复与代理可用性。
+5. 临时启用的候选会通过 `SingBoxConfigBuilder` 干跑——禁用规则过滤不会让校验空转。预览干跑是进程内确定性构建，不执行外部程序。
+6. 你审查预览，且**可以直接编辑任何草案字段**；每次编辑都会重新执行同一套确定性校验（含干跑），未通过时无法接纳。
+7. 接纳后规则仍为禁用状态。启用是独立的用户动作：该路径会写入候选文件并在替换受管运行时之前执行 `sing-box check -c`。
+
+AI 永远不会直接启用规则、调用命令、选择文件、安装模型、下载 sing-box 或应用未审查的配置。
+
+## AI 策略体检工作流
+
+1. 打开 **AI 策略体检**。可取消的后台分析器检查一份脱离的配置快照，不阻塞 WPF 界面；不发起提供方请求、不写文件、不应用运行时、不探测可执行文件、不连代理、不查 DNS、不观察流量。
+2. 发现采用与生成的 sing-box 路由相同的规范运行时顺序：优先级升序、创建时间升序、持久化顺序。规则页也使用同一顺序。
+3. 本地报告区分：精确重复、同范围不同动作、可证明的更早超集遮蔽、进程/全局范围过宽、无效禁用规则、非活动重复、同优先级重叠、ProxyAll 默认姿态，以及**可证明的部分重叠**（明确标注“非证明提示”）。比较前会规范化等价的后缀、整数端口并集与可合并 CIDR 并集写法；无法证明的重叠不会被包装成事实。
+4. 本地列表显示真实规则并可导航到受影响规则；它们永远不会被序列化给提供方。
+5. 请求解读时，选择 1–20 项并点击“让 AI 解读所选摘要”。确认对话框会显示该次请求的**精确逻辑 JSON**、提供方与排除清单。
+6. 闭合的策略披露只包含聚合计数与发现编号/类型/等级/关系/受影响规则数。AI 响应必须使用严格结构且只能引用这些发现编号。
+7. AI 解读是纯文本、不可信、只读的：不能修改本地发现、写备注、增删改规则、保存配置或应用 sing-box。本地指纹在预览前、确认后、响应后各核对一次；过期摘要不会发送，过期响应直接丢弃。
+
+策略体检描述的是静态配置语义，不是真实连接行为。报告干净不代表 TUN 创建、代理监听、认证、上游可达、DNS 或任何连接成功。
+
+## AI 路由推演
+
+1. 打开 **AI 路由推演**，输入一个精确进程名、一个具体域名或字面量 IPv4/IPv6 地址、一个端口，以及 TCP 或 UDP。
+2. 有界的后台工作器先通过生产 `SingBoxConfigBuilder` 校验脱离快照，再按规范运行时顺序求值启用规则。
+3. 结果刻意三值：可证明的首条命中、全部规则排除后的可证明全局回退，或**信息不足**（缺少已解析 IP/域名上下文、无法排除较早规则时）。输入无效与策略无效是独立的失败关闭状态，绝不返回动作。
+4. 页面显示本地求值轨迹并可导航到命中的规则。指纹同时绑定快照与规范化查询；任一变化都会隐藏旧结果。
+5. 恢复保护期间禁用推演，而不是对空占位状态求值。
+
+这是静态 what-if 工具，不是遥测：不解析 DNS、不反查 IP、不探测代理、不检查连接、不读运行日志、不枚举数据包、不调用 sing-box、不修改配置。假设输入、规则轨迹与结论不会跨越任何 AI 提供方边界。
+
+## 提供方配置
+
+### OpenAI
+
+IntentRoute AI 在请求时从 `OPENAI_API_KEY` 读取密钥。应用 UI 不接受密钥；密钥永不写入配置、档案、日志、导出或诊断。
+
+PowerShell（当前用户）示例：
+
+```powershell
+[Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your-api-key', 'User')
+```
+
+修改环境变量后重启应用。OpenAI 请求使用 Responses API、严格 JSON Schema 输出、无工具调用、有界的超时与输出大小，并设置 `store=false`。
+
+### 本地 Ollama
+
+单独安装 [Ollama](https://ollama.com/)、启动本地服务并安装模型，例如：
+
+```powershell
+ollama pull qwen3:8b
+```
+
+IntentRoute AI 只查询字面量 `127.0.0.1`（默认）或 `::1`。拒绝主机名、其他回环地址、带凭据端点、HTTPS、局域网与公网 Ollama 端点；这些请求禁用系统代理与重定向；不会自动拉取模型或启动 Ollama。界面通过 `GET /api/tags` 列出已安装模型。
+
+### 健康诊断
+
+设置页提供无凭据的提供方健康检查。OpenAI 只报告 `OPENAI_API_KEY` 是否存在——不显示内容、不发送请求；Ollama 只访问字面量环回地址，报告服务可达性、已安装模型数与所选模型是否在列。诊断永不包含凭据。
+
+## AI 数据边界
+
+| 数据 | OpenAI | 本地 Ollama |
+|---|---:|---:|
+| 用户输入的意图 | 发送 | 仅发往环回 |
+| 静态规则结构/指令 | 发送 | 仅发往环回 |
+| 预览并确认后的用户所选策略披露 | 发送 | 仅发往环回 |
+| 路由推演的假设输入或本地求值轨迹 | 永不 | 永不 |
+| 代理用户名/密码 | 永不 | 永不 |
+| 代理服务器地址 | 永不 | 永不 |
+| 现有规则的值、ID、标签、备注或完整配置 | 永不 | 永不 |
+| 现有规则中的进程名、域名、IP、端口或路径 | 永不 | 永不 |
+| 运行日志 | 永不 | 永不 |
+| 完整进程列表或路径 | 永不 | 永不 |
+| API 密钥 | 仅 Authorization 头 | 本地不适用 |
+
+OpenAI 的数据处理受你的 OpenAI 账户与当前 API 政策约束。`store=false` 是应用级请求设置，不承诺提供方不存在安全或滥用监控处理。Ollama 模式保持请求在环回内，但已安装模型/运行时的隐私与行为仍由你负责。
+
+## 当前路由能力
+
+- 按进程的代理/直连/阻止规则。
+- 可选的精确域名与 `*.后缀` 过滤。
+- IPv4/IPv6 地址与 CIDR 过滤。
+- 单端口与升序端口范围。
+- TCP、UDP 或 Both；`Both` 显式编译为 TCP + UDP，不会静默包含 sing-box v1.13 的 ICMP 匹配。
+- 显式优先级排序。
+- 规范运行时顺序由构建器、规则视图、进程候选视图与策略体检共享。
+- 本地策略体检 + 请求级、用户所选、结构化去标识的 AI 解读。
+- 保守的静态路由推演：可证明命中、可证明回退、信息不足三态，绑定配置快照与查询。
+- IPv4/IPv6 TUN 地址与严格路由。
+- 原子候选配置、`sing-box check`、可取消的启动稳定期校验与回滚。
+- 独占运行时所有权 + PID/启动时间孤儿恢复。
+- 运行时状态的路径、版本与 PID 始终描述同一个实际受管的 sing-box 进程——包括候选被拒绝或回滚之后。
+- 密码使用 Windows DPAPI `CurrentUser` 静态保护。
+- 无密码档案导出；有界脱敏的运行日志。
+- 仅限字面量环回的上游代理端点，附带可选的有界 TCP 监听检查。
+- 配置检查或启动前的 sing-box v1.13+ 识别版本门禁。
+- `config.json` 或 DPAPI 密码无法安全读取时的阻止保存恢复模式。
+- 事务式配置编辑：先校验并原子持久化完整候选，再发布到应用状态或排队运行时应用。
+- 脱离的配置快照：UI 或校验代码无法绕过受支持的提交路径修改活动路由状态。
+
+IntentRoute AI **不**提供代理节点、VPN 账号、抓包驱动、内置 AI 模型、OpenAI API 密钥或 sing-box 二进制。
+
+## 安装预览版
+
+1. 从 [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases) 下载 `IntentRoute-AI-v0.9.0-win-x64.zip` 与 `.sha256` 文件。
+2. 校验校验和。
+3. 单独下载官方 Windows x64 sing-box v1.13+ 压缩包。
+4. 单独安装 `sing-box.exe`，然后在**每次以管理员启动应用后**，通过 **设置 → 浏览** 显式批准确切文件。已保存路径、导入的档案/配置、`INTENTROUTE_SING_BOX`、旧版 `PROXYMANAGER_SING_BOX`、应用目录与 `PATH` 都只是候选发现提示：可以显示，但在本次会话重新选择该文件之前，不会对其执行 `version`、`check` 或 `run`。
+5. 确保已有代理服务监听在字面量环回 IP（如 `127.0.0.1` 或 `::1`）。设置页可保存 SOCKS5/HTTP/HTTPS 用户名密码，并可检查本机 TCP 端口能否建立连接。
+6. 以管理员身份运行 `IntentRouteAI.exe`（TUN 创建需要提权）。
+
+自包含发布面向 Windows x64，无需单独的 .NET 运行时。
+
+## 配置与升级迁移
+
+数据存储在 `%APPDATA%\IntentRouteAI`。首次启动时，若新目录没有当前配置，应用只从 `%APPDATA%\ProxyManager` 复制 `config.json` 与 `*.profile.json`。复制持有按目录互斥的迁移锁并使用进行中标记与逐文件原子移动；中断的迁移下次启动只补齐缺失的已知文件，绝不覆盖已完成副本。刻意不复制生成的 sing-box 配置、运行时租约、锁或候选，也绝不自动删除旧目录。
+
+代理密码使用 DPAPI `CurrentUser` 静态保护。UI 输入的密码（包括以保留的磁盘 `dpapi:` 标记开头的合法值）存储前一律按明文处理。生成的 `%APPDATA%\IntentRouteAI\sing-box.generated.json` 在 sing-box 运行期间必然包含明文凭据；应用在停止、正常退出与子进程异常退出时删除它，下次启动执行有界孤儿恢复与陈旧产物清理。
+
+自 v0.3.0 起：畸形 JSON、无效 UTF-8、空文档或空集合条目、无进程名的规则、重复规则/服务器 ID、显式空 ID **或缺失 `Id` 属性**、任何非空代理链定义、当前 Windows 用户无法解密的 `dpapi:` 密码——都会使配置**不可用**而非清空。持久化对象 ID 是必需的 JSON 成员；模型初始化器可以为新的内存对象创建 ID，但不会静默修复导入数据。代理链保持可解析，只是为了显式拒绝旧版/导入数据。全局规则必须使用显式 `*` 进程名。应用保持原文件不动、尝试创建带时间戳的 `config.json.corrupt-*.bak` 副本、阻止所有保存与运行时应用路径，并显示导入/重置恢复控件。导入替换与重置在恢复副本不存在时禁用。
+
+常规编辑、规则导入、AI 草案接纳、档案替换、恢复与重置都走同一个配置工作区事务：克隆、应用并校验完整候选、原子保存，然后才发布新的脱离快照。校验或保存失败时内存与磁盘都不变。
+
+本地代理 **测试端口** 只对输入的字面量环回 IP 做一次 5 秒上限的 TCP 连接。不发送用户名密码，不证明 SOCKS/HTTP 协商、认证、上游可达、DNS 或真实应用流量。
+
+## 构建与测试
+
+源码构建要求：Windows 10/11 x64、.NET 8.0.424 SDK（`global.json` 锁定）、推荐 PowerShell 7。
+
+```powershell
+./scripts/test.ps1
+./scripts/check-vulnerabilities.ps1
+./scripts/build.ps1
+./scripts/smoke-test-wpf.ps1 -OutputDirectory ./artifacts/win-x64
+./scripts/test-pinned-sing-box.ps1
+```
+
+提供方测试使用模拟 HTTP 处理器，不需要 OpenAI 密钥、付费调用、运行中的 Ollama 或已下载模型。Windows CI 还会启动发布后的单文件可执行文件，验证 WPF 主窗口创建、请求正常关闭并要求干净零退出。
+
+`test-pinned-sing-box.ps1` 会临时下载官方 sing-box v1.13.19 Windows 压缩包、校验锁定的 SHA-256、把代表性 `SingBoxConfigBuilder` 输出送入真实 `sing-box check`，然后删除临时文件。这个仅测试用的依赖不会被复制进应用产物；IntentRoute AI 本身从不下载或捆绑 sing-box。
+
+## 架构与安全
+
+以下深度文档为英文（术语与界面一致，可直接对照）：
+
+- [架构](docs/ARCHITECTURE.md)（英文）
+- [威胁模型](docs/THREAT_MODEL.md)（英文）
+- [安全政策](SECURITY.md)（英文）
+- [AI v0.2.0 设计](docs/plans/2026-08-25-intentroute-ai-design.md)（英文）
+- [路由推演设计](docs/plans/2026-08-27-route-decision-simulator-design.md)（英文）
+- [Codex for Open Source 准备](docs/CODEX_FOR_OSS_READINESS.md)（英文）
+- [第三方声明](THIRD_PARTY_NOTICES.md)
+
+请通过 [GitHub Security Advisories](https://github.com/Lucas-Xi/IntentRoute-AI/security/advisories/new) 私下报告漏洞。不要在 issue 中包含真实 API 密钥、代理凭据、生成的配置或未脱敏日志。
+
+## 已知限制
+
+- 预览质量：兼容性因 Windows、防火墙、终端安全软件与 sing-box 版本而异。
+- 版本门禁识别标准 `sing-box version X.Y.Z` 输出，无法识别的厂商输出按失败关闭处理；不校验第三方二进制签名或校验和。
+- AI 建议不具有权威性，可能遗漏服务域名或误解意图。
+- 策略体检只证明支持的静态包含/相等关系；可证明的部分重叠以“非证明提示”报告，不可证明的重叠不报告，从不观察实时流量。
+- 路由推演只接受一个精确进程、一个具体域名或字面量 IP、一个端口与 TCP/UDP。它刻意返回“信息不足”而不是解析 DNS、从 IP 反推域名、或在无法排除较早混合目标规则时宣称较晚规则生效。
+- 界面以中文为一等语言：除策略发现标题与持久化默认代理名（作为稳定分析标识与配置数据保持中文）外，全部用户可见字符串跟随语言偏好（481 资源键）。
+- 键盘导航带可见焦点态、辅助技术名称与冒烟级 Tab/方向键覆盖，并断言 Per-Monitor V2 DPI 感知；完整屏幕阅读器行为与混合 DPI 视觉验证尚未宣称。
+- 超大策略会被限制以保证 WPF 界面响应；会显示明确的“分析不完整”发现，而不是把部分报告当完整结论展示。
+- 不提供自主激活、流量自愈、实时连接归因、任意可执行通配符或远程 Ollama 端点。
+- 不提供代理节点分发或连通性保证。
+- `sing-box check` 校验配置语法/结构，不校验适配器创建或上游可达性。
+
+## 许可证
+
+IntentRoute AI 采用 [MIT 许可证](LICENSE)。sing-box 是独立的 GPL 许可程序，不包含在本仓库或发布包中；参见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

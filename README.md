@@ -1,5 +1,7 @@
 # IntentRoute AI
 
+English | **[中文](README.zh-CN.md)**
+
 [![CI](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lucas-Xi/IntentRoute-AI/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Lucas-Xi/IntentRoute-AI?include_prereleases)](https://github.com/Lucas-Xi/IntentRoute-AI/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -200,15 +202,11 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 - No proxy node distribution or connectivity guarantee.
 - `sing-box check` validates configuration syntax/schema, not adapter creation or upstream reachability.
 
-## 中文快速说明
+## 中文文档
 
-IntentRoute AI 是一个 Windows 开源 AI 分流控制工具。你可以用中文描述”哪个程序的哪些域名应该代理、直连或阻止”，再由 OpenAI 或本机 Ollama 生成结构化草案；草案的每个字段都能直接编辑，每次编辑都会重新执行同一套本地确定性校验（含 sing-box 候选干跑），未通过时无法接纳，写入后默认禁用，必须由你再次确认启用。
+完整的中文说明（项目介绍、AI 工作流、策略体检、路由推演、提供方配置、数据边界表、路由能力、安装、配置迁移、构建与已知限制）见 **[README.zh-CN.md](README.zh-CN.md)**。
 
-“AI 策略体检”在本地确定性检查重复、冲突、遮蔽、可证明的部分重叠、范围过宽和禁用规则问题（重叠提示明确标注”非证明”），再由你选择 1–20 项并确认精确结构摘要后，才可请求 AI 做只读解释。”AI 路由推演”针对一个具体进程、域名/IP、端口和协议，在本地按真实规则顺序给出可证明结论或明确的信息不足状态。设置页还提供无凭据的 AI 提供方健康诊断：OpenAI 只报告密钥存在性、绝不发送请求；Ollama 只访问本机环回地址。
-
-界面为中文默认，可在设置页切换 English（重启生效，配置目录下的 `ui-preferences.json` 独立于路由配置存储）。应用声明 Per-Monitor V2 高 DPI 感知并提供完整键盘导航；每个发布包内嵌未签名的构建溯源清单 `provenance.json`（版本、提交、构建者、依赖及哈希）。
-
-OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取用户自己的密钥；Ollama 模式只允许字面量 `127.0.0.1` 或 `::1`（默认连接 `127.0.0.1:11434`）。两种模式都不会发送代理密码、现有规则值、运行日志或完整进程列表。策略解读只发送计数、发现编号/类型/等级/关系和受影响规则数量，不发送进程名、域名、IP、端口、规则 ID、备注、路径或代理信息。路由推演的假设输入、规则轨迹和结论完全留在本地，不会发送给 OpenAI 或 Ollama。没有配置 AI 时，手工分流、本地策略体检和本地路由推演仍可正常使用。
+要点：用中文描述”哪个程序的哪些域名应该代理、直连或阻止”，由 OpenAI 或本机 Ollama 生成结构化草案——每个字段可编辑、每次编辑重新本地校验、接纳后默认禁用需手动启用。OpenAI 模式只从 `OPENAI_API_KEY` 环境变量读取密钥；Ollama 模式只允许字面量 `127.0.0.1` 或 `::1`。代理凭据、现有规则值、运行日志与完整进程列表永远不会发送给任何提供方；路由推演的输入与轨迹完全留在本地。没有配置 AI 时，手工分流、本地策略体检和本地路由推演仍可正常使用。
 
 ## License
 
