@@ -51,15 +51,18 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 - [x] Localization: every window-layer string (statics, display values, status messages, dialogs) follows a Chinese/English preference; 371 resource keys with parity tests
 
+## v0.7 — domain-layer localization completion (2026-08-28)
+
+- [x] Localized AI-provider errors, draft validation messages, provider diagnostics, and AppService runtime/status text (450 resource keys total)
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
 - [x] Authenticated local proxy editing in the UI
 - [x] Automated CI integration tests against a pinned real sing-box release
-- [ ] Visual layout validation across mixed-DPI displays
+- [ ] Visual layout validation across mixed-DPI displays (manual procedure documented in docs/mixed-dpi-verification.md; requires multi-monitor hardware — not claimed until a maintainer records a run)
 - [x] Localize AppService runtime-status and readiness text (the persisted default proxy name stays Chinese as configuration data)
-- [ ] Decide: keep Policy Intelligence finding titles Chinese as stable deterministic-analysis identifiers, or localize them alongside their tests and privacy canaries
-- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
+- [ ] Decide: keep Policy Intelligence finding titles Chinese as stable deterministic-analysis identifiers, or localize them alongside their tests and privacy canaries- [x] Corrupt-configuration recovery that preserves the source file, blocks accidental overwrite, and guides the user through restore
 - [ ] Signed release artifacts and build provenance when sustainable signing infrastructure exists
 
 ## Explicitly not promised

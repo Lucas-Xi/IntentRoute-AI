@@ -41,7 +41,7 @@
   <data name="NavItemProcess" xml:space="preserve"><value>⚙️  进程列表</value></data>
   <data name="NavItemSettings" xml:space="preserve"><value>🔧  设置</value></data>
   <data name="NavItemAbout" xml:space="preserve"><value>ℹ️  关于</value></data>
-  <data name="SidebarVersion" xml:space="preserve"><value>v0.6.0 开发预览版</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.7.0 开发预览版</value></data>
   <data name="StatusFooterLabel" xml:space="preserve"><value>运行状态</value></data>
   <data name="StatusFooterInitial" xml:space="preserve"><value>正在检查 sing-box…</value></data>
   <data name="ModeDirectLabel" xml:space="preserve"><value>默认直连</value></data>
@@ -72,7 +72,7 @@
   <data name="MenuMoveUp" xml:space="preserve"><value>⬆ 上移</value></data>
   <data name="MenuMoveDown" xml:space="preserve"><value>⬇ 下移</value></data>
   <data name="MenuDelete" xml:space="preserve"><value>❌ 删除</value></data>
-  <data name="AboutTagline" xml:space="preserve"><value>AI 辅助 Windows 网络分流 v0.6.0</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI 辅助 Windows 网络分流 v0.7.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>功能特性</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• 拖拽添加应用程序规则</value></data>
   <data name="AboutFeature2" xml:space="preserve"><value>• 支持代理/直连/阻止三种模式</value></data>
