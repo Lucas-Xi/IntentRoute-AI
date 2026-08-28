@@ -70,6 +70,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Curated notes come from the CHANGELOG section for this tag;
+          # the auto-generated commit list is appended below it.
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $pattern = "(?ms)^## \[$version\] - .*?(?=^## \[|\z)"
+          $section = [regex]::Match($changelog, $pattern).Value
+          if [string]::IsNullOrWhiteSpace($section) { throw "CHANGELOG.md has no section for [$version]." }
+          $notesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          @($section.Trim(), '', '---', '', "### Commits since the previous release", '') | Set-Content $notesPath -Encoding utf8
           $archive = (Get-Item IntentRoute-AI-*.zip).FullName
           $checksum = (Get-Item IntentRoute-AI-*.sha256).FullName
-          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --generate-notes --prerelease --title "IntentRoute AI $env:GITHUB_REF_NAME"
+          gh release create "$env:GITHUB_REF_NAME" $archive $checksum --verify-tag --notes-file $notesPath --prerelease --title "IntentRoute AI $env:GITHUB_REF_NAME"

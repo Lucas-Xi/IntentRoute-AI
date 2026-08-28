@@ -2,6 +2,13 @@
 
 All notable changes are documented here. The project follows semantic versioning while the public API and behavior are still in preview.
 
+## [Unreleased]
+
+### Added
+
+- Release notes are now curated: the release workflow extracts the tag's section from this changelog instead of auto-generating a bare commit list, with a CI check validating the extraction for every released version.
+- Added a reflection test asserting every hand-written `Strings` accessor property resolves to a non-empty value, catching property/key typos the parity tests cannot see.
+
 ## [0.9.0] - 2026-08-28
 
 ### Added

@@ -37,6 +37,10 @@ jobs:
         shell: pwsh
         run: ./scripts/test-pinned-sing-box.ps1
 
+      - name: Validate release-notes extraction
+        shell: pwsh
+        run: ./scripts/test-release-notes.ps1
+
       - name: Check vulnerable dependencies
         shell: pwsh
         run: ./scripts/check-vulnerabilities.ps1

@@ -31,6 +31,24 @@ public sealed class LocalizationTests
     }
 
     [Fact]
+    public void EveryAccessorProperty_ResolvesToANonEmptyValue()
+    {
+        // The accessor is hand-written: a typo between the property and its resx key
+        // would make GetString fall back to an empty string while the parity tests
+        // still pass. Reflection closes that gap for every property at once.
+        var properties = typeof(Strings)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(property => property.PropertyType == typeof(string) && property.CanRead)
+            .ToList();
+        Assert.NotEmpty(properties);
+        foreach (var property in properties)
+        {
+            var value = (string?)property.GetValue(null);
+            Assert.False(string.IsNullOrWhiteSpace(value), $"Property {property.Name} resolves to an empty value");
+        }
+    }
+
+    [Fact]
     public void Localization_DefaultsToChineseForEnglishCultureUnrelatedToUiPreference()
     {
         // The neutral resource is Chinese: any culture without a specific translation
