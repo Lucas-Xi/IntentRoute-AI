@@ -7,6 +7,7 @@ All notable changes are documented here. The project follows semantic versioning
 ### Added
 
 - Localized the AI-provider domain layer: every provider exception message (OpenAI and Ollama request lifecycle errors) and the AI-draft validator messages now follow the language preference, as do the provider-health diagnostic details. Test assertions on these strings were updated to resource-derived or culture-stable forms.
+- Localized the AppService runtime layer: readiness results (not-detected / not-approved / invalid saved path), footer status messages (rule stats, runtime states, apply outcomes, config-protection notice), profile and chain summaries, and import/clone errors now follow the language preference. The persisted default proxy-server name remains Chinese configuration data. Test assertions were updated to resource-derived forms.
 
 ## [0.6.0] - 2026-08-27
 

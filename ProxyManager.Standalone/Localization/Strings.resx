@@ -427,4 +427,29 @@
   <data name="DiagOllamaModelsNoPickFormat" xml:space="preserve"><value>已安装 {0} 个模型，但尚未选择模型。</value></data>
   <data name="DiagOllamaModelMissingFormat" xml:space="preserve"><value>已安装 {0} 个模型，但所选模型不在其中。</value></data>
   <data name="DiagOllamaModelPresentFormat" xml:space="preserve"><value>已安装 {0} 个模型，所选模型已在本机安装。</value></data>
+  <data name="ChainSequential" xml:space="preserve"><value>顺序链</value></data>
+  <data name="ChainFailover" xml:space="preserve"><value>故障转移</value></data>
+  <data name="ChainLoadBalance" xml:space="preserve"><value>负载均衡</value></data>
+  <data name="ServerSummaryFormat" xml:space="preserve"><value>{0} 服务器</value></data>
+  <data name="ProfileSummaryFormat" xml:space="preserve"><value>{0} 规则, {1} 代理</value></data>
+  <data name="ErrImportEmptyRules" xml:space="preserve"><value>导入文件包含空规则。</value></data>
+  <data name="RtSavedPathInvalid" xml:space="preserve"><value>保存的 sing-box 路径无效，未执行任何命令。请通过“浏览…”选择有效文件。</value></data>
+  <data name="RtNotDetected" xml:space="preserve"><value>未发现 sing-box。请先单独安装 v1.13+，再通过“浏览…”选择并批准可执行文件。</value></data>
+  <data name="RtNotApproved" xml:space="preserve"><value>该 sing-box 路径尚未在本次启动中批准，未执行任何命令。请通过“浏览…”重新选择该文件后再检查。</value></data>
+  <data name="StatusConfigUnreadable" xml:space="preserve"><value>配置文件不可安全读取；已阻止保存和 sing-box 启动。请先完成恢复。</value></data>
+  <data name="StatusRuleStatsFormat" xml:space="preserve"><value>代理:{0} 直连:{1} 阻止:{2}</value></data>
+  <data name="StatusNoRuntimeSaved" xml:space="preserve"><value>sing-box 尚未选择；配置已保存，但未启动运行时。</value></data>
+  <data name="StatusRuntimeNotApproved" xml:space="preserve"><value>sing-box 路径尚未在本次启动中批准；配置已保存，但未执行该文件。请在设置中通过“浏览…”重新选择。</value></data>
+  <data name="StatusRuntimePrepFailPrefix" xml:space="preserve"><value>无法准备运行时配置: </value></data>
+  <data name="StatusNotAppliedPrefix" xml:space="preserve"><value>新配置未应用；原 sing-box 仍在运行: </value></data>
+  <data name="StatusNotStartedPrefix" xml:space="preserve"><value>运行时未启动: </value></data>
+  <data name="StatusRuntimeErrorPrefix" xml:space="preserve"><value>运行时错误: </value></data>
+  <data name="RtStateRunningFormat" xml:space="preserve"><value>sing-box TUN 运行中 (PID {0})</value></data>
+  <data name="RtStateRunningStalePrefix" xml:space="preserve"><value>新配置未应用；原 sing-box 仍在运行</value></data>
+  <data name="RtStateProbing" xml:space="preserve"><value>正在检查 sing-box 路径和版本…</value></data>
+  <data name="RtStateChecking" xml:space="preserve"><value>正在校验 sing-box 配置…</value></data>
+  <data name="RtStateStarting" xml:space="preserve"><value>正在应用分流规则…</value></data>
+  <data name="RtStateFailedPrefix" xml:space="preserve"><value>sing-box 未运行</value></data>
+  <data name="RtStateStopped" xml:space="preserve"><value>sing-box 已停止</value></data>
+  <data name="ErrCloneRuleCandidate" xml:space="preserve"><value>无法创建规则候选副本。</value></data>
 </root>

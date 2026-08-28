@@ -427,4 +427,29 @@
   <data name="DiagOllamaModelsNoPickFormat" xml:space="preserve"><value>{0} models installed, but none selected.</value></data>
   <data name="DiagOllamaModelMissingFormat" xml:space="preserve"><value>{0} models installed, but the selected model is not among them.</value></data>
   <data name="DiagOllamaModelPresentFormat" xml:space="preserve"><value>{0} models installed; the selected model is installed locally.</value></data>
+  <data name="ChainSequential" xml:space="preserve"><value>Sequential chain</value></data>
+  <data name="ChainFailover" xml:space="preserve"><value>Failover chain</value></data>
+  <data name="ChainLoadBalance" xml:space="preserve"><value>Load balance</value></data>
+  <data name="ServerSummaryFormat" xml:space="preserve"><value>{0} servers</value></data>
+  <data name="ProfileSummaryFormat" xml:space="preserve"><value>{0} rules, {1} proxies</value></data>
+  <data name="ErrImportEmptyRules" xml:space="preserve"><value>The import file contains an empty rule.</value></data>
+  <data name="RtSavedPathInvalid" xml:space="preserve"><value>The saved sing-box path is invalid; no command was executed. Pick a valid file through Browse.</value></data>
+  <data name="RtNotDetected" xml:space="preserve"><value>sing-box was not found. Install v1.13+ separately, then select and approve the executable through Browse.</value></data>
+  <data name="RtNotApproved" xml:space="preserve"><value>This sing-box path is not approved in the current launch; no command was executed. Re-select the file through Browse before checking.</value></data>
+  <data name="StatusConfigUnreadable" xml:space="preserve"><value>The configuration file cannot be read safely; saving and sing-box startup are blocked. Complete recovery first.</value></data>
+  <data name="StatusRuleStatsFormat" xml:space="preserve"><value>Proxy:{0} Direct:{1} Block:{2}</value></data>
+  <data name="StatusNoRuntimeSaved" xml:space="preserve"><value>sing-box not selected; the configuration was saved but the runtime was not started.</value></data>
+  <data name="StatusRuntimeNotApproved" xml:space="preserve"><value>The sing-box path is not approved in the current launch; the configuration was saved but the file was not executed. Re-select it via Browse in Settings.</value></data>
+  <data name="StatusRuntimePrepFailPrefix" xml:space="preserve"><value>Cannot prepare the runtime configuration: </value></data>
+  <data name="StatusNotAppliedPrefix" xml:space="preserve"><value>The new configuration was not applied; the previous sing-box is still running: </value></data>
+  <data name="StatusNotStartedPrefix" xml:space="preserve"><value>The runtime did not start: </value></data>
+  <data name="StatusRuntimeErrorPrefix" xml:space="preserve"><value>Runtime error: </value></data>
+  <data name="RtStateRunningFormat" xml:space="preserve"><value>sing-box TUN running (PID {0})</value></data>
+  <data name="RtStateRunningStalePrefix" xml:space="preserve"><value>The new configuration was not applied; the previous sing-box is still running</value></data>
+  <data name="RtStateProbing" xml:space="preserve"><value>Checking the sing-box path and version…</value></data>
+  <data name="RtStateChecking" xml:space="preserve"><value>Validating the sing-box configuration…</value></data>
+  <data name="RtStateStarting" xml:space="preserve"><value>Applying routing rules…</value></data>
+  <data name="RtStateFailedPrefix" xml:space="preserve"><value>sing-box is not running</value></data>
+  <data name="RtStateStopped" xml:space="preserve"><value>sing-box stopped</value></data>
+  <data name="ErrCloneRuleCandidate" xml:space="preserve"><value>Cannot create a rule candidate copy.</value></data>
 </root>

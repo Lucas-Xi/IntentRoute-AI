@@ -316,7 +316,7 @@ public sealed class AppServiceRecoveryTests
             var readiness = await service.ProbeRuntimeReadinessAsync();
 
             Assert.False(readiness.IsReady);
-            Assert.Contains("路径无效", readiness.Error, StringComparison.Ordinal);
+            Assert.Equal(ProxyManager.Standalone.Localization.Strings.RtSavedPathInvalid, readiness.Error);
             Assert.False(File.Exists(Path.Combine(configDirectory, SingBoxRuntime.DefaultConfigFileName)));
         }
         finally

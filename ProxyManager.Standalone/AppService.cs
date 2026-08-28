@@ -53,8 +53,8 @@ public class ProxyChain : INotifyPropertyChanged
     public ProxyChainType ChainType { get; set; } = ProxyChainType.Sequential;
     public List<string> Servers { get; set; } = new();
     public bool Enabled { get; set; } = true;
-    public string ChainTypeText => ChainType switch { ProxyChainType.Sequential => "顺序链", ProxyChainType.Failover => "故障转移", ProxyChainType.LoadBalance => "负载均衡", _ => "?" };
-    public string ServerSummary => $"{Servers.Count} 服务器";
+    public string ChainTypeText => ChainType switch { ProxyChainType.Sequential => Strings.ChainSequential, ProxyChainType.Failover => Strings.ChainFailover, ProxyChainType.LoadBalance => Strings.ChainLoadBalance, _ => "?" };
+    public string ServerSummary => string.Format(Strings.ServerSummaryFormat, Servers.Count);
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? n = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
 }
@@ -118,7 +118,7 @@ public class ProfileInfo
     public DateTime ModifiedAt { get; set; } = DateTime.Now;
     public int RuleCount { get; set; }
     public int ServerCount { get; set; }
-    public string Summary => $"{RuleCount} 规则, {ServerCount} 代理";
+    public string Summary => string.Format(Strings.ProfileSummaryFormat, RuleCount, ServerCount);
 }
 
 public class AppConfig
@@ -285,7 +285,7 @@ public class AppService : IDisposable, IAsyncDisposable
         foreach (var rule in rules)
         {
             if (rule == null)
-                throw new InvalidDataException("导入文件包含空规则。");
+                throw new InvalidDataException(Strings.ErrImportEmptyRules);
             if (current.Rules.Concat(imported).Any(existing =>
                 string.Equals(existing.ExeName, rule.ExeName, StringComparison.OrdinalIgnoreCase)))
             {
@@ -515,7 +515,7 @@ public class AppService : IDisposable, IAsyncDisposable
             {
                 return Task.FromResult(SingBoxReadinessResult.NotReady(
                     null,
-                    "保存的 sing-box 路径无效，未执行任何命令。请通过“浏览…”选择有效文件。"));
+                    Strings.RtSavedPathInvalid));
             }
         }
         else
@@ -525,8 +525,8 @@ public class AppService : IDisposable, IAsyncDisposable
         return Task.FromResult(SingBoxReadinessResult.NotReady(
             candidate,
             candidate == null
-                ? "未发现 sing-box。请先单独安装 v1.13+，再通过“浏览…”选择并批准可执行文件。"
-                : "该 sing-box 路径尚未在本次启动中批准，未执行任何命令。请通过“浏览…”重新选择该文件后再检查。"));
+                ? Strings.RtNotDetected
+                : Strings.RtNotApproved));
     }
 
     // ── Profiles ─────────────────────────────────
@@ -591,7 +591,7 @@ public class AppService : IDisposable, IAsyncDisposable
     {
         if (!_workspace.IsWritable)
         {
-            StatusChanged?.Invoke("配置文件不可安全读取；已阻止保存和 sing-box 启动。请先完成恢复。");
+            StatusChanged?.Invoke(Strings.StatusConfigUnreadable);
             return;
         }
         var current = _workspace.Snapshot();
@@ -599,7 +599,7 @@ public class AppService : IDisposable, IAsyncDisposable
         var directApps = current.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Direct).Select(r => r.ExeName).ToList();
         var blockApps = current.Rules.Where(r => r.IsEnabled && r.Mode == ProxyMode.Block).Select(r => r.ExeName).ToList();
 
-        StatusChanged?.Invoke($"代理:{proxyApps.Count} 直连:{directApps.Count} 阻止:{blockApps.Count}");
+            StatusChanged?.Invoke(string.Format(Strings.StatusRuleStatsFormat, proxyApps.Count, directApps.Count, blockApps.Count));
         QueueRuntimeApply();
     }
 
@@ -641,8 +641,8 @@ public class AppService : IDisposable, IAsyncDisposable
             _runtime.MarkRunningConfigurationStale(
                 "The active configuration was saved but cannot be applied until the sing-box executable is approved again for this session.");
             StatusChanged?.Invoke(string.IsNullOrWhiteSpace(current.SingBoxExecutablePath)
-                ? "sing-box 尚未选择；配置已保存，但未启动运行时。"
-                : "sing-box 路径尚未在本次启动中批准；配置已保存，但未执行该文件。请在设置中通过“浏览…”重新选择。");
+                ? Strings.StatusNoRuntimeSaved
+                : Strings.StatusRuntimeNotApproved);
             return;
         }
         AppConfig snapshot;
@@ -653,7 +653,7 @@ public class AppService : IDisposable, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            StatusChanged?.Invoke("无法准备运行时配置: " + ex.Message);
+            StatusChanged?.Invoke(Strings.StatusRuntimePrepFailPrefix + ex.Message);
             return;
         }
 
@@ -674,14 +674,14 @@ public class AppService : IDisposable, IAsyncDisposable
                 if (!result.Success && !token.IsCancellationRequested)
                 {
                     StatusChanged?.Invoke(result.Status.IsRunning
-                        ? "新配置未应用；原 sing-box 仍在运行: " + result.Error
-                        : "运行时未启动: " + result.Error);
+                        ? Strings.StatusNotAppliedPrefix + result.Error
+                        : Strings.StatusNotStartedPrefix + result.Error);
                 }
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                StatusChanged?.Invoke("运行时错误: " + SingBoxRuntime.RedactSecrets(ex.Message));
+                StatusChanged?.Invoke(Strings.StatusRuntimeErrorPrefix + SingBoxRuntime.RedactSecrets(ex.Message));
             }
         }, token);
     }
@@ -704,14 +704,14 @@ public class AppService : IDisposable, IAsyncDisposable
     {
         var text = status.State switch
         {
-            SingBoxRuntimeState.Running when status.IsRunning => $"sing-box TUN 运行中 (PID {status.ProcessId})",
+            SingBoxRuntimeState.Running when status.IsRunning => string.Format(Strings.RtStateRunningFormat, status.ProcessId),
             SingBoxRuntimeState.RunningStale when status.IsRunning =>
-                "新配置未应用；原 sing-box 仍在运行" + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
-            SingBoxRuntimeState.Probing => "正在检查 sing-box 路径和版本…",
-            SingBoxRuntimeState.Checking => "正在校验 sing-box 配置…",
-            SingBoxRuntimeState.Starting => "正在应用分流规则…",
-            SingBoxRuntimeState.Failed => "sing-box 未运行" + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
-            _ => "sing-box 已停止"
+                Strings.RtStateRunningStalePrefix + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
+            SingBoxRuntimeState.Probing => Strings.RtStateProbing,
+            SingBoxRuntimeState.Checking => Strings.RtStateChecking,
+            SingBoxRuntimeState.Starting => Strings.RtStateStarting,
+            SingBoxRuntimeState.Failed => Strings.RtStateFailedPrefix + (string.IsNullOrEmpty(status.LastError) ? "" : ": " + status.LastError),
+            _ => Strings.RtStateStopped
         };
         RuntimeStatusChanged?.Invoke(status);
         StatusChanged?.Invoke(text);
@@ -756,7 +756,7 @@ public class AppService : IDisposable, IAsyncDisposable
 
     private static ProxyRule CloneRule(ProxyRule rule) =>
         JsonConvert.DeserializeObject<ProxyRule>(JsonConvert.SerializeObject(rule))
-        ?? throw new InvalidDataException("无法创建规则候选副本。");
+            ?? throw new InvalidDataException(Strings.ErrCloneRuleCandidate);
 
     private static bool PathsEqual(string left, string right)
     {

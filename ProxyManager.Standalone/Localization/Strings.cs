@@ -336,6 +336,32 @@ public static class Strings
     public static string DiagOllamaModelMissingFormat => GetString(nameof(DiagOllamaModelMissingFormat));
     public static string DiagOllamaModelPresentFormat => GetString(nameof(DiagOllamaModelPresentFormat));
 
+    public static string ChainSequential => GetString(nameof(ChainSequential));
+    public static string ChainFailover => GetString(nameof(ChainFailover));
+    public static string ChainLoadBalance => GetString(nameof(ChainLoadBalance));
+    public static string ServerSummaryFormat => GetString(nameof(ServerSummaryFormat));
+    public static string ProfileSummaryFormat => GetString(nameof(ProfileSummaryFormat));
+    public static string ErrImportEmptyRules => GetString(nameof(ErrImportEmptyRules));
+    public static string RtSavedPathInvalid => GetString(nameof(RtSavedPathInvalid));
+    public static string RtNotDetected => GetString(nameof(RtNotDetected));
+    public static string RtNotApproved => GetString(nameof(RtNotApproved));
+    public static string StatusConfigUnreadable => GetString(nameof(StatusConfigUnreadable));
+    public static string StatusRuleStatsFormat => GetString(nameof(StatusRuleStatsFormat));
+    public static string StatusNoRuntimeSaved => GetString(nameof(StatusNoRuntimeSaved));
+    public static string StatusRuntimeNotApproved => GetString(nameof(StatusRuntimeNotApproved));
+    public static string StatusRuntimePrepFailPrefix => GetString(nameof(StatusRuntimePrepFailPrefix));
+    public static string StatusNotAppliedPrefix => GetString(nameof(StatusNotAppliedPrefix));
+    public static string StatusNotStartedPrefix => GetString(nameof(StatusNotStartedPrefix));
+    public static string StatusRuntimeErrorPrefix => GetString(nameof(StatusRuntimeErrorPrefix));
+    public static string RtStateRunningFormat => GetString(nameof(RtStateRunningFormat));
+    public static string RtStateRunningStalePrefix => GetString(nameof(RtStateRunningStalePrefix));
+    public static string RtStateProbing => GetString(nameof(RtStateProbing));
+    public static string RtStateChecking => GetString(nameof(RtStateChecking));
+    public static string RtStateStarting => GetString(nameof(RtStateStarting));
+    public static string RtStateFailedPrefix => GetString(nameof(RtStateFailedPrefix));
+    public static string RtStateStopped => GetString(nameof(RtStateStopped));
+    public static string ErrCloneRuleCandidate => GetString(nameof(ErrCloneRuleCandidate));
+
     public static string ProviderOpenAiCloud => GetString(nameof(ProviderOpenAiCloud));
     public static string ProviderOllamaLocal => GetString(nameof(ProviderOllamaLocal));
     public static string JoinSeparator => GetString(nameof(JoinSeparator));
