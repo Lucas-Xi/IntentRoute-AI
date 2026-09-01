@@ -4,8 +4,11 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-01
+
 ### Added
 
+- Added runtime-log triage on the sing-box monitor page: a minimum-level filter (parsed from the redacted sing-box console lines, trace through error), a debounced case-insensitive text filter, an auto-scroll toggle, and an export button that writes exactly the current filtered view to a user-chosen UTF-8 (no BOM) text file. Exported lines pass through the secret redactor a second time, so exports stay credential-free; filtering and export are entirely local and nothing is transmitted anywhere.
 - Added a complete Chinese README (`README.zh-CN.md`) mirroring the English one section by section — project rationale, AI/policy/simulator workflows, provider setup, the data-boundary table, routing capabilities, install, configuration migration, build, and known limitations — with language switcher links at the top of both files. Deep technical docs (architecture, threat model) remain English with links from the Chinese README.
 - Release notes are now curated: the release workflow extracts the tag's section from this changelog instead of auto-generating a bare commit list, with a CI check validating the extraction for every released version.
 - Added a reflection test asserting every hand-written `Strings` accessor property resolves to a non-empty value, catching property/key typos the parity tests cannot see.

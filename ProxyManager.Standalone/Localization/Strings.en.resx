@@ -175,6 +175,17 @@
   <data name="MonitorClear" xml:space="preserve"><value>Clear</value></data>
   <data name="MonitorColTime" xml:space="preserve"><value>Time</value></data>
   <data name="MonitorColMessage" xml:space="preserve"><value>Message</value></data>
+  <data name="MonitorSearchLabel" xml:space="preserve"><value>Filter logs</value></data>
+  <data name="MonitorFilterLevel" xml:space="preserve"><value>Minimum level</value></data>
+  <data name="MonitorFilterAll" xml:space="preserve"><value>All</value></data>
+  <data name="MonitorLevelWarn" xml:space="preserve"><value>Warning</value></data>
+  <data name="MonitorLevelError" xml:space="preserve"><value>Error</value></data>
+  <data name="MonitorAutoScroll" xml:space="preserve"><value>Auto-scroll</value></data>
+  <data name="MonitorExport" xml:space="preserve"><value>Export logs</value></data>
+  <data name="MonitorExportAutomation" xml:space="preserve"><value>Export the current filtered runtime logs</value></data>
+  <data name="MonitorExportEmpty" xml:space="preserve"><value>The current filter matches no log lines</value></data>
+  <data name="MonitorExportDoneFormat" xml:space="preserve"><value>Exported {0} log lines to {1}</value></data>
+  <data name="MonitorExportFailedFormat" xml:space="preserve"><value>Log export failed: {0}</value></data>
   <data name="ProcessTitle" xml:space="preserve"><value>Running processes</value></data>
   <data name="ProcessRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="ProcessColPid" xml:space="preserve"><value>PID</value></data>

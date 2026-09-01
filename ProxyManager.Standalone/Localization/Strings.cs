@@ -185,6 +185,17 @@ public static class Strings
     public static string MonitorClear => GetString(nameof(MonitorClear));
     public static string MonitorColTime => GetString(nameof(MonitorColTime));
     public static string MonitorColMessage => GetString(nameof(MonitorColMessage));
+    public static string MonitorSearchLabel => GetString(nameof(MonitorSearchLabel));
+    public static string MonitorFilterLevel => GetString(nameof(MonitorFilterLevel));
+    public static string MonitorFilterAll => GetString(nameof(MonitorFilterAll));
+    public static string MonitorLevelWarn => GetString(nameof(MonitorLevelWarn));
+    public static string MonitorLevelError => GetString(nameof(MonitorLevelError));
+    public static string MonitorAutoScroll => GetString(nameof(MonitorAutoScroll));
+    public static string MonitorExport => GetString(nameof(MonitorExport));
+    public static string MonitorExportAutomation => GetString(nameof(MonitorExportAutomation));
+    public static string MonitorExportEmpty => GetString(nameof(MonitorExportEmpty));
+    public static string MonitorExportDoneFormat => GetString(nameof(MonitorExportDoneFormat));
+    public static string MonitorExportFailedFormat => GetString(nameof(MonitorExportFailedFormat));
     public static string ProcessTitle => GetString(nameof(ProcessTitle));
     public static string ProcessRefresh => GetString(nameof(ProcessRefresh));
     public static string ProcessColPid => GetString(nameof(ProcessColPid));

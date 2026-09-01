@@ -175,6 +175,17 @@
   <data name="MonitorClear" xml:space="preserve"><value>清空</value></data>
   <data name="MonitorColTime" xml:space="preserve"><value>时间</value></data>
   <data name="MonitorColMessage" xml:space="preserve"><value>消息</value></data>
+  <data name="MonitorSearchLabel" xml:space="preserve"><value>搜索日志</value></data>
+  <data name="MonitorFilterLevel" xml:space="preserve"><value>最低级别</value></data>
+  <data name="MonitorFilterAll" xml:space="preserve"><value>全部</value></data>
+  <data name="MonitorLevelWarn" xml:space="preserve"><value>警告</value></data>
+  <data name="MonitorLevelError" xml:space="preserve"><value>错误</value></data>
+  <data name="MonitorAutoScroll" xml:space="preserve"><value>自动滚动</value></data>
+  <data name="MonitorExport" xml:space="preserve"><value>导出日志</value></data>
+  <data name="MonitorExportAutomation" xml:space="preserve"><value>导出当前过滤后的运行日志</value></data>
+  <data name="MonitorExportEmpty" xml:space="preserve"><value>当前过滤结果为空，没有可导出的日志</value></data>
+  <data name="MonitorExportDoneFormat" xml:space="preserve"><value>已导出 {0} 行日志到 {1}</value></data>
+  <data name="MonitorExportFailedFormat" xml:space="preserve"><value>日志导出失败：{0}</value></data>
   <data name="ProcessTitle" xml:space="preserve"><value>运行中的进程</value></data>
   <data name="ProcessRefresh" xml:space="preserve"><value>刷新</value></data>
   <data name="ProcessColPid" xml:space="preserve"><value>PID</value></data>

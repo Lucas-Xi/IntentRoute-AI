@@ -99,7 +99,7 @@ Version/check helper processes are killed on timeout and caller cancellation. Ca
 
 ### Log manipulation
 
-sing-box output is untrusted text. It is displayed as text rather than interpreted as markup. Common credential patterns are redacted and the in-memory queue is bounded.
+sing-box output is untrusted text. It is displayed as text rather than interpreted as markup. Common credential patterns are redacted and the in-memory queue is bounded. The monitor page's level/text filters and the export button operate only on this already-redacted in-memory view: export re-runs each line through the same redactor before writing a user-chosen UTF-8 (no BOM) file, sends nothing over the network, and exports exactly the current filtered view rather than any additional runtime state.
 
 ## Out of scope
 

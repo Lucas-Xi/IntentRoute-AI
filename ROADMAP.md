@@ -63,6 +63,12 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 
 - [x] Unsigned build-provenance inventory embedded in every package (version, commit, builder, SDK, full dependency set with content hashes; enforced by the package gate)
 
+## v0.10 — runtime-log triage maturity (2026-09-01)
+
+- [x] Minimum-level filter, debounced case-insensitive search, and an auto-scroll toggle for the redacted sing-box runtime-log view
+- [x] Local export of the exact filtered view as a re-redacted, UTF-8 (no BOM) text file
+- [x] Complete Chinese README, curated changelog-based release notes, and a Strings-accessor reflection test
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

@@ -8,9 +8,9 @@ English | **[中文](README.zh-CN.md)**
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.9.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.10.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-v0.9.0 adds an unsigned build-provenance inventory: every archive now embeds `provenance.json` with the exact version, commit, builder, SDK, and the full resolved dependency set with content hashes; the package gate fails without it. Code signing itself still requires a certificate. Downloadable v0.9.0 archives contain all of these changes.
+v0.10.0 adds runtime-log triage: a minimum-level filter, debounced case-insensitive search, an auto-scroll toggle, and a local export of the exact filtered (re-redacted) log view. Every release archive still embeds the unsigned `provenance.json` build inventory introduced in v0.9.0; code signing itself still requires a certificate.
 
 ## Why this project exists
 
@@ -121,6 +121,7 @@ OpenAI API data handling is governed by the user's OpenAI account and current AP
 - Runtime status whose path, version, and PID describe the same actually managed sing-box process, including after candidate rejection or rollback.
 - Passwords protected at rest with Windows DPAPI `CurrentUser`.
 - Password-free profile exports and bounded/redacted runtime logs.
+- Runtime-log triage: minimum-level filter, debounced case-insensitive search, auto-scroll toggle, and a local export of the exact filtered (re-redacted) log view.
 - Literal-loopback-only upstream proxy endpoints with an optional bounded TCP-listener check.
 - A recognized sing-box v1.13+ version gate before configuration check or launch.
 - Save-blocked recovery when `config.json` or a DPAPI-protected password cannot be read safely.
@@ -131,7 +132,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.9.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.10.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Lucas-Xi/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.

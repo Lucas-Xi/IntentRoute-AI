@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
@@ -41,6 +42,9 @@ public partial class MainWindow : Window
     private AiRuleSuggestion? _currentAiSuggestion;
     private AiRuleValidationResult? _currentAiValidation;
     private System.Windows.Threading.DispatcherTimer? _draftRevalidationTimer;
+    private readonly System.Windows.Threading.DispatcherTimer _logSearchDebounce = new() { Interval = TimeSpan.FromMilliseconds(300) };
+    private ICollectionView? _logsView;
+    private string _logSearchText = string.Empty;
     private bool _languageUiLoading;
     private PolicyAnalysisReport? _currentPolicyReport;
     private RouteDecisionReport? _currentRouteDecisionReport;
@@ -61,11 +65,16 @@ public partial class MainWindow : Window
             _runtimeLogs.Add(new RuntimeLogLine(DateTime.Now.ToString("HH:mm:ss"), line));
             while (_runtimeLogs.Count > 500)
                 _runtimeLogs.RemoveAt(0);
+            if (LogAutoScrollToggle.IsChecked == true && LogsList.Items.Count > 0)
+                LogsList.ScrollIntoView(LogsList.Items[^1]);
         });
 
         Loaded += MainWindow_Loaded;
         RulesList.ItemsSource = _rules;
-        LogsList.ItemsSource = _runtimeLogs;
+        _logsView = CollectionViewSource.GetDefaultView(_runtimeLogs);
+        _logsView.Filter = o => o is RuntimeLogLine l &&
+            RuntimeLogFilter.Matches(l.Message, CurrentMinimumLogLevel(), _logSearchText);
+        LogsList.ItemsSource = _logsView;
         AiDraftList.ItemsSource = _aiDrafts;
         PolicyFindingsList.ItemsSource = _policyFindings;
         PolicyAiAdviceList.ItemsSource = _policyAdvice;
@@ -74,6 +83,19 @@ public partial class MainWindow : Window
         AiProviderCombo.SelectedIndex = 0;
         PolicyProviderCombo.ItemsSource = new[] { Strings.ProviderOpenAiCloud, Strings.ProviderOllamaLocal };
         PolicyProviderCombo.SelectedIndex = 0;
+
+        // 日志级别下拉：第 0 项「全部」与 Trace 等效；Trace/Debug/Info 用英文技术名。
+        LogLevelFilterCombo.ItemsSource = new[]
+        {
+            Strings.MonitorFilterAll,
+            nameof(RuntimeLogLevel.Trace),
+            nameof(RuntimeLogLevel.Debug),
+            nameof(RuntimeLogLevel.Info),
+            Strings.MonitorLevelWarn,
+            Strings.MonitorLevelError
+        };
+        LogLevelFilterCombo.SelectedIndex = 0;
+        _logSearchDebounce.Tick += LogSearchDebounce_Tick;
 
         // 允许标题栏拖动
         MouseLeftButtonDown += (s, e) => { if (e.ChangedButton == MouseButton.Left) DragMove(); };
@@ -1298,6 +1320,75 @@ public partial class MainWindow : Window
         _runtimeLogs.Clear();
     }
 
+    private RuntimeLogLevel CurrentMinimumLogLevel() => LogLevelFilterCombo.SelectedIndex switch
+    {
+        2 => RuntimeLogLevel.Debug,
+        3 => RuntimeLogLevel.Info,
+        4 => RuntimeLogLevel.Warn,
+        5 => RuntimeLogLevel.Error,
+        _ => RuntimeLogLevel.Trace // 第 0 项「全部」与 Trace 等效（最低档）
+    };
+
+    private void LogSearch_Changed(object sender, TextChangedEventArgs e)
+    {
+        // 300ms 防抖：停止旧计时后重新起表，避免每敲一个字符就刷新一次视图。
+        _logSearchDebounce.Stop();
+        _logSearchDebounce.Start();
+    }
+
+    private void LogSearchDebounce_Tick(object? sender, EventArgs e)
+    {
+        _logSearchDebounce.Stop();
+        _logSearchText = LogSearchBox.Text;
+        _logsView?.Refresh();
+    }
+
+    private void LogLevelFilter_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_logsView == null) return;
+        _logsView.Refresh();
+    }
+
+    private void ExportLogs_Click(object sender, RoutedEventArgs e)
+    {
+        var lines = (_logsView?.OfType<RuntimeLogLine>() ?? Enumerable.Empty<RuntimeLogLine>())
+            .Select(l => new RuntimeLogLineSnapshot(l.Time, l.Message))
+            .ToList();
+        if (lines.Count == 0)
+        {
+            MessageBox.Show(Strings.MonitorExportEmpty, Strings.DialogErrorTitle,
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Title = Strings.DialogExportTitle,
+            Filter = "Text files (*.txt)|*.txt",
+            FileName = $"intentsroute-logs-{DateTime.Now:yyyyMMdd-HHmmss}.txt"
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        try
+        {
+            File.WriteAllText(
+                dialog.FileName,
+                RuntimeLogFilter.BuildExportText(lines),
+                new System.Text.UTF8Encoding(false));
+            MessageBox.Show(
+                string.Format(Strings.MonitorExportDoneFormat, lines.Count, dialog.FileName),
+                Strings.DialogSuccessTitle);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                string.Format(Strings.MonitorExportFailedFormat, SingBoxRuntime.RedactSecrets(ex.Message)),
+                Strings.DialogErrorTitle,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }
+
     #endregion
 
     #region 进程列表
@@ -1755,6 +1846,7 @@ public partial class MainWindow : Window
         _lifetimeCts.Cancel();
         _draftRevalidationTimer?.Stop();
         _draftRevalidationTimer = null;
+        _logSearchDebounce.Stop();
         _aiModelRefreshVersion++;
         _policyModelRefreshVersion++;
         _policyAnalysisVersion++;
