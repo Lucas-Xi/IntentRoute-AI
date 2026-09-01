@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-01
+
+### Added
+
+- Added a process-to-rule workflow on the process page: a name/PID search filter, real executable paths in the path column (local `QueryFullProcessImageNameW` with limited-information access), and an **Add as rule** button that creates a Proxy-mode enabled rule from the selected running process through the same Configuration Workspace transaction as manual creation, then navigates to the rule list with the new rule selected. Duplicate process names are reported explicitly instead of silently ignored; an empty `ExePath` (path query unavailable) remains legal configuration data.
+
+### Fixed
+
+- Fixed a v0.1-era process-enumeration defect: the Toolhelp32 declarations resolved to the ANSI exports (`Process32First`/`Process32Next`) while the entry structure was marshalled as Unicode, so the process page showed byte-swapped mojibake names and configured-rule candidate matching could never hit. The declarations now bind explicitly to the W variants, and a failed snapshot returns early on `INVALID_HANDLE_VALUE` as well as a zero handle. The defect was exposed by the first test that asserts real snapshot content.
+
 ## [0.10.0] - 2026-09-01
 
 ### Added

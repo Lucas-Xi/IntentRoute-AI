@@ -426,10 +426,11 @@ public sealed class AppServiceRecoveryTests
         {
             using var service = new AppService(appDataRoot, startMonitor: false, applyOnStart: false);
             var rule = service.AddRule("safe.exe", ProxyMode.Direct);
+            Assert.NotNull(rule);
             var original = File.ReadAllBytes(service.ConfigPath);
 
             Assert.Throws<InvalidDataException>(() =>
-                service.UpdateRuleMode(rule.Id, (ProxyMode)999));
+                service.UpdateRuleMode(rule!.Id, (ProxyMode)999));
 
             Assert.Equal(ProxyMode.Direct, Assert.Single(service.Config.Rules).Mode);
             Assert.Equal(original, File.ReadAllBytes(service.ConfigPath));

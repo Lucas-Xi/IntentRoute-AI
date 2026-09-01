@@ -27,6 +27,8 @@ public partial class MainWindow : Window
     private readonly SemaphoreSlim _aiProviderGate = new(1, 1);
     private List<ProxyRule> _allRules = new();
     private string _searchFilter = "";
+    private readonly List<ProcessRow> _allProcesses = new();
+    private string _processSearchFilter = string.Empty;
     private bool _isMaximized = false;
     private CancellationTokenSource? _aiGenerationCts;
     private CancellationTokenSource? _policyAnalysisCts;
@@ -1404,19 +1406,73 @@ public partial class MainWindow : Window
         var rules = PolicyRuntimeOrder.Enabled(_service.Config.Rules)
             .Select(item => item.Rule)
             .ToList();
-        var list = processes
+        _allProcesses.Clear();
+        _allProcesses.AddRange(processes
             .OrderBy(p => p.Value)
-            .Select(p => new
-            {
-                Pid = p.Key,
-                Name = p.Value,
-                Path = "",
-                Status = GetConfiguredCandidate(rules, p.Value)
-            })
-            .ToList();
+            .Select(p => new ProcessRow(
+                p.Key,
+                p.Value,
+                ProcessMonitor.TryGetProcessPath(p.Key, out var path) ? path : "",
+                GetConfiguredCandidate(rules, p.Value))));
+        ApplyProcessFilter();
+    }
 
-        ProcessList.ItemsSource = list;
-        ProcessCount.Text = string.Format(Localization.Strings.CountProcessesFormat, list.Count);
+    private void ApplyProcessFilter()
+    {
+        IEnumerable<ProcessRow> view = _allProcesses;
+        if (!string.IsNullOrWhiteSpace(_processSearchFilter))
+        {
+            view = _allProcesses.Where(r =>
+                r.Name.Contains(_processSearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                r.Pid.ToString().Contains(_processSearchFilter, StringComparison.OrdinalIgnoreCase));
+        }
+        var filtered = view.ToList();
+
+        ProcessList.ItemsSource = filtered;
+        ProcessCount.Text = string.IsNullOrWhiteSpace(_processSearchFilter)
+            ? string.Format(Localization.Strings.CountProcessesFormat, _allProcesses.Count)
+            : string.Format(Localization.Strings.CountProcessesFilteredFormat, filtered.Count, _allProcesses.Count);
+    }
+
+    private void ProcessSearch_Changed(object sender, TextChangedEventArgs e)
+    {
+        _processSearchFilter = ProcessSearchBox.Text;
+        ApplyProcessFilter();
+    }
+
+    private void ProcessList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ProcessAddRuleButton.IsEnabled = ProcessList.SelectedItem is ProcessRow;
+    }
+
+    private void AddRuleFromProcess_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcessList.SelectedItem is not ProcessRow row) return;
+        try
+        {
+            var rule = _service.AddRuleByName(row.Name, row.Path);
+            if (rule == null)
+            {
+                MessageBox.Show(Strings.ProcessRuleExists, Strings.DialogErrorTitle,
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            NavRules.IsChecked = true;
+            SearchBox.Text = string.Empty;
+            ShowPage("NavRules");
+            LoadRules();
+            var added = _rules.FirstOrDefault(item => item.Id == rule.Id);
+            if (added == null) return;
+            RulesList.SelectedItem = added;
+            RulesList.ScrollIntoView(added);
+            RulesList.Focus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(SingBoxRuntime.RedactSecrets(ex.Message), Strings.DialogErrorTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     #endregion
@@ -1934,6 +1990,8 @@ public partial class MainWindow : Window
     }
 
     private sealed record RuntimeLogLine(string Time, string Message);
+
+    private sealed record ProcessRow(uint Pid, string Name, string Path, string Status);
 
     private sealed record RouteDecisionTraceLine(
         string Order,

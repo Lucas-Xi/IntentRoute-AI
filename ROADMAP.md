@@ -69,6 +69,12 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Local export of the exact filtered view as a re-redacted, UTF-8 (no BOM) text file
 - [x] Complete Chinese README, curated changelog-based release notes, and a Strings-accessor reflection test
 
+## v0.11 — process-to-rule workflow (2026-09-01)
+
+- [x] Name/PID search filter and real executable paths on the process page (local limited-information query)
+- [x] One-click rule creation from a selected running process through the normal Configuration Workspace transaction, with explicit duplicate reporting and rule-list navigation
+- [x] Fixed the v0.1 ANSI/Unicode Toolhelp32 mismatch that produced mojibake process names and broken candidate matching
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

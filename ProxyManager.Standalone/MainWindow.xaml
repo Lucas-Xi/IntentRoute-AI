@@ -1017,13 +1017,17 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{x:Static loc:Strings.ProcessTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <TextBlock x:Name="ProcessCount" Text="0 个进程" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <TextBox x:Name="ProcessSearchBox" Width="180" Style="{StaticResource InputBox}" FontSize="11" VerticalAlignment="Center"
+                                                     TextChanged="ProcessSearch_Changed" AutomationProperties.Name="{x:Static loc:Strings.ProcessSearchLabel}"/>
+                                            <Button x:Name="ProcessAddRuleButton" Content="{x:Static loc:Strings.ProcessAddRule}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Margin="8,0,0,0"
+                                                    IsEnabled="False" AutomationProperties.Name="{x:Static loc:Strings.ProcessAddRuleAutomation}" Click="AddRuleFromProcess_Click"/>
+                                            <TextBlock x:Name="ProcessCount" Text="0 个进程" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="12,0,12,0"/>
                                             <Button Content="{x:Static loc:Strings.ProcessRefresh}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="RefreshProcess_Click"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
 
-                                <ListView Grid.Row="1" x:Name="ProcessList" Background="Transparent" BorderThickness="0">
+                                <ListView Grid.Row="1" x:Name="ProcessList" Background="Transparent" BorderThickness="0" SelectionChanged="ProcessList_SelectionChanged">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="{x:Static loc:Strings.ProcessColPid}" Width="80" DisplayMemberBinding="{Binding Pid}"/>

@@ -141,35 +141,61 @@ public class AppConfig
 
 public static class ProcessMonitor
 {
-    [DllImport("kernel32.dll")] private static extern IntPtr CreateToolhelp32Snapshot(uint f, uint pid);
-    [DllImport("kernel32.dll")] private static extern bool Process32First(IntPtr h, ref PROCESSENTRY32 e);
-    [DllImport("kernel32.dll")] private static extern bool Process32Next(IntPtr h, ref PROCESSENTRY32 e);
-    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
-
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct PROCESSENTRY32
+    private struct PROCESNTRY32
     {
         public uint dwSize; public uint cntUsage; public uint th32ProcessID; public IntPtr th32DefaultHeapID;
         public uint th32ModuleID; public uint cntThreads; public uint th32ParentProcessID;
         public int pcPriClassBase; public uint dwFlags;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szExeFile;
     }
+
+    [DllImport("kernel32.dll")] private static extern IntPtr CreateToolhelp32Snapshot(uint f, uint pid);
+    // 必须显式绑定 W 变体：CharSet.Unicode 在默认 ExactSpelling=false 下会先命中
+    // kernel32 的 ANSI 导出名 Process32First，导致宽字符结构体读到错位乱码。
+    [DllImport("kernel32.dll", ExactSpelling = true)] private static extern bool Process32FirstW(IntPtr h, ref PROCESNTRY32 e);
+    [DllImport("kernel32.dll", ExactSpelling = true)] private static extern bool Process32NextW(IntPtr h, ref PROCESNTRY32 e);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, uint processId);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool QueryFullProcessImageNameW(IntPtr hProcess, uint dwFlags, System.Text.StringBuilder lpExeName, ref uint lpdwSize);
+
+    private static readonly IntPtr INVALID_HANDLE_VALUE = new(-1);
     private const uint TH32CS_SNAPPROCESS = 0x00000002;
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
 
     public static Dictionary<uint, string> GetRunningProcesses()
     {
         var p = new Dictionary<uint, string>();
         var snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (snap == IntPtr.Zero) return p;
+        // 失败时返回的是 INVALID_HANDLE_VALUE(-1) 而非零句柄。
+        if (snap == IntPtr.Zero || snap == INVALID_HANDLE_VALUE) return p;
         try
         {
-            var e = new PROCESSENTRY32 { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32>() };
-            if (Process32First(snap, ref e))
+            var e = new PROCESNTRY32 { dwSize = (uint)Marshal.SizeOf<PROCESNTRY32>() };
+            if (Process32FirstW(snap, ref e))
                 do { if (!p.ContainsKey(e.th32ProcessID)) p[e.th32ProcessID] = e.szExeFile; }
-                while (Process32Next(snap, ref e));
+                while (Process32NextW(snap, ref e));
         }
         finally { CloseHandle(snap); }
         return p;
+    }
+
+    public static bool TryGetProcessPath(uint pid, out string path)
+    {
+        path = "";
+        var h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (h == IntPtr.Zero) return false;
+        try
+        {
+            var sb = new System.Text.StringBuilder(1024);
+            uint size = 1024;
+            if (!QueryFullProcessImageNameW(h, 0, sb, ref size)) return false;
+            var result = sb.ToString();
+            if (string.IsNullOrWhiteSpace(result)) return false;
+            path = result;
+            return true;
+        }
+        finally { CloseHandle(h); }
     }
 }
 
@@ -252,12 +278,12 @@ public class AppService : IDisposable, IAsyncDisposable
 
     // ── Rules ───────────────────────────────────
 
-    public ProxyRule AddRule(string exePath, ProxyMode mode = ProxyMode.Proxy)
+    public ProxyRule? AddRuleByName(string exeName, string exePath, ProxyMode mode = ProxyMode.Proxy)
     {
-        var exeName = Path.GetFileName(exePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(exeName);
         var current = _workspace.Snapshot();
         if (current.Rules.Any(r => r.ExeName.Equals(exeName, StringComparison.OrdinalIgnoreCase)))
-            return null!;
+            return null;
 
         var rule = new ProxyRule
         {
@@ -270,6 +296,9 @@ public class AppService : IDisposable, IAsyncDisposable
         var committed = CommitConfiguration(candidate => candidate.Rules.Add(rule));
         return committed.Rules.Single(candidate => candidate.Id == rule.Id);
     }
+
+    public ProxyRule? AddRule(string exePath, ProxyMode mode = ProxyMode.Proxy) =>
+        AddRuleByName(Path.GetFileName(exePath), exePath, mode);
 
     public void ClearRules()
     {

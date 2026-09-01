@@ -192,6 +192,10 @@
   <data name="ProcessColName" xml:space="preserve"><value>Process name</value></data>
   <data name="ProcessColPath" xml:space="preserve"><value>Path</value></data>
   <data name="ProcessColStatus" xml:space="preserve"><value>Candidate (not evaluated per destination)</value></data>
+  <data name="ProcessSearchLabel" xml:space="preserve"><value>Filter processes</value></data>
+  <data name="ProcessAddRule" xml:space="preserve"><value>Add as rule</value></data>
+  <data name="ProcessAddRuleAutomation" xml:space="preserve"><value>Create a routing rule for the selected process</value></data>
+  <data name="ProcessRuleExists" xml:space="preserve"><value>A rule with this process name already exists</value></data>
   <data name="ModeProxyText" xml:space="preserve"><value>Proxy</value></data>
   <data name="ModeDirectText" xml:space="preserve"><value>Direct</value></data>
   <data name="ModeBlockText" xml:space="preserve"><value>Block</value></data>
@@ -210,6 +214,7 @@
   <data name="CountFindingsFormat" xml:space="preserve"><value>{0} findings</value></data>
   <data name="CountTraceFormat" xml:space="preserve"><value>{0} steps</value></data>
   <data name="CountProcessesFormat" xml:space="preserve"><value>{0} processes</value></data>
+  <data name="CountProcessesFilteredFormat" xml:space="preserve"><value>{0} of {1} processes</value></data>
   <data name="VersionPrefix" xml:space="preserve"><value>Version: </value></data>
   <data name="SeverityCritical" xml:space="preserve"><value>Critical</value></data>
   <data name="SeverityWarning" xml:space="preserve"><value>Warning</value></data>

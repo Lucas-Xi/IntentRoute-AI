@@ -202,6 +202,10 @@ public static class Strings
     public static string ProcessColName => GetString(nameof(ProcessColName));
     public static string ProcessColPath => GetString(nameof(ProcessColPath));
     public static string ProcessColStatus => GetString(nameof(ProcessColStatus));
+    public static string ProcessSearchLabel => GetString(nameof(ProcessSearchLabel));
+    public static string ProcessAddRule => GetString(nameof(ProcessAddRule));
+    public static string ProcessAddRuleAutomation => GetString(nameof(ProcessAddRuleAutomation));
+    public static string ProcessRuleExists => GetString(nameof(ProcessRuleExists));
 
     public static string ModeProxyText => GetString(nameof(ModeProxyText));
     public static string ModeDirectText => GetString(nameof(ModeDirectText));
@@ -221,6 +225,7 @@ public static class Strings
     public static string CountFindingsFormat => GetString(nameof(CountFindingsFormat));
     public static string CountTraceFormat => GetString(nameof(CountTraceFormat));
     public static string CountProcessesFormat => GetString(nameof(CountProcessesFormat));
+    public static string CountProcessesFilteredFormat => GetString(nameof(CountProcessesFilteredFormat));
     public static string VersionPrefix => GetString(nameof(VersionPrefix));
     public static string SeverityCritical => GetString(nameof(SeverityCritical));
     public static string SeverityWarning => GetString(nameof(SeverityWarning));

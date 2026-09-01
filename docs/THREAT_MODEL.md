@@ -49,6 +49,8 @@ The OpenAI key is read at request time from `OPENAI_API_KEY` and is never stored
 
 Ollama requests use only literal HTTP `127.0.0.1` or `::1`, with proxy use and redirects disabled. Hostname, other-loopback, LAN/public, and credentialed endpoints are rejected. IntentRoute AI never sends proxy credentials, proxy addresses, existing rule values or identifiers, logs, filesystem paths, or a full process inventory to either provider.
 
+The process page enumerates running processes and their executable paths locally (Toolhelp32 snapshot plus a limited-information `QueryFullProcessImageNameW` per entry) to display candidates and to prefill a new rule's stored `ExePath`. These paths stay on the local side of the provider seam: the disclosure type has no path field, and creating a rule from a process sends nothing anywhere.
+
 Another local process can impersonate an Ollama service by binding the selected loopback port. Its output receives no special trust: it is size-bounded and strictly parsed. Rule-authoring output is locally validated and can only be accepted as disabled rules; policy-explanation output can only become plain text attached to already-local finding codes.
 
 Existing rule values and notes can contain prompt-injection text. They remain on the local side of the Policy Disclosure seam, so neither provider receives or interprets them during policy explanation.

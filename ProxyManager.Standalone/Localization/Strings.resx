@@ -192,6 +192,10 @@
   <data name="ProcessColName" xml:space="preserve"><value>进程名</value></data>
   <data name="ProcessColPath" xml:space="preserve"><value>路径</value></data>
   <data name="ProcessColStatus" xml:space="preserve"><value>配置候选（未按目标求值）</value></data>
+  <data name="ProcessSearchLabel" xml:space="preserve"><value>搜索进程</value></data>
+  <data name="ProcessAddRule" xml:space="preserve"><value>添加为规则</value></data>
+  <data name="ProcessAddRuleAutomation" xml:space="preserve"><value>将选中进程创建为路由规则</value></data>
+  <data name="ProcessRuleExists" xml:space="preserve"><value>该进程已有同名规则</value></data>
   <data name="ModeProxyText" xml:space="preserve"><value>代理</value></data>
   <data name="ModeDirectText" xml:space="preserve"><value>直连</value></data>
   <data name="ModeBlockText" xml:space="preserve"><value>阻止</value></data>
@@ -210,6 +214,7 @@
   <data name="CountFindingsFormat" xml:space="preserve"><value>{0} 项</value></data>
   <data name="CountTraceFormat" xml:space="preserve"><value>{0} 条</value></data>
   <data name="CountProcessesFormat" xml:space="preserve"><value>{0} 个进程</value></data>
+  <data name="CountProcessesFilteredFormat" xml:space="preserve"><value>{0} / {1} 个进程</value></data>
   <data name="VersionPrefix" xml:space="preserve"><value>版本：</value></data>
   <data name="SeverityCritical" xml:space="preserve"><value>严重</value></data>
   <data name="SeverityWarning" xml:space="preserve"><value>警告</value></data>
