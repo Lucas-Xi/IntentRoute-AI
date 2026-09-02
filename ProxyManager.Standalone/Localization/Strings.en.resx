@@ -369,8 +369,22 @@
   <data name="DialogImportTitle" xml:space="preserve"><value>Import rules</value></data>
   <data name="DialogExportTitle" xml:space="preserve"><value>Export rules</value></data>
   <data name="DialogJsonFilter" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>
-  <data name="ImportDoneFormat" xml:space="preserve"><value>Import finished: {0} rules added</value></data>
+  <data name="ImportDoneFormat" xml:space="preserve"><value>Import finished: {0} added, {1} skipped</value></data>
   <data name="ImportFailedFormat" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="ImportPreviewTitle" xml:space="preserve"><value>Import preview</value></data>
+  <data name="ImportPreviewIntro" xml:space="preserve"><value>Rules with the same identity (process + hosts/IPs/ports/protocol + mode) are skipped and never overwrite existing rules. Different constraints for the same process are imported as new rules.</value></data>
+  <data name="ImportPreviewColumnProcess" xml:space="preserve"><value>Process</value></data>
+  <data name="ImportPreviewColumnMode" xml:space="preserve"><value>Mode</value></data>
+  <data name="ImportPreviewColumnCondition" xml:space="preserve"><value>Constraints</value></data>
+  <data name="ImportPreviewColumnDisposition" xml:space="preserve"><value>Action</value></data>
+  <data name="ImportPreviewDispositionAdd" xml:space="preserve"><value>Add</value></data>
+  <data name="ImportPreviewDispositionSkipExisting" xml:space="preserve"><value>Already present, skip</value></data>
+  <data name="ImportPreviewDispositionSkipDuplicateInFile" xml:space="preserve"><value>Duplicate in file, skip</value></data>
+  <data name="ImportPreviewSummaryFormat" xml:space="preserve"><value>{0} will be added, {1} already present skipped, {2} in-file duplicates skipped.</value></data>
+  <data name="ImportPreviewNothingToAdd" xml:space="preserve"><value>Nothing to add. Cancel to leave the current configuration unchanged.</value></data>
+  <data name="ImportPreviewCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ImportPreviewConfirm" xml:space="preserve"><value>Import additions</value></data>
+  <data name="ImportPreviewMissingRules" xml:space="preserve"><value>The import file does not contain a Rules array.</value></data>
   <data name="ExportDoneFormat" xml:space="preserve"><value>Export finished: {0} rules</value></data>
   <data name="ExportFailedFormat" xml:space="preserve"><value>Export failed: {0}</value></data>
   <data name="ProxyInvalidPort" xml:space="preserve"><value>Enter a valid port number</value></data>

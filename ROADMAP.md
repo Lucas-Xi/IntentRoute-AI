@@ -92,6 +92,12 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Migration-lock acquisition bound raised 10s → 60s after contention-jitter flakiness; both known timing-sensitive tests hardened (three consecutive full-suite runs green)
 - [x] Packaged-WPF smoke gate now covers the v0.10–v0.13 UI surfaces (batch buttons, log toolbar, process toolbar) via verified spacebar page navigation
 
+## v0.15 — import preview and identity-consistent dedupe (2026-09-03)
+
+- [x] Import preview dialog classifying every incoming rule (add / already present / in-file duplicate) with confirm gated on having additions and an added+skipped completion summary
+- [x] Import dedupe switched from process-name-only to the shared full rule identity, so same-process rules with different constraints import instead of silently disappearing
+- [x] Shared `RuleIdentity` key reused by AI draft validation and rule import; a file without a `Rules` array now fails explicitly instead of doing nothing
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-03
+
+### Added
+
+- Rule import now shows a preview dialog before anything is written. Every incoming rule is classified against the current configuration and displayed as add / already-present skip / in-file duplicate skip; the confirm button stays disabled while nothing would be added, and the completion message reports both added and skipped counts. A file without a `Rules` array now fails with an explicit message instead of silently doing nothing.
+- Import duplicate detection moved from process-name-only to the shared full rule identity (process + normalized hosts/IPs/ports/protocol + mode), so rules for the same process with different constraints are imported as new rules instead of silently disappearing — matching the v0.13 constraints editor and the AI acceptance path. The identity key itself was extracted into `RuleIdentity` and is now reused by AI draft validation and rule import, so duplicate semantics cannot drift between the two paths.
+
 ## [0.14.0] - 2026-09-02
 
 ### Changed

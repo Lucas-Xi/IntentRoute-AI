@@ -306,27 +306,25 @@ public class AppService : IDisposable, IAsyncDisposable
         CommitConfiguration(candidate => candidate.Rules.Clear());
     }
 
+    public RuleImportPreview PreviewRuleImport(IReadOnlyList<ProxyRule> rules)
+    {
+        ArgumentNullException.ThrowIfNull(rules);
+        return RuleImportPlanner.Build(_workspace.Snapshot().Rules, rules);
+    }
+
     public int ImportRules(IReadOnlyList<ProxyRule> rules)
     {
         ArgumentNullException.ThrowIfNull(rules);
-        var current = _workspace.Snapshot();
-        var imported = new List<ProxyRule>();
-        foreach (var rule in rules)
-        {
-            if (rule == null)
-                throw new InvalidDataException(Strings.ErrImportEmptyRules);
-            if (current.Rules.Concat(imported).Any(existing =>
-                string.Equals(existing.ExeName, rule.ExeName, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
+        var preview = PreviewRuleImport(rules);
+        if (preview.AddCount == 0) return 0;
 
+        var imported = preview.RulesToAdd.Select(rule =>
+        {
             var importedRule = CloneRule(rule);
             importedRule.Id = Guid.NewGuid().ToString();
-            imported.Add(importedRule);
-        }
+            return importedRule;
+        }).ToList();
 
-        if (imported.Count == 0) return 0;
         CommitConfiguration(candidate => candidate.Rules.AddRange(imported));
         return imported.Count;
     }

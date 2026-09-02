@@ -369,8 +369,22 @@
   <data name="DialogImportTitle" xml:space="preserve"><value>导入规则</value></data>
   <data name="DialogExportTitle" xml:space="preserve"><value>导出规则</value></data>
   <data name="DialogJsonFilter" xml:space="preserve"><value>JSON 文件 (*.json)|*.json</value></data>
-  <data name="ImportDoneFormat" xml:space="preserve"><value>导入完成: 新增 {0} 条规则</value></data>
+  <data name="ImportDoneFormat" xml:space="preserve"><value>导入完成: 新增 {0} 条，跳过 {1} 条</value></data>
   <data name="ImportFailedFormat" xml:space="preserve"><value>导入失败: {0}</value></data>
+  <data name="ImportPreviewTitle" xml:space="preserve"><value>导入预览</value></data>
+  <data name="ImportPreviewIntro" xml:space="preserve"><value>完整身份（进程 + 域名/IP/端口/协议 + 模式）相同的规则会被跳过，不会覆盖现有规则。同一进程的不同约束会作为新规则导入。</value></data>
+  <data name="ImportPreviewColumnProcess" xml:space="preserve"><value>进程</value></data>
+  <data name="ImportPreviewColumnMode" xml:space="preserve"><value>模式</value></data>
+  <data name="ImportPreviewColumnCondition" xml:space="preserve"><value>条件</value></data>
+  <data name="ImportPreviewColumnDisposition" xml:space="preserve"><value>处理</value></data>
+  <data name="ImportPreviewDispositionAdd" xml:space="preserve"><value>新增</value></data>
+  <data name="ImportPreviewDispositionSkipExisting" xml:space="preserve"><value>已存在，跳过</value></data>
+  <data name="ImportPreviewDispositionSkipDuplicateInFile" xml:space="preserve"><value>文件内重复，跳过</value></data>
+  <data name="ImportPreviewSummaryFormat" xml:space="preserve"><value>将新增 {0} 条，跳过已存在 {1} 条，跳过文件内重复 {2} 条。</value></data>
+  <data name="ImportPreviewNothingToAdd" xml:space="preserve"><value>没有可新增的规则。取消即可，当前配置不会改变。</value></data>
+  <data name="ImportPreviewCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="ImportPreviewConfirm" xml:space="preserve"><value>导入新增项</value></data>
+  <data name="ImportPreviewMissingRules" xml:space="preserve"><value>导入文件缺少 Rules 数组。</value></data>
   <data name="ExportDoneFormat" xml:space="preserve"><value>导出完成: {0} 条规则</value></data>
   <data name="ExportFailedFormat" xml:space="preserve"><value>导出失败: {0}</value></data>
   <data name="ProxyInvalidPort" xml:space="preserve"><value>请输入有效的端口号</value></data>

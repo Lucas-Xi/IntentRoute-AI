@@ -532,8 +532,6 @@ public sealed class AiRuleValidationResult
 
 public static class AiRuleDraftValidator
 {
-    private static readonly char[] Separators = [',', ';', '|', '\n', '\r', '\t', ' '];
-
     public static AiRuleValidationResult Validate(AiRuleSuggestion suggestion, AppConfig currentConfig)
     {
         ArgumentNullException.ThrowIfNull(suggestion);
@@ -550,7 +548,7 @@ public static class AiRuleDraftValidator
         var mapped = new List<ProxyRule>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var existing = new HashSet<string>(
-            (currentConfig.Rules ?? []).Select(CreateRuleKey),
+            (currentConfig.Rules ?? []).Select(RuleIdentity.CreateKey),
             StringComparer.OrdinalIgnoreCase);
 
         for (var index = 0; index < suggestion.Rules.Count && index < AiRuleContract.MaxRules; index++)
@@ -576,7 +574,7 @@ public static class AiRuleDraftValidator
                 Priority = ((currentConfig.Rules?.Count ?? 0) + mapped.Count + 1) * 10
             };
 
-            var key = CreateRuleKey(rule);
+            var key = RuleIdentity.CreateKey(rule);
             if (!seen.Add(key)) errors.Add(string.Format(Strings.ValDuplicateInDraftFormat, label));
             if (existing.Contains(key)) errors.Add(string.Format(Strings.ValDuplicateExistingFormat, label));
             mapped.Add(rule);
@@ -647,25 +645,8 @@ public static class AiRuleDraftValidator
         return action is "Proxy" or "Direct" or "Block";
     }
 
-    private static IEnumerable<string> Split(string? raw) =>
-        (raw ?? string.Empty).Split(Separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    private static string NormalizeList(string? raw, bool lowerCase)
-    {
-        var values = Split(raw)
-            .Select(value => lowerCase ? value.ToLowerInvariant() : value)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase);
-        return string.Join(", ", values);
-    }
-
-    private static string CreateRuleKey(ProxyRule rule) => string.Join("\u001f",
-        (rule.ExeName ?? string.Empty).Trim().ToLowerInvariant(),
-        NormalizeList(rule.TargetHosts, true),
-        NormalizeList(rule.TargetIPs, false),
-        NormalizeList(rule.TargetPorts, false),
-        (rule.Protocol ?? string.Empty).Trim(),
-        rule.Mode.ToString());
+    private static string NormalizeList(string? raw, bool lowerCase) =>
+        RuleIdentity.NormalizeList(raw, lowerCase);
 
     private static AppConfig CloneConfig(AppConfig config) =>
         JsonConvert.DeserializeObject<AppConfig>(JsonConvert.SerializeObject(config)) ?? new AppConfig();

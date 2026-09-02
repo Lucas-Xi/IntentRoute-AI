@@ -1312,12 +1312,19 @@ public partial class MainWindow : Window
             {
                 var json = AppConfigStore.ReadStrictUtf8(dialog.FileName);
                 var import = Newtonsoft.Json.JsonConvert.DeserializeObject<ImportData>(json);
-                if (import?.Rules != null)
-                {
-                    var added = _service.ImportRules(import.Rules);
-                    LoadRules();
-                    MessageBox.Show(string.Format(Strings.ImportDoneFormat, added), Strings.DialogSuccessTitle);
-                }
+                if (import?.Rules == null)
+                    throw new InvalidDataException(Strings.ImportPreviewMissingRules);
+
+                var preview = _service.PreviewRuleImport(import.Rules);
+                var previewWindow = new RuleImportPreviewWindow(preview) { Owner = this };
+                if (previewWindow.ShowDialog() != true)
+                    return;
+
+                var added = _service.ImportRules(import.Rules);
+                LoadRules();
+                MessageBox.Show(
+                    string.Format(Strings.ImportDoneFormat, added, preview.SkipCount),
+                    Strings.DialogSuccessTitle);
             }
             catch (Exception ex)
             {
