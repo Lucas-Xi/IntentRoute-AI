@@ -92,6 +92,7 @@ public static class AppDataMigration
         }
     }
 
+    // 有界等待 60 秒：AV/CI 文件占用抖动下 10 秒不够，而真实启动迁移远用不到该上限，超时仍大声失败。
     private static FileStream AcquireMigrationLock(string path)
     {
         var startedAt = Environment.TickCount64;
@@ -107,7 +108,7 @@ public static class AppDataMigration
                     bufferSize: 1,
                     FileOptions.DeleteOnClose);
             }
-            catch (IOException) when (Environment.TickCount64 - startedAt < 10_000)
+            catch (IOException) when (Environment.TickCount64 - startedAt < 60_000)
             {
                 Thread.Sleep(25);
             }

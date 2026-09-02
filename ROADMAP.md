@@ -87,6 +87,11 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] `UpdateRuleConstraints` Configuration Workspace transaction that leaves identity, mode, and priority untouched; host validation deduplicated into the shared validator
 - [x] IP/CIDR and port format validation now exist at edit time (previously length-only before build-time rejection)
 
+## v0.14 — stability and smoke-coverage hardening (2026-09-02)
+
+- [x] Migration-lock acquisition bound raised 10s → 60s after contention-jitter flakiness; both known timing-sensitive tests hardened (three consecutive full-suite runs green)
+- [x] Packaged-WPF smoke gate now covers the v0.10–v0.13 UI surfaces (batch buttons, log toolbar, process toolbar) via verified spacebar page navigation
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

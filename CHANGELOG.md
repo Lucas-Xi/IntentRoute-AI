@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-02
+
+### Changed
+
+- Raised the configuration-migration lock acquisition bound from 10 to 60 seconds. The lock retry is the only path that can surface a raw `IOException` to a concurrent startup, and 10 seconds proved too tight under antivirus or CI file-contention jitter; real startup migrations never approach even 10 seconds, so only the failure bound moves.
+
+### Fixed
+
+- Hardened the two timing-sensitive tests that produced the only observed flaky failures: the concurrent-migration test now tolerates slow file systems through the 60-second lock bound above, and the orphan-recovery test waits 15 seconds for the recorded orphan to exit, covering the runtime's own 3-second internal kill bound plus slow-CI margin (the previous 5-second window failed once on a GitHub runner).
+- Extended the packaged-WPF smoke gate to cover the four UI surfaces added since v0.10: it asserts the rules-page batch buttons exist and start disabled, switches to the monitor and process pages, and asserts their new toolbar controls (log search/level/auto-scroll, process search, and the add-as-rule button with its disabled start state). Page switching is driven by focusing the nav radio and sending space — the empirically verified keyboard-activation path — with each switch verified by polling for a target-page control.
+
 ## [0.13.0] - 2026-09-02
 
 ### Added

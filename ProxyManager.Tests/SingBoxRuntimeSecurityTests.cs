@@ -641,7 +641,8 @@ public sealed class SingBoxRuntimeSecurityTests
         {
             using var runtime = new SingBoxRuntime(tempDirectory);
 
-            Assert.True(orphan.WaitForExit(5000));
+            // 生产 RecoverOrphanedProcess 自带 3 秒内部 WaitForExit 上限，测试窗口需覆盖它并留慢 CI 余量。
+            Assert.True(orphan.WaitForExit(15000));
             Assert.False(File.Exists(configPath));
             Assert.False(File.Exists(statePath));
         }

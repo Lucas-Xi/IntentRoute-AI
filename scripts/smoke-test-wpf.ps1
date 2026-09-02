@@ -132,6 +132,86 @@ try {
         throw "Down arrow did not move focus within the navigation group (focused: '$seenId')."
     }
 
+    # Page coverage (v0.14): rules-page batch action buttons must start disabled on a fresh
+    # profile, and the monitor/process pages must expose their toolbar controls once
+    # selected. Pages toggle through Visibility, so collapsed pages keep their children out
+    # of the UIA tree and each page has to be selected before its controls can be found.
+    # The app switches pages in the WPF Click handler (Nav_Click). Empirically the nav
+    # radio buttons expose only SelectionItemPattern (Select() sets IsChecked without
+    # raising Click, so the page never becomes visible), and the spacebar is the only
+    # input that raises OnClick on a focused WPF ButtonBase -- so the pages are switched
+    # by focusing the radio and sending SPACE, then verified by polling for a control
+    # that exists only on the target page.
+    function Find-ControlByAutomationId {
+        param(
+            [System.Windows.Automation.AutomationElement]$Root,
+            [string]$AutomationId
+        )
+        $condition = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::AutomationIdProperty, $AutomationId)
+        return $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
+    }
+
+    function Select-NavPage {
+        param(
+            [System.Windows.Automation.AutomationElement]$Root,
+            [string]$AutomationId,
+            [Parameter(Mandatory = $true)][string]$VerifyControlId
+        )
+        $nav = Find-ControlByAutomationId -Root $Root -AutomationId $AutomationId
+        if ($null -eq $nav) {
+            throw "Main window does not expose the $AutomationId navigation element."
+        }
+        $nav.SetFocus()
+        Start-Sleep -Milliseconds 250
+        [System.Windows.Forms.SendKeys]::SendWait(' ')
+        # Poll for a control that exists only on the target page; a focused-but-not-activated
+        # radio (or any silent Select-path regression) fails loudly here instead of producing
+        # confusing not-found errors in the per-page assertions below.
+        $verifyDeadline = [DateTime]::UtcNow.AddSeconds(5)
+        while ([DateTime]::UtcNow -lt $verifyDeadline) {
+            Start-Sleep -Milliseconds 350
+            if ($null -ne (Find-ControlByAutomationId -Root $Root -AutomationId $VerifyControlId)) {
+                return
+            }
+        }
+        throw "Selecting $AutomationId did not make its page visible (verify control '$VerifyControlId' not found)."
+    }
+
+    foreach ($batchButtonId in @('BatchEnableButton', 'BatchDisableButton', 'BatchDeleteButton')) {
+        $batchButton = Find-ControlByAutomationId -Root $root -AutomationId $batchButtonId
+        if ($null -eq $batchButton) {
+            throw "Rules page does not expose the $batchButtonId automation element."
+        }
+        if ($batchButton.Current.IsEnabled) {
+            throw "$batchButtonId must start disabled until a rule row is selected."
+        }
+    }
+
+    Select-NavPage -Root $root -AutomationId 'NavMonitor' -VerifyControlId 'LogSearchBox'
+    foreach ($monitorControlId in @('LogSearchBox', 'LogLevelFilterCombo', 'LogAutoScrollToggle')) {
+        $monitorControl = Find-ControlByAutomationId -Root $root -AutomationId $monitorControlId
+        if ($null -eq $monitorControl) {
+            throw "Monitor page does not expose the $monitorControlId automation element."
+        }
+    }
+
+    Select-NavPage -Root $root -AutomationId 'NavProcess' -VerifyControlId 'ProcessSearchBox'
+    $processSearchBox = Find-ControlByAutomationId -Root $root -AutomationId 'ProcessSearchBox'
+    if ($null -eq $processSearchBox) {
+        throw 'Process page does not expose the ProcessSearchBox automation element.'
+    }
+    $processAddRuleButton = Find-ControlByAutomationId -Root $root -AutomationId 'ProcessAddRuleButton'
+    if ($null -eq $processAddRuleButton) {
+        throw 'Process page does not expose the ProcessAddRuleButton automation element.'
+    }
+    if ($processAddRuleButton.Current.IsEnabled) {
+        throw 'ProcessAddRuleButton must start disabled until a process row is selected.'
+    }
+
+    # Restore the default page so the application is left in a clean state before closing.
+    Select-NavPage -Root $root -AutomationId 'NavRules' -VerifyControlId 'BatchEnableButton'
+
     if (-not $process.CloseMainWindow()) {
         throw 'Published IntentRouteAI.exe did not accept a normal window-close request.'
     }
@@ -149,7 +229,7 @@ try {
         throw "Published IntentRouteAI.exe returned exit code $($process.ExitCode) after a normal close.`n$diagnostic"
     }
 
-    Write-Host 'WPF smoke test passed: published single-file app created the expected main window and closed cleanly.'
+    Write-Host 'WPF smoke test passed: published single-file app created the expected main window, exposed the rules-page batch buttons and the monitor/process page toolbars, and closed cleanly.'
 }
 finally {
     if ($process) {
