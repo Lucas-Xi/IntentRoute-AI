@@ -50,6 +50,9 @@ public static class Strings
     public static string NavItemProcess => GetString(nameof(NavItemProcess));
     public static string NavItemSettings => GetString(nameof(NavItemSettings));
     public static string NavItemAbout => GetString(nameof(NavItemAbout));
+    public static string NavSectionWorkspace => GetString(nameof(NavSectionWorkspace));
+    public static string NavSectionRuntime => GetString(nameof(NavSectionRuntime));
+    public static string NavSectionApp => GetString(nameof(NavSectionApp));
     public static string SidebarVersion => GetString(nameof(SidebarVersion));
     public static string StatusFooterLabel => GetString(nameof(StatusFooterLabel));
     public static string StatusFooterInitial => GetString(nameof(StatusFooterInitial));
@@ -275,6 +278,8 @@ public static class Strings
     public static string RulesBatchDisableAutomation => GetString(nameof(RulesBatchDisableAutomation));
     public static string RulesBatchDeleteAutomation => GetString(nameof(RulesBatchDeleteAutomation));
     public static string RulesBatchDeleteConfirmFormat => GetString(nameof(RulesBatchDeleteConfirmFormat));
+    public static string RulesBatchHint => GetString(nameof(RulesBatchHint));
+    public static string CommonCancel => GetString(nameof(CommonCancel));
     public static string DialogImportTitle => GetString(nameof(DialogImportTitle));
     public static string DialogExportTitle => GetString(nameof(DialogExportTitle));
     public static string DialogJsonFilter => GetString(nameof(DialogJsonFilter));

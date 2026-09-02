@@ -33,15 +33,18 @@
   <data name="SettingsLanguageFollowSystem" xml:space="preserve"><value>Follow system</value></data>
   <data name="SettingsLanguageRestartHint" xml:space="preserve"><value>Language preference saved. It takes effect after restarting the app.</value></data>
   <data name="WindowTitle" xml:space="preserve"><value>IntentRoute AI - Windows Smart Routing</value></data>
-  <data name="NavItemRules" xml:space="preserve"><value>📋  Rule management</value></data>
-  <data name="NavItemPolicy" xml:space="preserve"><value>◈  AI policy check</value></data>
-  <data name="NavItemRouteSimulator" xml:space="preserve"><value>◇  AI route simulator</value></data>
-  <data name="NavItemAi" xml:space="preserve"><value>✦  AI rule assistant</value></data>
-  <data name="NavItemMonitor" xml:space="preserve"><value>📋  Runtime log</value></data>
-  <data name="NavItemProcess" xml:space="preserve"><value>⚙️  Process list</value></data>
-  <data name="NavItemSettings" xml:space="preserve"><value>🔧  Settings</value></data>
-  <data name="NavItemAbout" xml:space="preserve"><value>ℹ️  About</value></data>
-  <data name="SidebarVersion" xml:space="preserve"><value>v0.9.0 development preview</value></data>
+  <data name="NavItemRules" xml:space="preserve"><value>Rule management</value></data>
+  <data name="NavItemPolicy" xml:space="preserve"><value>AI policy check</value></data>
+  <data name="NavItemRouteSimulator" xml:space="preserve"><value>AI route simulator</value></data>
+  <data name="NavItemAi" xml:space="preserve"><value>AI rule assistant</value></data>
+  <data name="NavItemMonitor" xml:space="preserve"><value>Runtime log</value></data>
+  <data name="NavItemProcess" xml:space="preserve"><value>Process list</value></data>
+  <data name="NavItemSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="NavItemAbout" xml:space="preserve"><value>About</value></data>
+  <data name="NavSectionWorkspace" xml:space="preserve"><value>Rules &amp; policy</value></data>
+  <data name="NavSectionRuntime" xml:space="preserve"><value>Runtime &amp; monitoring</value></data>
+  <data name="NavSectionApp" xml:space="preserve"><value>Application</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.16.0 development preview</value></data>
   <data name="StatusFooterLabel" xml:space="preserve"><value>Runtime status</value></data>
   <data name="StatusFooterInitial" xml:space="preserve"><value>Checking sing-box…</value></data>
   <data name="ModeDirectLabel" xml:space="preserve"><value>Direct by default</value></data>
@@ -90,7 +93,7 @@
   <data name="RuleEditBadIps" xml:space="preserve"><value>Invalid IP/CIDR constraint format</value></data>
   <data name="RuleEditBadPorts" xml:space="preserve"><value>Invalid port constraint format</value></data>
   <data name="RuleEditBadProtocol" xml:space="preserve"><value>Protocol must be TCP, UDP, Both, or Any</value></data>
-  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.9.0</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.16.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>Features</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• Drag an application to add rules</value></data>
   <data name="AboutFeature2" xml:space="preserve"><value>• Proxy / direct / block routing modes</value></data>
@@ -105,11 +108,11 @@
   <data name="RecoveryOpenFolder" xml:space="preserve"><value>Open folder</value></data>
   <data name="RecoveryImport" xml:space="preserve"><value>Import valid config</value></data>
   <data name="RecoveryReset" xml:space="preserve"><value>Explicit reset</value></data>
-  <data name="RulesSearchPlaceholder" xml:space="preserve"><value>🔍 Search rules...</value></data>
-  <data name="RulesAdd" xml:space="preserve"><value>➕ Add rule</value></data>
-  <data name="RulesImport" xml:space="preserve"><value>📥 Import</value></data>
-  <data name="RulesExport" xml:space="preserve"><value>📤 Export</value></data>
-  <data name="RulesClear" xml:space="preserve"><value>🗑 Clear</value></data>
+  <data name="RulesSearchPlaceholder" xml:space="preserve"><value>Search rules…</value></data>
+  <data name="RulesAdd" xml:space="preserve"><value>Add rule</value></data>
+  <data name="RulesImport" xml:space="preserve"><value>Import</value></data>
+  <data name="RulesExport" xml:space="preserve"><value>Export</value></data>
+  <data name="RulesClear" xml:space="preserve"><value>Clear</value></data>
   <data name="RulesBatchEnable" xml:space="preserve"><value>Enable selected</value></data>
   <data name="RulesBatchDisable" xml:space="preserve"><value>Disable selected</value></data>
   <data name="RulesBatchDelete" xml:space="preserve"><value>Delete selected</value></data>
@@ -358,6 +361,7 @@
   <data name="DialogPickAppTitle" xml:space="preserve"><value>Select application</value></data>
   <data name="DialogExeFilter" xml:space="preserve"><value>Executable files (*.exe)|*.exe</value></data>
   <data name="DialogConfirmTitle" xml:space="preserve"><value>Confirm</value></data>
+  <data name="CommonCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="DialogSuccessTitle" xml:space="preserve"><value>Success</value></data>
   <data name="DialogErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="RulesClearConfirm" xml:space="preserve"><value>Clear all rules?</value></data>
@@ -366,6 +370,7 @@
   <data name="RulesBatchDisableAutomation" xml:space="preserve"><value>Disable the selected rules</value></data>
   <data name="RulesBatchDeleteAutomation" xml:space="preserve"><value>Delete the selected rules</value></data>
   <data name="RulesBatchDeleteConfirmFormat" xml:space="preserve"><value>Delete the {0} selected rules?</value></data>
+  <data name="RulesBatchHint" xml:space="preserve"><value>Enabled after selecting rows (Ctrl/Shift to multi-select)</value></data>
   <data name="DialogImportTitle" xml:space="preserve"><value>Import rules</value></data>
   <data name="DialogExportTitle" xml:space="preserve"><value>Export rules</value></data>
   <data name="DialogJsonFilter" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>

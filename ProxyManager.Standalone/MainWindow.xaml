@@ -4,179 +4,19 @@
         xmlns:loc="clr-namespace:ProxyManager.Standalone.Localization"
         Title="{x:Static loc:Strings.WindowTitle}" Height="720" Width="1040"
         MinHeight="500" MinWidth="750"
-        Background="#0F0F0F"
+        Background="{StaticResource BackgroundBrush}"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
         WindowStyle="None"
         AllowsTransparency="True">
 
+    <!--
+      v0.16 起设计系统统一在 App.xaml：色彩、按钮、输入框、下拉框、导航等
+      全部由应用级资源提供（含 PrimaryBtn/SecondaryBtn/BgBrush 等历史别名）。
+      窗口本地仅保留本窗口特有的转换器与规则右键菜单。
+    -->
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <!-- 颜色定义 -->
-        <Color x:Key="BgColor">#0F0F0F</Color>
-        <Color x:Key="SurfaceColor">#161616</Color>
-        <Color x:Key="CardColor">#1C1C1C</Color>
-        <Color x:Key="HoverColor">#222222</Color>
-        <Color x:Key="AccentColor">#3B82F6</Color>
-        <Color x:Key="AccentHoverColor">#2563EB</Color>
-        <Color x:Key="SuccessColor">#22C55E</Color>
-        <Color x:Key="WarningColor">#EAB308</Color>
-        <Color x:Key="DangerColor">#EF4444</Color>
-        <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
-        <Color x:Key="TextSecondaryColor">#A1A1AA</Color>
-        <Color x:Key="TextMutedColor">#71717A</Color>
-        <Color x:Key="BorderColor">#27272A</Color>
-
-        <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
-        <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
-        <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
-        <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
-        <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
-        <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
-        <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
-        <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
-        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimaryColor}"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
-        <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
-
-        <!-- 导航按钮样式 -->
-        <Style x:Key="NavButton" TargetType="RadioButton">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="border" Background="{TemplateBinding Background}"
-                                CornerRadius="8" Padding="14,10" Margin="0,2"
-                                BorderThickness="1" BorderBrush="Transparent">
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource HoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                                <Setter Property="FontWeight" Value="Medium"/>
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource CardBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- 主按钮样式 -->
-        <Style x:Key="PrimaryBtn" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,7"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
-                                Padding="{TemplateBinding Padding}"
-                                BorderThickness="1" BorderBrush="Transparent">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource TextBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- 次要按钮样式 -->
-        <Style x:Key="SecondaryBtn" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="Padding" Value="16,7"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- 输入框样式 -->
-        <Style x:Key="InputBox" TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
-            <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                Padding="{TemplateBinding Padding}">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="GridViewColumnHeader">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="FontSize" Value="11"/>
-        </Style>
 
         <!-- 右键菜单 -->
         <ContextMenu x:Key="RuleMenu" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}">
@@ -190,7 +30,7 @@
             <MenuItem Header="{x:Static loc:Strings.MenuMoveUp}" Click="MoveUp_Click" Foreground="{StaticResource TextBrush}"/>
             <MenuItem Header="{x:Static loc:Strings.MenuMoveDown}" Click="MoveDown_Click" Foreground="{StaticResource TextBrush}"/>
             <Separator Background="{StaticResource BorderBrush}"/>
-            <MenuItem Header="{x:Static loc:Strings.MenuDelete}" Click="DeleteRule_Click" Foreground="{StaticResource DangerBrush}"/>
+            <MenuItem Header="{x:Static loc:Strings.MenuDelete}" Click="DeleteRule_Click" Foreground="{StaticResource ErrorBrush}"/>
         </ContextMenu>
     </Window.Resources>
 
@@ -210,53 +50,69 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Logo区域 -->
-                    <Border Grid.Row="0" Padding="18,20" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <StackPanel>
-                            <TextBlock Text="✦ IntentRoute AI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="{x:Static loc:Strings.SidebarVersion}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                    <!-- 品牌区 -->
+                    <Border Grid.Row="0" Padding="16,18" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="30" Height="30" CornerRadius="7"
+                                    Background="{StaticResource AccentDimBrush}" VerticalAlignment="Center">
+                                <TextBlock Text="✦" FontSize="15" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="IntentRoute AI" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+                                <TextBlock Text="{x:Static loc:Strings.SidebarVersion}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
-                    <!-- 导航菜单 -->
-                    <StackPanel Grid.Row="1" Margin="10,16,10,0">
-                        <RadioButton x:Name="NavRules" Content="{x:Static loc:Strings.NavItemRules}" GroupName="Nav" IsChecked="True"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavRules" AutomationProperties.Name="{x:Static loc:Strings.NavItemRules}"/>
-                        <RadioButton x:Name="NavPolicy" Content="{x:Static loc:Strings.NavItemPolicy}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavPolicy" AutomationProperties.Name="{x:Static loc:Strings.NavItemPolicy}"/>
-                        <RadioButton x:Name="NavRouteSimulator" Content="{x:Static loc:Strings.NavItemRouteSimulator}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavRouteSimulator" AutomationProperties.Name="{x:Static loc:Strings.NavItemRouteSimulator}"/>
-                        <RadioButton x:Name="NavAi" Content="{x:Static loc:Strings.NavItemAi}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavAi" AutomationProperties.Name="{x:Static loc:Strings.NavItemAi}"/>
-                        <RadioButton x:Name="NavMonitor" Content="{x:Static loc:Strings.NavItemMonitor}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavMonitor" AutomationProperties.Name="{x:Static loc:Strings.NavItemMonitor}"/>
-                        <RadioButton x:Name="NavProcess" Content="{x:Static loc:Strings.NavItemProcess}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavProcess" AutomationProperties.Name="{x:Static loc:Strings.NavItemProcess}"/>
-                        <RadioButton x:Name="NavSettings" Content="{x:Static loc:Strings.NavItemSettings}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavSettings" AutomationProperties.Name="{x:Static loc:Strings.NavItemSettings}"/>
+                    <!-- 导航菜单：分组标签 + 保持既有顺序（冒烟门禁依赖 NavRules→下方向键→NavPolicy 的相邻关系） -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="10,12,10,0">
+                        <StackPanel>
+                            <TextBlock Text="{x:Static loc:Strings.NavSectionWorkspace}" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}" Margin="12,2,0,6"/>
+                            <RadioButton x:Name="NavRules" Content="{x:Static loc:Strings.NavItemRules}" GroupName="Nav" IsChecked="True"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavRules" AutomationProperties.Name="{x:Static loc:Strings.NavItemRules}"/>
+                            <RadioButton x:Name="NavPolicy" Content="{x:Static loc:Strings.NavItemPolicy}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavPolicy" AutomationProperties.Name="{x:Static loc:Strings.NavItemPolicy}"/>
+                            <RadioButton x:Name="NavRouteSimulator" Content="{x:Static loc:Strings.NavItemRouteSimulator}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavRouteSimulator" AutomationProperties.Name="{x:Static loc:Strings.NavItemRouteSimulator}"/>
+                            <RadioButton x:Name="NavAi" Content="{x:Static loc:Strings.NavItemAi}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavAi" AutomationProperties.Name="{x:Static loc:Strings.NavItemAi}"/>
 
-                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="8,16,8,12"/>
+                            <TextBlock Text="{x:Static loc:Strings.NavSectionRuntime}" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}" Margin="12,14,0,6"/>
+                            <RadioButton x:Name="NavMonitor" Content="{x:Static loc:Strings.NavItemMonitor}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavMonitor" AutomationProperties.Name="{x:Static loc:Strings.NavItemMonitor}"/>
+                            <RadioButton x:Name="NavProcess" Content="{x:Static loc:Strings.NavItemProcess}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavProcess" AutomationProperties.Name="{x:Static loc:Strings.NavItemProcess}"/>
 
-                        <RadioButton x:Name="NavAbout" Content="{x:Static loc:Strings.NavItemAbout}" GroupName="Nav"
-                                     Style="{StaticResource NavButton}" Click="Nav_Click"
-                                     AutomationProperties.AutomationId="NavAbout" AutomationProperties.Name="{x:Static loc:Strings.NavItemAbout}"/>
-                    </StackPanel>
+                            <TextBlock Text="{x:Static loc:Strings.NavSectionApp}" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}" Margin="12,14,0,6"/>
+                            <RadioButton x:Name="NavSettings" Content="{x:Static loc:Strings.NavItemSettings}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavSettings" AutomationProperties.Name="{x:Static loc:Strings.NavItemSettings}"/>
+                            <RadioButton x:Name="NavAbout" Content="{x:Static loc:Strings.NavItemAbout}" GroupName="Nav"
+                                         Style="{StaticResource NavButton}" Click="Nav_Click"
+                                         AutomationProperties.AutomationId="NavAbout" AutomationProperties.Name="{x:Static loc:Strings.NavItemAbout}"/>
+                        </StackPanel>
+                    </ScrollViewer>
 
                     <!-- 底部状态 -->
                     <Border Grid.Row="2" Padding="14,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource MutedTextBrush}" Margin="0,0,8,0"/>
                                 <TextBlock x:Name="StatusLabel" Text="{x:Static loc:Strings.StatusFooterLabel}" FontSize="12" Foreground="{StaticResource TextBrush}"/>
                             </StackPanel>
-                            <TextBlock x:Name="StatusDetail" Text="{x:Static loc:Strings.StatusFooterInitial}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="StatusDetail" Text="{x:Static loc:Strings.StatusFooterInitial}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                       MaxHeight="52" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -271,7 +127,8 @@
                 </Grid.RowDefinitions>
 
                 <!-- 顶部标题栏 -->
-                <Border Grid.Row="0" Background="{StaticResource BgBrush}" Padding="20,12,20,0">
+                <Border Grid.Row="0" Background="{StaticResource BgBrush}" Padding="20,12,8,10"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -279,36 +136,35 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- 标题 -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <TextBlock x:Name="PageTitle" Text="{x:Static loc:Strings.PageTitleRules}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock x:Name="PageSubtitle" Text="{x:Static loc:Strings.PageSubtitleRules}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="8,0,0,6"/>
+                        <!-- 标题：主副两行，基线对齐 -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock x:Name="PageTitle" Text="{x:Static loc:Strings.PageTitleRules}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock x:Name="PageSubtitle" Text="{x:Static loc:Strings.PageSubtitleRules}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0"/>
                         </StackPanel>
 
-                        <!-- 全局模式切换 -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="2">
-                                <StackPanel Orientation="Horizontal">
-                                    <RadioButton x:Name="ModeDirect" Content="{x:Static loc:Strings.ModeDirectLabel}" GroupName="Mode" IsChecked="True"
-                                                 Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
-                                    <RadioButton x:Name="ModeProxy" Content="{x:Static loc:Strings.ModeProxyLabel}" GroupName="Mode"
-                                                 Style="{StaticResource NavButton}" Click="Mode_Changed" FontSize="12"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
+                        <!-- 全局模式切换（分段控件） -->
+                        <Border Grid.Column="1" Background="{StaticResource CardBrush}" CornerRadius="7" Padding="3"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ModeDirect" Content="{x:Static loc:Strings.ModeDirectLabel}" GroupName="Mode" IsChecked="True"
+                                             Style="{StaticResource SegmentItem}" Click="Mode_Changed"
+                                             AutomationProperties.Name="{x:Static loc:Strings.ModeDirectLabel}"/>
+                                <RadioButton x:Name="ModeProxy" Content="{x:Static loc:Strings.ModeProxyLabel}" GroupName="Mode"
+                                             Style="{StaticResource SegmentItem}" Click="Mode_Changed"
+                                             AutomationProperties.Name="{x:Static loc:Strings.ModeProxyLabel}"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- 窗口控制 -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal">
-                            <Button Content="—" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
-                                    BorderThickness="0" FontSize="16" Width="32" Height="28" Cursor="Hand"
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                            <Button Content="—" Style="{StaticResource WindowButton}"
                                     AutomationProperties.AutomationId="WindowMinimize" AutomationProperties.Name="{x:Static loc:Strings.WindowMinimizeName}"
                                     Click="Minimize_Click"/>
-                            <Button Content="□" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
-                                    BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                            <Button Content="□" Style="{StaticResource WindowButton}"
                                     AutomationProperties.AutomationId="WindowMaximize" AutomationProperties.Name="{x:Static loc:Strings.WindowMaximizeName}"
                                     Click="Maximize_Click"/>
-                            <Button Content="✕" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
-                                    BorderThickness="0" FontSize="14" Width="32" Height="28" Cursor="Hand"
+                            <Button Content="✕" Style="{StaticResource WindowCloseButton}"
                                     AutomationProperties.AutomationId="WindowClose" AutomationProperties.Name="{x:Static loc:Strings.WindowCloseName}"
                                     Click="Close_Click"/>
                         </StackPanel>
@@ -317,7 +173,7 @@
 
                 <!-- 配置恢复阻断提示 -->
                 <Border x:Name="ConfigRecoveryBanner" Grid.Row="1" Visibility="Collapsed"
-                        Background="#3D2E00" BorderBrush="{StaticResource WarningBrush}"
+                        Background="{StaticResource WarningSoftBrush}" BorderBrush="{StaticResource WarningBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="12" Margin="16,8,16,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -351,60 +207,78 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- 工具栏 -->
+                        <!-- 工具栏：第一行搜索/统计/主操作，第二行批量与危险操作 -->
                         <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="8"
                                 Padding="12" Margin="0,0,0,10">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                <!-- 搜索框 -->
-                                <Grid Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBox x:Name="SearchBox" Width="200"
-                                             Style="{StaticResource InputBox}" FontSize="12"
-                                             TextChanged="Search_Changed"/>
-                                    <TextBlock x:Name="SearchPlaceholder" Text="{x:Static loc:Strings.RulesSearchPlaceholder}"
-                                               Foreground="{StaticResource TextMutedBrush}"
-                                               FontSize="12" Margin="11,0,0,0"
-                                               IsHitTestVisible="False" VerticalAlignment="Center"
-                                               Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVis}}"/>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 搜索框 -->
+                                    <Grid Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBox x:Name="SearchBox" Width="240"
+                                                 Style="{StaticResource InputBox}" FontSize="12"
+                                                 TextChanged="Search_Changed"/>
+                                        <TextBlock x:Name="SearchPlaceholder" Text="{x:Static loc:Strings.RulesSearchPlaceholder}"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="12" Margin="11,0,0,0"
+                                                   IsHitTestVisible="False" VerticalAlignment="Center"
+                                                   Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVis}}"/>
+                                    </Grid>
+
+                                    <!-- 统计徽标 -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="10" Padding="9,3" Margin="0,0,6,0">
+                                            <TextBlock x:Name="ProxyCount" Text="代理: 0" FontSize="11" Foreground="{StaticResource AccentBrush}"/>
+                                        </Border>
+                                        <Border Background="{StaticResource SuccessSoftBrush}" CornerRadius="10" Padding="9,3" Margin="0,0,6,0">
+                                            <TextBlock x:Name="DirectCount" Text="直连: 0" FontSize="11" Foreground="{StaticResource SuccessBrush}"/>
+                                        </Border>
+                                        <Border Background="{StaticResource ErrorSoftBrush}" CornerRadius="10" Padding="9,3">
+                                            <TextBlock x:Name="BlockCount" Text="阻止: 0" FontSize="11" Foreground="{StaticResource ErrorBrush}"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- 主操作 -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <Button Content="{x:Static loc:Strings.RulesAdd}" Style="{StaticResource PrimaryBtn}"
+                                                Click="AddRule_Click" Margin="0,0,8,0"/>
+                                        <Button Content="{x:Static loc:Strings.RulesImport}" Style="{StaticResource SecondaryBtn}"
+                                                Click="Import_Click" Margin="0,0,8,0"/>
+                                        <Button Content="{x:Static loc:Strings.RulesExport}" Style="{StaticResource SecondaryBtn}"
+                                                Click="Export_Click"/>
+                                    </StackPanel>
                                 </Grid>
 
-                                <!-- 统计信息 -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Background="#1A3B82F6" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
-                                        <TextBlock x:Name="ProxyCount" Text="代理: 0" FontSize="11" Foreground="{StaticResource AccentBrush}"/>
-                                    </Border>
-                                    <Border Background="#1A22C55E" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
-                                        <TextBlock x:Name="DirectCount" Text="直连: 0" FontSize="11" Foreground="{StaticResource SuccessBrush}"/>
-                                    </Border>
-                                    <Border Background="#1AEF4444" CornerRadius="4" Padding="8,3">
-                                        <TextBlock x:Name="BlockCount" Text="阻止: 0" FontSize="11" Foreground="{StaticResource DangerBrush}"/>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- 操作按钮 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                    <Button Content="{x:Static loc:Strings.RulesAdd}" Style="{StaticResource PrimaryBtn}"
-                                            Click="AddRule_Click" Margin="0,0,8,0"/>
-                                    <Button Content="{x:Static loc:Strings.RulesImport}" Style="{StaticResource SecondaryBtn}"
-                                            Click="Import_Click" Margin="0,0,8,0"/>
-                                    <Button Content="{x:Static loc:Strings.RulesExport}" Style="{StaticResource SecondaryBtn}"
-                                            Click="Export_Click" Margin="0,0,8,0"/>
+                                <!-- 批量/危险操作行 -->
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                                     <Button x:Name="BatchEnableButton" Content="{x:Static loc:Strings.RulesBatchEnable}" Style="{StaticResource SecondaryBtn}"
-                                            Margin="0,0,8,0" IsEnabled="False"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False"
                                             AutomationProperties.Name="{x:Static loc:Strings.RulesBatchEnableAutomation}" Click="BatchEnable_Click"/>
                                     <Button x:Name="BatchDisableButton" Content="{x:Static loc:Strings.RulesBatchDisable}" Style="{StaticResource SecondaryBtn}"
-                                            Margin="0,0,8,0" IsEnabled="False"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False"
                                             AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDisableAutomation}" Click="BatchDisable_Click"/>
                                     <Button x:Name="BatchDeleteButton" Content="{x:Static loc:Strings.RulesBatchDelete}" Style="{StaticResource SecondaryBtn}"
-                                            Margin="0,0,8,0" IsEnabled="False" Foreground="{StaticResource DangerBrush}"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False" Foreground="{StaticResource ErrorBrush}"
                                             AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDeleteAutomation}" Click="BatchDelete_Click"/>
+                                    <Border Width="1" Height="18" Background="{StaticResource BorderBrush}" VerticalAlignment="Center" Margin="4,0,10,0"/>
                                     <Button Content="{x:Static loc:Strings.RulesClear}" Style="{StaticResource SecondaryBtn}"
-                                            Click="Clear_Click" Foreground="{StaticResource DangerBrush}"/>
+                                            FontSize="11" Padding="12,5" Foreground="{StaticResource ErrorBrush}"
+                                            Click="Clear_Click"/>
+                                    <TextBlock Text="{x:Static loc:Strings.RulesBatchHint}" FontSize="11" VerticalAlignment="Center"
+                                               Foreground="{StaticResource MutedTextBrush}" Margin="12,0,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -452,43 +326,46 @@
                                                     <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
                                                 </Trigger>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#263B82F6"/>
+                                                    <Setter Property="Background" Value="{StaticResource SelectionSoftBrush}"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
                                     </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid MinHeight="48" Margin="0">
+                                            <Grid MinHeight="50" Margin="0">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="44"/>
                                                     <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="90"/>
-                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="96"/>
+                                                    <ColumnDefinition Width="72"/>
                                                     <ColumnDefinition Width="120"/>
-                                                    <ColumnDefinition Width="30"/>
+                                                    <ColumnDefinition Width="34"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="{Binding Index}" FontSize="11"
-                                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"
                                                            HorizontalAlignment="Center"/>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,5">
-                                                    <TextBlock Text="{Binding ExeName}" FontSize="12" FontWeight="SemiBold"
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,7">
+                                                    <TextBlock Text="{Binding ExeName}" FontSize="12.5" FontWeight="SemiBold"
                                                                Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis"
                                                                ToolTip="{Binding ExePath}"/>
-                                                    <TextBlock Text="{Binding ConditionSummary}" FontSize="10"
-                                                               Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding ConditionSummary}" FontSize="10.5"
+                                                               Foreground="{StaticResource SecondaryTextBrush}" TextTrimming="CharacterEllipsis"
+                                                               Margin="0,3,0,0"/>
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="2" Text="{Binding ModeText}" FontSize="11"
-                                                           Foreground="{Binding ModeColor}" FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Ellipse Width="7" Height="7" Fill="{Binding ModeColor}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding ModeText}" FontSize="11" Margin="6,0,0,0"
+                                                               Foreground="{Binding ModeColor}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                                 <TextBlock Grid.Column="3" Text="{Binding StatusText}" FontSize="11"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Foreground="{StaticResource SecondaryTextBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="4" Text="{Binding CreatedAt}" FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                <TextBlock Grid.Column="4" Text="{Binding CreatedAt}" FontSize="10.5"
+                                                           Foreground="{StaticResource MutedTextBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 <TextBlock Grid.Column="5" Text="⋮" FontSize="16"
-                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           Foreground="{StaticResource MutedTextBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            ToolTip="{x:Static loc:Strings.RulesRowMenuHint}"/>
                                             </Grid>
@@ -498,16 +375,29 @@
 
                                 <!-- 空状态 -->
                                 <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <TextBlock Text="📂" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptyPrimary}" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptySecondary}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                    <Border Width="64" Height="64" CornerRadius="14"
+                                            Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Center">
+                                        <Path Data="M3,6 C3,4.9 3.9,4 5,4 L10,4 L12,6.5 L21,6.5 C22.1,6.5 23,7.4 23,8.5 L23,18 C23,19.1 22.1,20 21,20 L5,20 C3.9,20 3,19.1 3,18 Z"
+                                              Stroke="{StaticResource MutedTextBrush}" StrokeThickness="1.6" Fill="Transparent"
+                                              Stretch="Uniform" Margin="12"/>
+                                    </Border>
+                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptyPrimary}" FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptySecondary}" FontSize="12" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"/>
                                 </StackPanel>
 
                                 <!-- 拖拽覆盖层 -->
-                                <Border x:Name="DropOverlay" Background="#990F0F0F" Visibility="Collapsed">
+                                <Border x:Name="DropOverlay" Background="{StaticResource OverlayBrush}" Visibility="Collapsed">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <TextBlock Text="📥" FontSize="48" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="{x:Static loc:Strings.RulesDropOverlay}" FontSize="16" Foreground="{StaticResource TextBrush}" Margin="0,12,0,0"/>
+                                        <Border Width="72" Height="72" CornerRadius="16"
+                                                Background="{StaticResource AccentSoftBrush}"
+                                                BorderBrush="{StaticResource AccentBrush}" BorderThickness="1"
+                                                HorizontalAlignment="Center">
+                                            <Path Data="M12,3 L12,14 M12,3 L7,8 M12,3 L17,8 M4,15 L4,19 C4,20.1 4.9,21 6,21 L18,21 C19.1,21 20,20.1 20,19 L20,15"
+                                                  Stroke="{StaticResource AccentBrush}" StrokeThickness="1.8"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                  Stretch="Uniform" Margin="14"/>
+                                        </Border>
+                                        <TextBlock Text="{x:Static loc:Strings.RulesDropOverlay}" FontSize="15" Foreground="{StaticResource TextBrush}" Margin="0,14,0,0" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -532,31 +422,19 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                    <TextBlock Text="{x:Static loc:Strings.AiProviderLabel}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                    <TextBlock Text="{x:Static loc:Strings.AiProviderLabel}" FontSize="11" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,6"/>
                                     <ComboBox x:Name="AiProviderCombo" Style="{StaticResource InputCombo}"
-                                              Background="#F3F4F6" Foreground="#111827"
-                                              SelectionChanged="AiProvider_Changed">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}" Foreground="#111827"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                              MinWidth="150"
+                                              SelectionChanged="AiProvider_Changed"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                                    <TextBlock Text="{x:Static loc:Strings.ModelLabel}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                                    <TextBlock Text="{x:Static loc:Strings.ModelLabel}" FontSize="11" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,6"/>
                                     <ComboBox x:Name="AiModelCombo" Style="{StaticResource InputCombo}"
-                                              Background="#F3F4F6" Foreground="#111827">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}" Foreground="#111827"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                              MinWidth="220"/>
                                 </StackPanel>
                                 <Button Grid.Column="2" Content="{x:Static loc:Strings.RefreshModelsLabel}" Style="{StaticResource SecondaryBtn}" Padding="12,6"
                                         VerticalAlignment="Bottom" Margin="0,0,14,0" Click="RefreshAiModels_Click"/>
-                                <Border Grid.Column="3" Background="#1422C55E" BorderBrush="#3322C55E" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                                <Border Grid.Column="3" Background="{StaticResource SuccessSoftBrush}" BorderBrush="{StaticResource SuccessDimBrush}" BorderThickness="1" CornerRadius="6" Padding="12,8">
                                     <TextBlock x:Name="AiPrivacyText" Text="{x:Static loc:Strings.AiPrivacyInitial}"
                                                FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                                 </Border>
@@ -728,21 +606,17 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,0">
-                                    <TextBlock Text="{x:Static loc:Strings.AiProviderLabel}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
-                                    <ComboBox x:Name="PolicyProviderCombo" Style="{StaticResource InputCombo}" Background="#F3F4F6" Foreground="#111827" SelectionChanged="PolicyProvider_Changed">
-                                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#111827"/></DataTemplate></ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <TextBlock Text="{x:Static loc:Strings.AiProviderLabel}" FontSize="10" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="PolicyProviderCombo" Style="{StaticResource InputCombo}" MinWidth="115" SelectionChanged="PolicyProvider_Changed"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,8,0">
-                                    <TextBlock Text="{x:Static loc:Strings.ModelLabel}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
-                                    <ComboBox x:Name="PolicyModelCombo" Style="{StaticResource InputCombo}" Background="#F3F4F6" Foreground="#111827">
-                                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#111827"/></DataTemplate></ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <TextBlock Text="{x:Static loc:Strings.ModelLabel}" FontSize="10" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="PolicyModelCombo" Style="{StaticResource InputCombo}" MinWidth="150"/>
                                 </StackPanel>
                                 <Button Grid.Row="0" Grid.Column="2" Content="{x:Static loc:Strings.RefreshModelsLabel}" Style="{StaticResource SecondaryBtn}" Padding="8,6" VerticalAlignment="Bottom" Margin="0,0,6,0" Click="RefreshPolicyModels_Click"/>
                                 <Button Grid.Row="0" Grid.Column="3" Content="{x:Static loc:Strings.PolicyReanalyze}" Style="{StaticResource SecondaryBtn}" Padding="8,6" VerticalAlignment="Bottom" Margin="0,0,6,0" Click="AnalyzePolicy_Click"/>
                                 <Button Grid.Row="0" Grid.Column="4" x:Name="PolicyLocateButton" Content="{x:Static loc:Strings.PolicyLocate}" Style="{StaticResource SecondaryBtn}" Padding="8,6" VerticalAlignment="Bottom" IsEnabled="False" Click="LocatePolicyRule_Click"/>
-                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Background="#143B82F6" BorderBrush="#333B82F6" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,8,0,0">
+                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Background="{StaticResource AccentSoftBrush}" BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,8,0,0">
                                     <TextBlock Text="{x:Static loc:Strings.PolicyPrivacyNote}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                                 </Border>
                             </Grid>
@@ -808,7 +682,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Background="#143B82F6" BorderBrush="#553B82F6"
+                        <Border Grid.Row="0" Background="{StaticResource AccentSoftBrush}" BorderBrush="{StaticResource AccentDimBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="{x:Static loc:Strings.RouteBannerTitle}" FontSize="12" FontWeight="SemiBold"
@@ -838,7 +712,7 @@
                                 <StackPanel Grid.Column="1" Margin="0,0,8,0">
                                     <TextBlock Text="{x:Static loc:Strings.RouteDestinationKindLabel}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                                     <ComboBox x:Name="RouteDestinationKindCombo" Style="{StaticResource InputCombo}"
-                                              Background="#F3F4F6" Foreground="#111827" SelectedIndex="0"
+                                              SelectedIndex="0"
                                               AutomationProperties.Name="{x:Static loc:Strings.RouteDestinationKindLabel}" SelectionChanged="RouteDestinationKind_Changed">
                                         <ComboBoxItem Content="{x:Static loc:Strings.RouteDestinationDomain}"/>
                                         <ComboBoxItem Content="{x:Static loc:Strings.RouteDestinationIp}"/>
@@ -858,7 +732,7 @@
                                 <StackPanel Grid.Column="4" Margin="0,0,8,0">
                                     <TextBlock Text="{x:Static loc:Strings.RouteTransportLabel}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                                     <ComboBox x:Name="RouteTransportCombo" Style="{StaticResource InputCombo}"
-                                              Background="#F3F4F6" Foreground="#111827" SelectedIndex="0"
+                                              SelectedIndex="0"
                                               AutomationProperties.Name="{x:Static loc:Strings.RouteTransportLabel}" SelectionChanged="RouteQuery_Changed">
                                         <ComboBoxItem Content="TCP"/>
                                         <ComboBoxItem Content="UDP"/>
@@ -889,7 +763,7 @@
                                     </Grid.RowDefinitions>
                                     <Grid Grid.Row="0">
                                         <TextBlock Text="{x:Static loc:Strings.RouteResultTitle}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                                        <Border HorizontalAlignment="Right" Background="#1A6B7280" CornerRadius="4" Padding="7,3">
+                                        <Border HorizontalAlignment="Right" Background="{StaticResource HoverBrush}" CornerRadius="4" Padding="7,3">
                                             <TextBlock x:Name="RouteDecisionBadgeText" Text="{x:Static loc:Strings.RouteBadgeInitial}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
                                                        AutomationProperties.LiveSetting="Polite"/>
                                         </Border>
@@ -952,7 +826,7 @@
                                 <TextBlock x:Name="RouteDecisionStatusText" Text="{x:Static loc:Strings.RouteStatusInitial}"
                                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,120,0"
                                            AutomationProperties.LiveSetting="Polite"/>
-                                <Button x:Name="RouteDecisionCancelButton" Content="取消" Style="{StaticResource SecondaryBtn}"
+                                <Button x:Name="RouteDecisionCancelButton" Content="{x:Static loc:Strings.CommonCancel}" Style="{StaticResource SecondaryBtn}"
                                         HorizontalAlignment="Right" IsEnabled="False" AutomationProperties.Name="取消本地路由推演"
                                         Click="CancelRouteSimulation_Click"/>
                             </Grid>

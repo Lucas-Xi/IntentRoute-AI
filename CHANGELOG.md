@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-03
+
+### Changed
+
+- Unified the UI on a single design system. `App.xaml` is now the only source for colors, typography, and control styles; the main window's private copy of the palette (which had drifted to a different dark gray) was removed, and legacy resource keys (`PrimaryBtn`, `SecondaryBtn`, `BgBrush`, `DangerBrush`, `TextMutedBrush`, `TextSecondaryBrush`) resolve as aliases so existing dialogs and code-behind `FindResource` calls keep working.
+- Every ComboBox and CheckBox now renders with a real dark template. Previously the app-level ComboBox style had no template, so provider/model/transport/language dropdowns rendered as light-gray system controls inside the dark UI — six of them were patched with hard-coded light `#F3F4F6` backgrounds to match, which looked wrong against the theme. The overrides are gone and all dropdowns, including their popups and item hover states, follow the palette.
+- Redesigned the shell: the sidebar groups navigation under labeled sections (rules & policy / runtime & monitoring / application) with an accent indicator bar on the active item and a brand tile, the title bar stacks the page subtitle under the title and switches the global mode to a segmented control, and window controls use standard 42×32 hover targets with a red close hover.
+- Redesigned the rules page: the toolbar is two rows (search + count pills + primary actions; batch enable/disable/delete + clear as a separate selection row with a hint), rule rows show the mode as a colored dot plus text, and the empty state and drag-over overlay use drawn icons instead of emoji.
+- Removed emoji prefixes from navigation and toolbar button strings for a consistent professional look, and refreshed the sidebar version and about tagline from the stale "v0.9.0" to the current version. Navigation order is unchanged (the smoke gate's keyboard path still walks `NavRules` → down → `NavPolicy`), and every automation id, control name, and event handler is preserved — the smoke gate passes unchanged.
+
 ## [0.15.0] - 2026-09-03
 
 ### Added

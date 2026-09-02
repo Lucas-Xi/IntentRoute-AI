@@ -98,6 +98,13 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Import dedupe switched from process-name-only to the shared full rule identity, so same-process rules with different constraints import instead of silently disappearing
 - [x] Shared `RuleIdentity` key reused by AI draft validation and rule import; a file without a `Rules` array now fails explicitly instead of doing nothing
 
+## v0.16 — unified dark design system and shell redesign (2026-09-03)
+
+- [x] Single design system in `App.xaml` (main window's drifted private palette removed; legacy keys aliased), with real dark ComboBox and CheckBox templates replacing six hard-coded light-dropdown patches
+- [x] Shell redesign: grouped sidebar with active-item indicator and brand tile, stacked title/subtitle header, segmented global-mode control, standard window controls
+- [x] Rules-page redesign: two-row toolbar with count pills and a dedicated batch row, dot-style mode column, drawn empty-state and drag-over icons; emoji removed from nav/toolbar strings
+- [x] All automation ids, UIA names, keyboard navigation, and the smoke gate's contracts preserved (smoke passes unchanged; visually verified on rules/settings/AI pages)
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
