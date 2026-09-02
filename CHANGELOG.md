@@ -4,6 +4,12 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-02
+
+### Added
+
+- Added a rule-constraints editor: an **Edit constraints** item at the top of the rule-list context menu opens a dialog for the selected rule's host / IP-CIDR / port constraints, protocol (TCP, UDP, Both, or Any), and note. Editing is live-validated by a shared `RuleConstraintValidator` (same semantics as the sing-box builder: exact or `*.suffix` hosts, IPv4/IPv6 literals or CIDRs, single ports or ascending ranges; empty means unrestricted) and the Save button stays disabled until every field parses. The new `AppService.UpdateRuleConstraints` transaction persists the five editable fields through the Configuration Workspace (protocol allow-listed to the AI-acceptance spelling), leaves ExeName/Mode/Priority untouched, and silently no-ops on unknown rule ids like the other update paths; host/IP/port format remains covered by editor validation plus build-time rejection, matching `ImportRules`. The AI draft validator's private host validation was deduplicated into the shared validator with identical behavior.
+
 ## [0.12.0] - 2026-09-02
 
 ### Added

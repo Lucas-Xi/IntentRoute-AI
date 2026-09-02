@@ -374,6 +374,26 @@ public class AppService : IDisposable, IAsyncDisposable
         CommitConfiguration(candidate => candidate.Rules.First(rule => rule.Id == id).Mode = mode);
     }
 
+    // 条件更新只做协议白名单校验（存储规范与 AI 接纳路径一致为大写）；
+    // hosts/ips/ports 的格式校验与 ImportRules 对齐：编辑器实时校验 + builder 构建期拒绝。
+    public void UpdateRuleConstraints(string id, string? hosts, string? ips, string? ports, string? protocol, string? note)
+    {
+        var normalizedProtocol = (protocol ?? "").Trim().ToUpperInvariant();
+        if (normalizedProtocol is not ("" or "TCP" or "UDP" or "Both"))
+            throw new ArgumentException(Strings.RuleEditBadProtocol, nameof(protocol));
+
+        if (_workspace.Snapshot().Rules.All(rule => rule.Id != id)) return;
+        CommitConfiguration(candidate =>
+        {
+            var rule = candidate.Rules.First(item => item.Id == id);
+            rule.TargetHosts = hosts ?? "";
+            rule.TargetIPs = ips ?? "";
+            rule.TargetPorts = ports ?? "";
+            rule.Protocol = normalizedProtocol;
+            rule.Note = note ?? "";
+        });
+    }
+
     public void MoveRule(string id, int delta)
     {
         var current = _workspace.Snapshot();

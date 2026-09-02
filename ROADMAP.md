@@ -81,6 +81,12 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Batch operations provably leave rule priority and persisted order untouched (only Move Rule reorders)
 - [x] Release-notes extraction consolidated into a shared script the CI gate executes (republished v0.11.0)
 
+## v0.13 — rule-constraints editor (2026-09-02)
+
+- [x] Context-menu **Edit constraints** dialog for host / IP-CIDR / port / protocol / note with live shared validation (Save gated until every field parses)
+- [x] `UpdateRuleConstraints` Configuration Workspace transaction that leaves identity, mode, and priority untouched; host validation deduplicated into the shared validator
+- [x] IP/CIDR and port format validation now exist at edit time (previously length-only before build-time rejection)
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

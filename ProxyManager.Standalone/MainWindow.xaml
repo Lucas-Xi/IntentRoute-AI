@@ -180,6 +180,7 @@
 
         <!-- 右键菜单 -->
         <ContextMenu x:Key="RuleMenu" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}">
+            <MenuItem Header="{x:Static loc:Strings.MenuEditConstraints}" Click="EditRuleConstraints_Click" Foreground="{StaticResource TextBrush}"/>
             <MenuItem Header="{x:Static loc:Strings.MenuToggleEnabled}" Click="ToggleRule_Click" Foreground="{StaticResource TextBrush}"/>
             <Separator Background="{StaticResource BorderBrush}"/>
             <MenuItem Header="{x:Static loc:Strings.MenuForceProxy}" Click="SetProxy_Click" Foreground="{StaticResource TextBrush}"/>

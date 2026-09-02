@@ -1203,6 +1203,24 @@ public partial class MainWindow : Window
         if (rule != null) { _service.UpdateRuleMode(rule.Id, ProxyMode.Block); LoadRules(); }
     }
 
+    private void EditRuleConstraints_Click(object sender, RoutedEventArgs e)
+    {
+        var rule = GetSelectedRule();
+        if (rule == null) return;
+        var dialog = new RuleEditWindow(rule) { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            _service.UpdateRuleConstraints(rule.Id, dialog.Hosts, dialog.Ips, dialog.Ports, dialog.Protocol, dialog.Note);
+            LoadRules();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(SingBoxRuntime.RedactSecrets(ex.Message), Strings.DialogErrorTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     private void MoveUp_Click(object sender, RoutedEventArgs e)
     {
         var rule = GetSelectedRule();

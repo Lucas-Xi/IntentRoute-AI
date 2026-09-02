@@ -65,6 +65,7 @@
   <data name="PageSubtitleProcess" xml:space="preserve"><value> - Running processes</value></data>
   <data name="PageSubtitleSettings" xml:space="preserve"><value> - Configure proxies and features</value></data>
   <data name="PageSubtitleAbout" xml:space="preserve"><value> - Version information</value></data>
+  <data name="MenuEditConstraints" xml:space="preserve"><value>Edit constraints</value></data>
   <data name="MenuToggleEnabled" xml:space="preserve"><value>Toggle enabled</value></data>
   <data name="MenuForceProxy" xml:space="preserve"><value>🔵 Force proxy</value></data>
   <data name="MenuForceDirect" xml:space="preserve"><value>🟢 Force direct</value></data>
@@ -72,6 +73,23 @@
   <data name="MenuMoveUp" xml:space="preserve"><value>⬆ Move up</value></data>
   <data name="MenuMoveDown" xml:space="preserve"><value>⬇ Move down</value></data>
   <data name="MenuDelete" xml:space="preserve"><value>❌ Delete</value></data>
+  <data name="RuleEditTitle" xml:space="preserve"><value>Edit rule constraints</value></data>
+  <data name="RuleEditProcessLabel" xml:space="preserve"><value>Process</value></data>
+  <data name="RuleEditHostsLabel" xml:space="preserve"><value>Host constraints</value></data>
+  <data name="RuleEditHostsHint" xml:space="preserve"><value>Exact hosts or *.suffix, separated by commas, semicolons, or spaces; empty means unrestricted</value></data>
+  <data name="RuleEditIpsLabel" xml:space="preserve"><value>IP / CIDR constraints</value></data>
+  <data name="RuleEditIpsHint" xml:space="preserve"><value>IPv4/IPv6 addresses or CIDRs such as 192.168.0.0/16, same separators; empty means unrestricted</value></data>
+  <data name="RuleEditPortsLabel" xml:space="preserve"><value>Port constraints</value></data>
+  <data name="RuleEditPortsHint" xml:space="preserve"><value>Single ports or ascending ranges such as 443 or 1000-2000, same separators; empty means unrestricted</value></data>
+  <data name="RuleEditProtocolLabel" xml:space="preserve"><value>Protocol</value></data>
+  <data name="RuleEditProtocolAny" xml:space="preserve"><value>Any</value></data>
+  <data name="RuleEditNoteLabel" xml:space="preserve"><value>Note</value></data>
+  <data name="RuleEditSave" xml:space="preserve"><value>Save</value></data>
+  <data name="RuleEditCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="RuleEditBadHosts" xml:space="preserve"><value>Invalid host constraint format</value></data>
+  <data name="RuleEditBadIps" xml:space="preserve"><value>Invalid IP/CIDR constraint format</value></data>
+  <data name="RuleEditBadPorts" xml:space="preserve"><value>Invalid port constraint format</value></data>
+  <data name="RuleEditBadProtocol" xml:space="preserve"><value>Protocol must be TCP, UDP, Both, or Any</value></data>
   <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.9.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>Features</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• Drag an application to add rules</value></data>

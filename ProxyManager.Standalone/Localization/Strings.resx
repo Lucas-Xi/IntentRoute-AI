@@ -65,6 +65,7 @@
   <data name="PageSubtitleProcess" xml:space="preserve"><value> - 运行中的进程</value></data>
   <data name="PageSubtitleSettings" xml:space="preserve"><value> - 配置代理和功能</value></data>
   <data name="PageSubtitleAbout" xml:space="preserve"><value> - 版本信息</value></data>
+  <data name="MenuEditConstraints" xml:space="preserve"><value>编辑条件</value></data>
   <data name="MenuToggleEnabled" xml:space="preserve"><value>切换启用</value></data>
   <data name="MenuForceProxy" xml:space="preserve"><value>🔵 强制代理</value></data>
   <data name="MenuForceDirect" xml:space="preserve"><value>🟢 强制直连</value></data>
@@ -72,6 +73,23 @@
   <data name="MenuMoveUp" xml:space="preserve"><value>⬆ 上移</value></data>
   <data name="MenuMoveDown" xml:space="preserve"><value>⬇ 下移</value></data>
   <data name="MenuDelete" xml:space="preserve"><value>❌ 删除</value></data>
+  <data name="RuleEditTitle" xml:space="preserve"><value>编辑规则条件</value></data>
+  <data name="RuleEditProcessLabel" xml:space="preserve"><value>进程</value></data>
+  <data name="RuleEditHostsLabel" xml:space="preserve"><value>域名约束</value></data>
+  <data name="RuleEditHostsHint" xml:space="preserve"><value>精确域名或 *.suffix，逗号、分号或空格分隔，留空表示不限</value></data>
+  <data name="RuleEditIpsLabel" xml:space="preserve"><value>IP / CIDR 约束</value></data>
+  <data name="RuleEditIpsHint" xml:space="preserve"><value>IPv4/IPv6 地址或 CIDR（如 192.168.0.0/16），分隔同上，留空表示不限</value></data>
+  <data name="RuleEditPortsLabel" xml:space="preserve"><value>端口约束</value></data>
+  <data name="RuleEditPortsHint" xml:space="preserve"><value>单端口或升序范围（如 443 或 1000-2000），分隔同上，留空表示不限</value></data>
+  <data name="RuleEditProtocolLabel" xml:space="preserve"><value>协议</value></data>
+  <data name="RuleEditProtocolAny" xml:space="preserve"><value>不限</value></data>
+  <data name="RuleEditNoteLabel" xml:space="preserve"><value>备注</value></data>
+  <data name="RuleEditSave" xml:space="preserve"><value>保存</value></data>
+  <data name="RuleEditCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="RuleEditBadHosts" xml:space="preserve"><value>域名约束格式无效</value></data>
+  <data name="RuleEditBadIps" xml:space="preserve"><value>IP / CIDR 约束格式无效</value></data>
+  <data name="RuleEditBadPorts" xml:space="preserve"><value>端口约束格式无效</value></data>
+  <data name="RuleEditBadProtocol" xml:space="preserve"><value>协议必须是 TCP、UDP、Both 或不限</value></data>
   <data name="AboutTagline" xml:space="preserve"><value>AI 辅助 Windows 网络分流 v0.9.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>功能特性</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• 拖拽添加应用程序规则</value></data>

@@ -610,7 +610,7 @@ public static class AiRuleDraftValidator
     {
         if (!IsValidProcessName(draft.ProcessName))
             errors.Add(string.Format(Strings.ValBadProcessNameFormat, label));
-        if (draft.TargetHosts.Length > 1_000 || !ValidateHosts(draft.TargetHosts))
+        if (!RuleConstraintValidator.IsValidHostList(draft.TargetHosts))
             errors.Add(string.Format(Strings.ValBadHostsFormat, label));
         if (draft.TargetIps.Length > 1_000)
             errors.Add(string.Format(Strings.ValIpsTooLongFormat, label));
@@ -633,25 +633,6 @@ public static class AiRuleDraftValidator
         if (value.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || value.Any(char.IsControl)) return false;
         return !value.Contains('*') && !value.Contains('?') &&
             !value.Contains('/') && !value.Contains('\\') && !value.Contains(':');
-    }
-
-    private static bool ValidateHosts(string raw)
-    {
-        foreach (var original in Split(raw))
-        {
-            var host = original;
-            if (host.StartsWith("*.", StringComparison.Ordinal)) host = host[2..];
-            if (host.Length is < 1 or > 253 || host.Contains("..", StringComparison.Ordinal) ||
-                Uri.CheckHostName(host) != UriHostNameType.Dns)
-                return false;
-
-            var labels = host.Split('.');
-            if (labels.Length < 2 || labels.Any(label => label.Length is < 1 or > 63 ||
-                label.StartsWith('-') || label.EndsWith('-') ||
-                label.Any(ch => !(char.IsAsciiLetterOrDigit(ch) || ch == '-'))))
-                return false;
-        }
-        return true;
     }
 
     private static bool TryMapMode(string action, out ProxyMode mode)
