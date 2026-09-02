@@ -1237,6 +1237,49 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RulesList_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateBatchRuleButtons();
+
+    private void UpdateBatchRuleButtons()
+    {
+        var hasSelection = RulesList.SelectedItems.Count > 0;
+        BatchEnableButton.IsEnabled = hasSelection;
+        BatchDisableButton.IsEnabled = hasSelection;
+        BatchDeleteButton.IsEnabled = hasSelection;
+    }
+
+    private List<ProxyRule> GetSelectedRules() => RulesList.SelectedItems.OfType<ProxyRule>().ToList();
+
+    private void BatchEnable_Click(object sender, RoutedEventArgs e)
+    {
+        var rules = GetSelectedRules();
+        if (rules.Count == 0) return;
+        _service.SetRulesEnabled(rules.Select(rule => rule.Id).ToList(), true);
+        LoadRules();
+        UpdateBatchRuleButtons();
+    }
+
+    private void BatchDisable_Click(object sender, RoutedEventArgs e)
+    {
+        var rules = GetSelectedRules();
+        if (rules.Count == 0) return;
+        _service.SetRulesEnabled(rules.Select(rule => rule.Id).ToList(), false);
+        LoadRules();
+        UpdateBatchRuleButtons();
+    }
+
+    private void BatchDelete_Click(object sender, RoutedEventArgs e)
+    {
+        var rules = GetSelectedRules();
+        if (rules.Count == 0) return;
+        if (MessageBox.Show(string.Format(Strings.RulesBatchDeleteConfirmFormat, rules.Count), Strings.DialogConfirmTitle,
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+        {
+            _service.RemoveRules(rules.Select(rule => rule.Id).ToList());
+            LoadRules();
+            UpdateBatchRuleButtons();
+        }
+    }
+
     private void Import_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog

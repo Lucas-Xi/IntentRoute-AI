@@ -4,8 +4,11 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
-### Fixed
+## [0.12.0] - 2026-09-02
 
+### Added
+
+- Added multi-select batch operations to the rule list: the list now supports extended selection (Ctrl/Shift), and toolbar buttons enable, disable, or delete every selected rule through one atomic Configuration Workspace transaction per action. Batch delete asks for an explicit count-formatted confirmation. Batch operations never touch rule priority or persisted order — only Move Rule reorders.
 - Fixed the Release workflow's curated-notes step: the inline PowerShell extraction had a syntax error (`if [string]::` missing parentheses) that failed the v0.10.0 and v0.11.0 release runs, so no packages were published for those tags. The extraction now lives in `scripts/make-release-notes.ps1`, which the Release workflow runs and `test-release-notes.ps1` executes for every released version, so an extraction-script regression now fails CI instead of a release. v0.11.0 was republished from the fixed workflow; v0.10.0 was superseded within a day and intentionally not re-cut.
 
 ## [0.11.0] - 2026-09-01

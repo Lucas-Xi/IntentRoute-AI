@@ -102,6 +102,9 @@ public static class Strings
     public static string RulesImport => GetString(nameof(RulesImport));
     public static string RulesExport => GetString(nameof(RulesExport));
     public static string RulesClear => GetString(nameof(RulesClear));
+    public static string RulesBatchEnable => GetString(nameof(RulesBatchEnable));
+    public static string RulesBatchDisable => GetString(nameof(RulesBatchDisable));
+    public static string RulesBatchDelete => GetString(nameof(RulesBatchDelete));
     public static string RulesHeaderApp => GetString(nameof(RulesHeaderApp));
     public static string RulesHeaderMode => GetString(nameof(RulesHeaderMode));
     public static string RulesHeaderStatus => GetString(nameof(RulesHeaderStatus));
@@ -250,6 +253,10 @@ public static class Strings
     public static string DialogErrorTitle => GetString(nameof(DialogErrorTitle));
     public static string RulesClearConfirm => GetString(nameof(RulesClearConfirm));
     public static string RulesDeleteConfirmFormat => GetString(nameof(RulesDeleteConfirmFormat));
+    public static string RulesBatchEnableAutomation => GetString(nameof(RulesBatchEnableAutomation));
+    public static string RulesBatchDisableAutomation => GetString(nameof(RulesBatchDisableAutomation));
+    public static string RulesBatchDeleteAutomation => GetString(nameof(RulesBatchDeleteAutomation));
+    public static string RulesBatchDeleteConfirmFormat => GetString(nameof(RulesBatchDeleteConfirmFormat));
     public static string DialogImportTitle => GetString(nameof(DialogImportTitle));
     public static string DialogExportTitle => GetString(nameof(DialogExportTitle));
     public static string DialogJsonFilter => GetString(nameof(DialogJsonFilter));

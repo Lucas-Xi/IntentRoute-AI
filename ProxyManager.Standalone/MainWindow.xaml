@@ -393,6 +393,15 @@
                                             Click="Import_Click" Margin="0,0,8,0"/>
                                     <Button Content="{x:Static loc:Strings.RulesExport}" Style="{StaticResource SecondaryBtn}"
                                             Click="Export_Click" Margin="0,0,8,0"/>
+                                    <Button x:Name="BatchEnableButton" Content="{x:Static loc:Strings.RulesBatchEnable}" Style="{StaticResource SecondaryBtn}"
+                                            Margin="0,0,8,0" IsEnabled="False"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchEnableAutomation}" Click="BatchEnable_Click"/>
+                                    <Button x:Name="BatchDisableButton" Content="{x:Static loc:Strings.RulesBatchDisable}" Style="{StaticResource SecondaryBtn}"
+                                            Margin="0,0,8,0" IsEnabled="False"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDisableAutomation}" Click="BatchDisable_Click"/>
+                                    <Button x:Name="BatchDeleteButton" Content="{x:Static loc:Strings.RulesBatchDelete}" Style="{StaticResource SecondaryBtn}"
+                                            Margin="0,0,8,0" IsEnabled="False" Foreground="{StaticResource DangerBrush}"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDeleteAutomation}" Click="BatchDelete_Click"/>
                                     <Button Content="{x:Static loc:Strings.RulesClear}" Style="{StaticResource SecondaryBtn}"
                                             Click="Clear_Click" Foreground="{StaticResource DangerBrush}"/>
                                 </StackPanel>
@@ -426,6 +435,7 @@
                                 <!-- 列表内容 -->
                                 <ListBox x:Name="RulesList" Margin="0,38,0,0" Background="Transparent"
                                          BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         SelectionMode="Extended" SelectionChanged="RulesList_SelectionChanged"
                                          ContextMenu="{StaticResource RuleMenu}">
                                     <ListBox.ItemContainerStyle>
                                         <Style TargetType="ListBoxItem">

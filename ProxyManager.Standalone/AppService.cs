@@ -395,6 +395,44 @@ public class AppService : IDisposable, IAsyncDisposable
         });
     }
 
+    public int SetRulesEnabled(IReadOnlyCollection<string> ids, bool enabled)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        var idSet = new HashSet<string>(ids, StringComparer.Ordinal);
+        var matched = _workspace.Snapshot().Rules.Count(rule => idSet.Contains(rule.Id));
+        if (matched == 0) return 0;
+        CommitConfiguration(candidate =>
+        {
+            foreach (var rule in candidate.Rules.Where(rule => idSet.Contains(rule.Id)))
+                rule.IsEnabled = enabled;
+        });
+        return matched;
+    }
+
+    public int SetRulesMode(IReadOnlyCollection<string> ids, ProxyMode mode)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        var idSet = new HashSet<string>(ids, StringComparer.Ordinal);
+        var matched = _workspace.Snapshot().Rules.Count(rule => idSet.Contains(rule.Id));
+        if (matched == 0) return 0;
+        CommitConfiguration(candidate =>
+        {
+            foreach (var rule in candidate.Rules.Where(rule => idSet.Contains(rule.Id)))
+                rule.Mode = mode;
+        });
+        return matched;
+    }
+
+    public int RemoveRules(IReadOnlyCollection<string> ids)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        var idSet = new HashSet<string>(ids, StringComparer.Ordinal);
+        var matched = _workspace.Snapshot().Rules.Count(rule => idSet.Contains(rule.Id));
+        if (matched == 0) return 0;
+        CommitConfiguration(candidate => candidate.Rules.RemoveAll(rule => idSet.Contains(rule.Id)));
+        return matched;
+    }
+
     // ── Proxy Servers ───────────────────────────
 
     public ProxyServer AddServer(ProxyServer server)

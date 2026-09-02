@@ -75,6 +75,12 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] One-click rule creation from a selected running process through the normal Configuration Workspace transaction, with explicit duplicate reporting and rule-list navigation
 - [x] Fixed the v0.1 ANSI/Unicode Toolhelp32 mismatch that produced mojibake process names and broken candidate matching
 
+## v0.12 — batch rule management (2026-09-02)
+
+- [x] Extended multi-selection on the rule list with toolbar batch enable/disable/delete, one atomic Configuration Workspace transaction per action and a count-formatted delete confirmation
+- [x] Batch operations provably leave rule priority and persisted order untouched (only Move Rule reorders)
+- [x] Release-notes extraction consolidated into a shared script the CI gate executes (republished v0.11.0)
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

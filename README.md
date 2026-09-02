@@ -8,9 +8,9 @@ English | **[中文](README.zh-CN.md)**
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.11.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.12.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-v0.11.0 adds a process-to-rule workflow: search the running-process list, see real executable paths, and create a rule from a selected process in one click through the normal configuration transaction. It also fixes a v0.1-era defect that showed mojibake process names. Every release archive still embeds the unsigned `provenance.json` build inventory introduced in v0.9.0; code signing itself still requires a certificate.
+v0.12.0 adds batch rule management: extended multi-selection with atomic batch enable/disable/delete. Every release archive still embeds the unsigned `provenance.json` build inventory introduced in v0.9.0; code signing itself still requires a certificate.
 
 ## Why this project exists
 
@@ -123,6 +123,7 @@ OpenAI API data handling is governed by the user's OpenAI account and current AP
 - Password-free profile exports and bounded/redacted runtime logs.
 - Runtime-log triage: minimum-level filter, debounced case-insensitive search, auto-scroll toggle, and a local export of the exact filtered (re-redacted) log view.
 - Process-to-rule workflow: name/PID search, real executable paths, and one-click rule creation from a selected running process through the normal configuration transaction.
+- Batch rule management: extended multi-selection with one-transaction batch enable/disable/delete and a count-formatted confirmation.
 - Literal-loopback-only upstream proxy endpoints with an optional bounded TCP-listener check.
 - A recognized sing-box v1.13+ version gate before configuration check or launch.
 - Save-blocked recovery when `config.json` or a DPAPI-protected password cannot be read safely.
@@ -133,7 +134,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.11.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Vincent-Xi08/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.12.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Vincent-Xi08/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.

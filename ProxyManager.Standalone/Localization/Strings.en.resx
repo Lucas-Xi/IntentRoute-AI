@@ -92,6 +92,9 @@
   <data name="RulesImport" xml:space="preserve"><value>📥 Import</value></data>
   <data name="RulesExport" xml:space="preserve"><value>📤 Export</value></data>
   <data name="RulesClear" xml:space="preserve"><value>🗑 Clear</value></data>
+  <data name="RulesBatchEnable" xml:space="preserve"><value>Enable selected</value></data>
+  <data name="RulesBatchDisable" xml:space="preserve"><value>Disable selected</value></data>
+  <data name="RulesBatchDelete" xml:space="preserve"><value>Delete selected</value></data>
   <data name="RulesHeaderApp" xml:space="preserve"><value>Application</value></data>
   <data name="RulesHeaderMode" xml:space="preserve"><value>Mode</value></data>
   <data name="RulesHeaderStatus" xml:space="preserve"><value>Status</value></data>
@@ -341,6 +344,10 @@
   <data name="DialogErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="RulesClearConfirm" xml:space="preserve"><value>Clear all rules?</value></data>
   <data name="RulesDeleteConfirmFormat" xml:space="preserve"><value>Delete rule '{0}'?</value></data>
+  <data name="RulesBatchEnableAutomation" xml:space="preserve"><value>Enable the selected rules</value></data>
+  <data name="RulesBatchDisableAutomation" xml:space="preserve"><value>Disable the selected rules</value></data>
+  <data name="RulesBatchDeleteAutomation" xml:space="preserve"><value>Delete the selected rules</value></data>
+  <data name="RulesBatchDeleteConfirmFormat" xml:space="preserve"><value>Delete the {0} selected rules?</value></data>
   <data name="DialogImportTitle" xml:space="preserve"><value>Import rules</value></data>
   <data name="DialogExportTitle" xml:space="preserve"><value>Export rules</value></data>
   <data name="DialogJsonFilter" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>

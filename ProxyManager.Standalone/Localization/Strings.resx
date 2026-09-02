@@ -92,6 +92,9 @@
   <data name="RulesImport" xml:space="preserve"><value>📥 导入</value></data>
   <data name="RulesExport" xml:space="preserve"><value>📤 导出</value></data>
   <data name="RulesClear" xml:space="preserve"><value>🗑 清空</value></data>
+  <data name="RulesBatchEnable" xml:space="preserve"><value>批量启用</value></data>
+  <data name="RulesBatchDisable" xml:space="preserve"><value>批量禁用</value></data>
+  <data name="RulesBatchDelete" xml:space="preserve"><value>批量删除</value></data>
   <data name="RulesHeaderApp" xml:space="preserve"><value>应用程序</value></data>
   <data name="RulesHeaderMode" xml:space="preserve"><value>模式</value></data>
   <data name="RulesHeaderStatus" xml:space="preserve"><value>状态</value></data>
@@ -341,6 +344,10 @@
   <data name="DialogErrorTitle" xml:space="preserve"><value>错误</value></data>
   <data name="RulesClearConfirm" xml:space="preserve"><value>确定清空所有规则？</value></data>
   <data name="RulesDeleteConfirmFormat" xml:space="preserve"><value>删除规则 '{0}'？</value></data>
+  <data name="RulesBatchEnableAutomation" xml:space="preserve"><value>批量启用选中的规则</value></data>
+  <data name="RulesBatchDisableAutomation" xml:space="preserve"><value>批量禁用选中的规则</value></data>
+  <data name="RulesBatchDeleteAutomation" xml:space="preserve"><value>批量删除选中的规则</value></data>
+  <data name="RulesBatchDeleteConfirmFormat" xml:space="preserve"><value>删除选中的 {0} 条规则？</value></data>
   <data name="DialogImportTitle" xml:space="preserve"><value>导入规则</value></data>
   <data name="DialogExportTitle" xml:space="preserve"><value>导出规则</value></data>
   <data name="DialogJsonFilter" xml:space="preserve"><value>JSON 文件 (*.json)|*.json</value></data>
