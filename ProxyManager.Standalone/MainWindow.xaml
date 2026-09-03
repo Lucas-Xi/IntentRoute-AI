@@ -431,11 +431,28 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                        <!-- 主题色页头 -->
+                        <Border Grid.Row="0" Style="{StaticResource AccentHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource AccentDimBrush}" VerticalAlignment="Center">
+                                    <TextBlock Text="✦" FontSize="15" FontWeight="Bold"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitleAi}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitleAi}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150"/>
@@ -463,7 +480,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="{x:Static loc:Strings.AiIntentTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
                                 <TextBlock Text="{x:Static loc:Strings.AiIntentExample}"
@@ -482,7 +499,7 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8">
+                        <Border Grid.Row="3" Background="{StaticResource CardBrush}" CornerRadius="8">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -571,7 +588,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                        <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="12" Margin="0,10,0,0">
                             <Grid>
                                 <TextBlock x:Name="AiStatusText" Text="{x:Static loc:Strings.AiStatusInitial}"
                                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,170,0"/>
@@ -587,12 +604,29 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="155"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <!-- 主题色页头 -->
+                        <Border Grid.Row="0" Style="{StaticResource SuccessHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource SuccessDimBrush}" VerticalAlignment="Center">
+                                    <Path Data="M12,2 L20,5.5 L20,11 C20,16.2 16.6,20.3 12,21.5 C7.4,20.3 4,16.2 4,11 L4,5.5 Z"
+                                          Stroke="{StaticResource SuccessBrush}" StrokeThickness="1.6" Fill="Transparent"
+                                          Stretch="Uniform" Margin="7"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitlePolicy}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitlePolicy}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -641,7 +675,7 @@
                             </Border>
                         </Grid>
 
-                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -672,7 +706,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8" Margin="0,0,0,10">
+                        <Border Grid.Row="3" Background="{StaticResource CardBrush}" CornerRadius="8" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                 <Border Grid.Row="0" Padding="14,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -695,7 +729,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="3" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                        <Border Grid.Row="4" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="0.32*"/><ColumnDefinition Width="0.68*"/></Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,12,0">
@@ -712,7 +746,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10">
+                        <Border Grid.Row="5" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10">
                             <Grid>
                                 <TextBlock x:Name="PolicyStatusText" Text="{x:Static loc:Strings.PolicyStatusInitial}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,270,0"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -728,22 +762,39 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Background="{StaticResource AccentSoftBrush}" BorderBrush="{StaticResource AccentDimBrush}"
+                        <!-- 主题色页头 -->
+                        <Border Grid.Row="0" Style="{StaticResource WarningHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource WarningDimBrush}" VerticalAlignment="Center">
+                                    <Path Data="M8,5 L19,12 L8,19 Z"
+                                          Stroke="{StaticResource WarningBrush}" StrokeThickness="1.6" Fill="Transparent"
+                                          StrokeLineJoin="Round" Stretch="Uniform" Margin="9"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitleRouteSimulator}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitleRouteSimulator}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <StackPanel>
                                 <TextBlock Text="{x:Static loc:Strings.RouteBannerTitle}" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{StaticResource AccentBrush}"/>
+                                           Foreground="{StaticResource TextBrush}"/>
                                 <TextBlock Margin="0,4,0,0" FontSize="10" TextWrapping="Wrap"
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            Text="{x:Static loc:Strings.RouteBannerBody}"/>
                             </StackPanel>
                         </Border>
 
-                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="150"/>
@@ -794,7 +845,7 @@
                             </Grid>
                         </Border>
 
-                        <Grid Grid.Row="2">
+                        <Grid Grid.Row="3">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="0.36*"/>
                                 <ColumnDefinition Width="0.64*"/>
@@ -871,7 +922,7 @@
                             </Border>
                         </Grid>
 
-                        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+                        <Border Grid.Row="4" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10" Margin="0,10,0,0">
                             <Grid>
                                 <TextBlock x:Name="RouteDecisionStatusText" Text="{x:Static loc:Strings.RouteStatusInitial}"
                                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,120,0"
@@ -885,94 +936,142 @@
 
                     <!-- 页面: sing-box 运行日志 -->
                     <Grid x:Name="PageMonitor" Visibility="Collapsed">
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 主题色页头 -->
+                        <Border Grid.Row="0" Style="{StaticResource NeutralHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource HoverBrush}" VerticalAlignment="Center">
+                                    <Path Data="M4,6 H20 M4,12 H20 M4,18 H20"
+                                          Stroke="{StaticResource SecondaryTextBrush}" StrokeThickness="1.8"
+                                          StrokeStartLineCap="Round" Stretch="Uniform" Margin="7"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitleMonitor}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitleMonitor}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 过滤工具栏卡片 -->
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-
-                                <Border Grid.Row="0" Padding="16,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid Grid.Row="0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{x:Static loc:Strings.MonitorTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                <Button Content="{x:Static loc:Strings.MonitorExport}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Margin="0,0,8,0"
-                                                        AutomationProperties.Name="{x:Static loc:Strings.MonitorExportAutomation}" Click="ExportLogs_Click"/>
-                                                <Button Content="{x:Static loc:Strings.MonitorClear}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="ClearLogs_Click"/>
-                                            </StackPanel>
-                                        </Grid>
-                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
-                                            <TextBlock Text="{x:Static loc:Strings.MonitorSearchLabel}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBox x:Name="LogSearchBox" Width="200" Style="{StaticResource InputBox}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                     TextChanged="LogSearch_Changed" AutomationProperties.Name="{x:Static loc:Strings.MonitorSearchLabel}"/>
-                                            <TextBlock Text="{x:Static loc:Strings.MonitorFilterLevel}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                            <ComboBox x:Name="LogLevelFilterCombo" Width="110" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                      SelectionChanged="LogLevelFilter_Changed" AutomationProperties.Name="{x:Static loc:Strings.MonitorFilterLevel}"/>
-                                            <CheckBox x:Name="LogAutoScrollToggle" Content="{x:Static loc:Strings.MonitorAutoScroll}" IsChecked="True" IsThreeState="False"
-                                                      FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-
-                                <ListView Grid.Row="1" x:Name="LogsList" Background="Transparent" BorderThickness="0">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn Header="{x:Static loc:Strings.MonitorColTime}" Width="90" DisplayMemberBinding="{Binding Time}"/>
-                                            <GridViewColumn Header="{x:Static loc:Strings.MonitorColMessage}" Width="620" DisplayMemberBinding="{Binding Message}"/>
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{x:Static loc:Strings.MonitorTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="{x:Static loc:Strings.MonitorExport}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Margin="0,0,8,0"
+                                                AutomationProperties.Name="{x:Static loc:Strings.MonitorExportAutomation}" Click="ExportLogs_Click"/>
+                                        <Button Content="{x:Static loc:Strings.MonitorClear}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="ClearLogs_Click"/>
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+                                    <TextBlock Text="{x:Static loc:Strings.MonitorSearchLabel}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="LogSearchBox" Width="200" Style="{StaticResource InputBox}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
+                                             TextChanged="LogSearch_Changed" AutomationProperties.Name="{x:Static loc:Strings.MonitorSearchLabel}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.MonitorFilterLevel}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                    <ComboBox x:Name="LogLevelFilterCombo" Width="110" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
+                                              SelectionChanged="LogLevelFilter_Changed" AutomationProperties.Name="{x:Static loc:Strings.MonitorFilterLevel}"/>
+                                    <CheckBox x:Name="LogAutoScrollToggle" Content="{x:Static loc:Strings.MonitorAutoScroll}" IsChecked="True" IsThreeState="False"
+                                              FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                </StackPanel>
                             </Grid>
+                        </Border>
+
+                        <!-- 日志列表卡片（终端风格：等宽字体） -->
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <ListView x:Name="LogsList" Background="Transparent" BorderThickness="0">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="{x:Static loc:Strings.MonitorColTime}" Width="90">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Time}" FontFamily="Consolas" FontSize="11"
+                                                               Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="{x:Static loc:Strings.MonitorColMessage}" Width="620">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Message}" FontFamily="Consolas" FontSize="11"
+                                                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
                         </Border>
                     </Grid>
 
                     <!-- 页面: 进程列表 -->
                     <Grid x:Name="PageProcess" Visibility="Collapsed">
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="8">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" Padding="16,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{x:Static loc:Strings.ProcessTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <TextBox x:Name="ProcessSearchBox" Width="180" Style="{StaticResource InputBox}" FontSize="11" VerticalAlignment="Center"
-                                                     TextChanged="ProcessSearch_Changed" AutomationProperties.Name="{x:Static loc:Strings.ProcessSearchLabel}"/>
-                                            <Button x:Name="ProcessAddRuleButton" Content="{x:Static loc:Strings.ProcessAddRule}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Margin="8,0,0,0"
-                                                    IsEnabled="False" AutomationProperties.Name="{x:Static loc:Strings.ProcessAddRuleAutomation}" Click="AddRuleFromProcess_Click"/>
-                                            <TextBlock x:Name="ProcessCount" Text="0 个进程" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="12,0,12,0"/>
-                                            <Button Content="{x:Static loc:Strings.ProcessRefresh}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="RefreshProcess_Click"/>
-                                        </StackPanel>
-                                    </Grid>
+                        <!-- 主题色页头 -->
+                        <Border Grid.Row="0" Style="{StaticResource WarningHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource WarningDimBrush}" VerticalAlignment="Center">
+                                    <Path Data="M4,4 H10 V10 H4 Z M14,4 H20 V10 H14 Z M4,14 H10 V20 H4 Z M14,14 H20 V20 H14 Z"
+                                          Stroke="{StaticResource WarningBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                          Stretch="Uniform" Margin="7"/>
                                 </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitleProcess}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitleProcess}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
 
-                                <ListView Grid.Row="1" x:Name="ProcessList" Background="Transparent" BorderThickness="0" SelectionChanged="ProcessList_SelectionChanged">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn Header="{x:Static loc:Strings.ProcessColPid}" Width="80" DisplayMemberBinding="{Binding Pid}"/>
-                                            <GridViewColumn Header="{x:Static loc:Strings.ProcessColName}" Width="200" DisplayMemberBinding="{Binding Name}"/>
-                                            <GridViewColumn Header="{x:Static loc:Strings.ProcessColPath}" Width="300" DisplayMemberBinding="{Binding Path}"/>
-                                            <GridViewColumn Header="{x:Static loc:Strings.ProcessColStatus}" Width="175" DisplayMemberBinding="{Binding Status}"/>
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>
+                        <!-- 工具栏卡片 -->
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{x:Static loc:Strings.ProcessTitle}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <TextBox x:Name="ProcessSearchBox" Width="180" Style="{StaticResource InputBox}" FontSize="11" VerticalAlignment="Center"
+                                             TextChanged="ProcessSearch_Changed" AutomationProperties.Name="{x:Static loc:Strings.ProcessSearchLabel}"/>
+                                    <Button x:Name="ProcessAddRuleButton" Content="{x:Static loc:Strings.ProcessAddRule}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Margin="8,0,0,0"
+                                            IsEnabled="False" AutomationProperties.Name="{x:Static loc:Strings.ProcessAddRuleAutomation}" Click="AddRuleFromProcess_Click"/>
+                                    <TextBlock x:Name="ProcessCount" Text="0 个进程" FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="12,0,12,0"/>
+                                    <Button Content="{x:Static loc:Strings.ProcessRefresh}" Style="{StaticResource SecondaryBtn}" Padding="12,5" FontSize="11" Click="RefreshProcess_Click"/>
+                                </StackPanel>
                             </Grid>
+                        </Border>
+
+                        <!-- 进程列表卡片 -->
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8">
+                            <ListView x:Name="ProcessList" Background="Transparent" BorderThickness="0" SelectionChanged="ProcessList_SelectionChanged">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="{x:Static loc:Strings.ProcessColPid}" Width="80" DisplayMemberBinding="{Binding Pid}"/>
+                                        <GridViewColumn Header="{x:Static loc:Strings.ProcessColName}" Width="200" DisplayMemberBinding="{Binding Name}"/>
+                                        <GridViewColumn Header="{x:Static loc:Strings.ProcessColPath}" Width="300" DisplayMemberBinding="{Binding Path}"/>
+                                        <GridViewColumn Header="{x:Static loc:Strings.ProcessColStatus}" Width="175" DisplayMemberBinding="{Binding Status}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
                         </Border>
                     </Grid>
 
@@ -980,6 +1079,27 @@
                     <Grid x:Name="PageSettings" Visibility="Collapsed">
                         <ScrollViewer>
                             <StackPanel>
+                                <!-- 主题色页头 -->
+                                <Border Style="{StaticResource AccentHeaderCard}" Margin="0,0,0,12">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="32" Height="32" CornerRadius="6"
+                                                Background="{StaticResource AccentDimBrush}" VerticalAlignment="Center">
+                                            <Grid Margin="7">
+                                                <Path Data="M4,6 H20 M4,12 H20 M4,18 H20"
+                                                      Stroke="{StaticResource AccentBrush}" StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round" Stretch="Uniform"/>
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2,2,0,0"/>
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="6,0,0,2"/>
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Static loc:Strings.PageTitleSettings}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
+                                            <TextBlock Text="{x:Static loc:Strings.PageSubtitleSettings}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- sing-box 就绪状态 -->
                                 <Border x:Name="RuntimeSettingsCard" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                                     <StackPanel>
@@ -1101,7 +1221,27 @@
 
                     <!-- 页面: 关于 -->
                     <Grid x:Name="PageAbout" Visibility="Collapsed">
-                        <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="32">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Style="{StaticResource NeutralHeaderCard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="32" Height="32" CornerRadius="6"
+                                        Background="{StaticResource HoverBrush}" VerticalAlignment="Center">
+                                    <TextBlock Text="i" FontSize="15" FontWeight="Bold" FontStyle="Italic"
+                                               Foreground="{StaticResource SecondaryTextBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Static loc:Strings.PageTitleAbout}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PageSubtitleAbout}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="32">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="✦" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                                 <TextBlock Text="IntentRoute AI" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"/>

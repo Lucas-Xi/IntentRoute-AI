@@ -137,6 +137,14 @@
                 <Setter Property="Padding" Value="16"/>
                 <Setter Property="Margin" Value="0,0,0,10"/>
             </Style>
+            <Style x:Key="NeutralHeaderCard" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
 
             <!-- ═══ 按钮 · Primary ═══ -->
             <Style x:Key="PrimaryButton" TargetType="Button">

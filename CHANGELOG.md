@@ -4,6 +4,18 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-03
+
+### Changed
+
+- Extended the theme-colored page banners to every page: each of the eight pages now opens with a compact themed header card (icon chip + page title/subtitle) in its own accent — rules and AI assistant in accent blue, policy health in success green, route simulator and process list in warning amber, runtime log and about in neutral surface, settings in accent blue — so the current area is identifiable at a glance.
+- Restructured the runtime-log and process pages onto the same visual grammar as the rest of the app: a themed header card, a separate toolbar card (filters and actions), and a dedicated content card for the list, replacing the previous single monolithic card.
+- Runtime logs now render in Consolas with muted timestamps, giving the log view a terminal-like reading experience.
+- The route-simulator what-if banner was restyled from accent blue to the neutral surface treatment so it no longer clashes with the page's warning theme.
+- Lightened the palette one step (background `#0D1117`, surface `#161B22`, card `#1C2128`, border `#30363D`) to increase layer separation on typical monitors, and muted the secondary/muted text tiers for clearer hierarchy.
+
+All changes are visual; automation ids, event handlers, localization keys, and the smoke gate pass unchanged.
+
 ## [0.17.0] - 2026-09-03
 
 ### Changed

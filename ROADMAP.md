@@ -112,6 +112,13 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Empty-state action row on the rules page (Add rule + Import)
 - [x] 200ms scale+fade dialog entrance for the constraints editor and import preview
 
+## v0.18 — theme-colored page identity (2026-09-03)
+
+- [x] Theme-colored header banner on all eight pages (icon chip + title/subtitle in the page's accent: blue for rules/AI/settings, green for policy, amber for simulator/process, neutral for log/about)
+- [x] Runtime-log and process pages restructured to the standard header + toolbar card + content card grammar
+- [x] Runtime log rendering in Consolas with muted timestamps (terminal-style reading)
+- [x] Palette lightened one step for stronger layer separation; simulator banner restyled neutral
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
