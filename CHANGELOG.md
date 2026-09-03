@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-03
+
+### Changed
+
+- UI component-library polish pass (borrowed, not bundled, from the Shadcnblocks/ReUI/Motion component archives after a read-only selection review): every GridView-backed list (rules aside, policy findings, policy advice, route trace, runtime log, process list) now shares one containerized table treatment — a darker `SurfaceAlt` header band, full-row hover background instead of the default system highlight, row separator lines, and stretched rows with consistent padding.
+- Policy Intelligence KPI cards follow the three-tier stat-card pattern: colored severity dot plus label, a 24px value, and a one-line localized footnote explaining what the count means (canonical-order matching, conflict priority, broad-scope review, disabled drafts excluded from runtime).
+- The rules-page empty state gained its action row: **Add rule** and **Import** buttons under the title/description, so a fresh install can start from the empty state itself instead of hunting for the toolbar.
+- Rule-constraints and import-preview dialogs enter with a 200ms scale-and-fade transition (0.97→1, cubic ease-out), mapped from the component library's dialog entrance parameters to WPF storyboards.
+
+All changes are visual; automation ids, event handlers, the smoke gate, and the 318-test suite pass unchanged.
+
 ## [0.16.0] - 2026-09-03
 
 ### Changed

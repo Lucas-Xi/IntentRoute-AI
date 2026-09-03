@@ -17,6 +17,7 @@
             <!-- ═══ 色板 ═══ -->
             <Color x:Key="BgColor">#FF0B0E14</Color>
             <Color x:Key="SurfaceColor">#FF10141B</Color>
+            <Color x:Key="SurfaceAltColor">#FF0E1219</Color>
             <Color x:Key="CardColor">#FF151A23</Color>
             <Color x:Key="HoverColor">#FF1D2530</Color>
             <Color x:Key="BorderColor">#FF272E3A</Color>
@@ -46,6 +47,7 @@
             <!-- ═══ 画刷（规范键名） ═══ -->
             <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BgColor}"/>
             <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+            <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}"/>
             <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
             <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
             <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
@@ -661,9 +663,9 @@
                 </Setter>
             </Style>
 
-            <!-- ═══ ListView 表头 ═══ -->
+            <!-- ═══ ListView 表头与行（v0.17：容器化表格规范） ═══ -->
             <Style TargetType="GridViewColumnHeader">
-                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}"/>
                 <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -685,6 +687,31 @@
             </Style>
             <Style TargetType="Thumb">
                 <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            <!-- 隐式 ListViewItem：深色悬停/选中、拉伸行、行分隔线（容器化表格规范） -->
+            <Style TargetType="ListViewItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListViewItem">
+                            <Border x:Name="bd" Background="Transparent"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                                    Padding="10,4">
+                                <GridViewRowPresenter VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource SelectionSoftBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- ═══ 右键菜单 ═══ -->

@@ -44,7 +44,7 @@
   <data name="NavSectionWorkspace" xml:space="preserve"><value>Rules &amp; policy</value></data>
   <data name="NavSectionRuntime" xml:space="preserve"><value>Runtime &amp; monitoring</value></data>
   <data name="NavSectionApp" xml:space="preserve"><value>Application</value></data>
-  <data name="SidebarVersion" xml:space="preserve"><value>v0.16.0 development preview</value></data>
+  <data name="SidebarVersion" xml:space="preserve"><value>v0.17.0 development preview</value></data>
   <data name="StatusFooterLabel" xml:space="preserve"><value>Runtime status</value></data>
   <data name="StatusFooterInitial" xml:space="preserve"><value>Checking sing-box…</value></data>
   <data name="ModeDirectLabel" xml:space="preserve"><value>Direct by default</value></data>
@@ -93,7 +93,7 @@
   <data name="RuleEditBadIps" xml:space="preserve"><value>Invalid IP/CIDR constraint format</value></data>
   <data name="RuleEditBadPorts" xml:space="preserve"><value>Invalid port constraint format</value></data>
   <data name="RuleEditBadProtocol" xml:space="preserve"><value>Protocol must be TCP, UDP, Both, or Any</value></data>
-  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.16.0</value></data>
+  <data name="AboutTagline" xml:space="preserve"><value>AI-assisted Windows network routing v0.17.0</value></data>
   <data name="AboutFeaturesTitle" xml:space="preserve"><value>Features</value></data>
   <data name="AboutFeature1" xml:space="preserve"><value>• Drag an application to add rules</value></data>
   <data name="AboutFeature2" xml:space="preserve"><value>• Proxy / direct / block routing modes</value></data>
@@ -147,6 +147,10 @@
   <data name="PolicyStatActive" xml:space="preserve"><value>Active rules</value></data>
   <data name="PolicyStatCritical" xml:space="preserve"><value>Critical</value></data>
   <data name="PolicyStatWarning" xml:space="preserve"><value>Review</value></data>
+  <data name="PolicyStatActiveFoot" xml:space="preserve"><value>Matched in canonical runtime order</value></data>
+  <data name="PolicyStatCriticalFoot" xml:space="preserve"><value>Conflicts and shadowing need priority</value></data>
+  <data name="PolicyStatWarningFoot" xml:space="preserve"><value>Review broad-scope findings</value></data>
+  <data name="PolicyStatDisabledFoot" xml:space="preserve"><value>Disabled drafts never match at runtime</value></data>
   <data name="PolicyStatDisabled" xml:space="preserve"><value>Disabled drafts</value></data>
   <data name="PolicyReanalyze" xml:space="preserve"><value>Re-analyze</value></data>
   <data name="PolicyLocate" xml:space="preserve"><value>Locate rule</value></data>

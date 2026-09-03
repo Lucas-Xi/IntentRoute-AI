@@ -373,7 +373,7 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
 
-                                <!-- 空状态 -->
+                                <!-- 空状态：图标 → 标题 → 描述 → 双操作 -->
                                 <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <Border Width="64" Height="64" CornerRadius="14"
                                             Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Center">
@@ -381,8 +381,14 @@
                                               Stroke="{StaticResource MutedTextBrush}" StrokeThickness="1.6" Fill="Transparent"
                                               Stretch="Uniform" Margin="12"/>
                                     </Border>
-                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptyPrimary}" FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+                                    <TextBlock Text="{x:Static loc:Strings.RulesEmptyPrimary}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
                                     <TextBlock Text="{x:Static loc:Strings.RulesEmptySecondary}" FontSize="12" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                                        <Button Content="{x:Static loc:Strings.RulesAdd}" Style="{StaticResource PrimaryBtn}"
+                                                Click="AddRule_Click" Margin="0,0,8,0"/>
+                                        <Button Content="{x:Static loc:Strings.RulesImport}" Style="{StaticResource SecondaryBtn}"
+                                                Click="Import_Click"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- 拖拽覆盖层 -->
@@ -577,17 +583,45 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="14" Margin="0,0,8,0">
-                                <StackPanel><TextBlock Text="{x:Static loc:Strings.PolicyStatActive}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/><TextBlock x:Name="PolicyActiveCount" Text="0" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,3,0,0"/></StackPanel>
+                            <Border Grid.Column="0" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                        <TextBlock Text="{x:Static loc:Strings.PolicyStatActive}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="PolicyActiveCount" Text="0" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,2"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PolicyStatActiveFoot}" FontSize="10" Foreground="{StaticResource MutedTextBrush}"/>
+                                </StackPanel>
                             </Border>
-                            <Border Grid.Column="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="14" Margin="0,0,8,0">
-                                <StackPanel><TextBlock Text="{x:Static loc:Strings.PolicyStatCritical}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/><TextBlock x:Name="PolicyCriticalCount" Text="0" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource DangerBrush}" Margin="0,3,0,0"/></StackPanel>
+                            <Border Grid.Column="1" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource ErrorBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                        <TextBlock Text="{x:Static loc:Strings.PolicyStatCritical}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="PolicyCriticalCount" Text="0" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource ErrorBrush}" Margin="0,6,0,2"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PolicyStatCriticalFoot}" FontSize="10" Foreground="{StaticResource MutedTextBrush}"/>
+                                </StackPanel>
                             </Border>
-                            <Border Grid.Column="2" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="14" Margin="0,0,8,0">
-                                <StackPanel><TextBlock Text="{x:Static loc:Strings.PolicyStatWarning}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/><TextBlock x:Name="PolicyWarningCount" Text="0" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" Margin="0,3,0,0"/></StackPanel>
+                            <Border Grid.Column="2" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                        <TextBlock Text="{x:Static loc:Strings.PolicyStatWarning}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="PolicyWarningCount" Text="0" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,2"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PolicyStatWarningFoot}" FontSize="10" Foreground="{StaticResource MutedTextBrush}"/>
+                                </StackPanel>
                             </Border>
-                            <Border Grid.Column="3" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="14">
-                                <StackPanel><TextBlock Text="{x:Static loc:Strings.PolicyStatDisabled}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/><TextBlock x:Name="PolicyDisabledCount" Text="0" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,3,0,0"/></StackPanel>
+                            <Border Grid.Column="3" Background="{StaticResource CardBrush}" CornerRadius="8" Padding="16">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                        <TextBlock Text="{x:Static loc:Strings.PolicyStatDisabled}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="PolicyDisabledCount" Text="0" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,6,0,2"/>
+                                    <TextBlock Text="{x:Static loc:Strings.PolicyStatDisabledFoot}" FontSize="10" Foreground="{StaticResource MutedTextBrush}"/>
+                                </StackPanel>
                             </Border>
                         </Grid>
 

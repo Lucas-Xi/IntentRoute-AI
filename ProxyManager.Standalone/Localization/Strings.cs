@@ -158,6 +158,10 @@ public static class Strings
     public static string PolicyStatCritical => GetString(nameof(PolicyStatCritical));
     public static string PolicyStatWarning => GetString(nameof(PolicyStatWarning));
     public static string PolicyStatDisabled => GetString(nameof(PolicyStatDisabled));
+    public static string PolicyStatActiveFoot => GetString(nameof(PolicyStatActiveFoot));
+    public static string PolicyStatCriticalFoot => GetString(nameof(PolicyStatCriticalFoot));
+    public static string PolicyStatWarningFoot => GetString(nameof(PolicyStatWarningFoot));
+    public static string PolicyStatDisabledFoot => GetString(nameof(PolicyStatDisabledFoot));
     public static string PolicyReanalyze => GetString(nameof(PolicyReanalyze));
     public static string PolicyLocate => GetString(nameof(PolicyLocate));
     public static string PolicyPrivacyNote => GetString(nameof(PolicyPrivacyNote));

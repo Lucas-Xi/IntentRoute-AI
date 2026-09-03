@@ -105,6 +105,13 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Rules-page redesign: two-row toolbar with count pills and a dedicated batch row, dot-style mode column, drawn empty-state and drag-over icons; emoji removed from nav/toolbar strings
 - [x] All automation ids, UIA names, keyboard navigation, and the smoke gate's contracts preserved (smoke passes unchanged; visually verified on rules/settings/AI pages)
 
+## v0.17 — component-library polish pass (2026-09-03)
+
+- [x] Containerized table treatment shared by all GridView lists (SurfaceAlt header, full-row hover, row separators)
+- [x] Three-tier KPI stat cards on Policy Intelligence (dot+label / 24px value / localized footnote)
+- [x] Empty-state action row on the rules page (Add rule + Import)
+- [x] 200ms scale+fade dialog entrance for the constraints editor and import preview
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting
