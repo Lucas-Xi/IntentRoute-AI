@@ -15,12 +15,12 @@
                  ═══════════════════════════════════════════════════════════ -->
 
             <!-- ═══ 色板 ═══ -->
-            <Color x:Key="BgColor">#FF0B0E14</Color>
-            <Color x:Key="SurfaceColor">#FF10141B</Color>
+            <Color x:Key="BgColor">#FF0D1117</Color>
+            <Color x:Key="SurfaceColor">#FF161B22</Color>
             <Color x:Key="SurfaceAltColor">#FF0E1219</Color>
-            <Color x:Key="CardColor">#FF151A23</Color>
+            <Color x:Key="CardColor">#FF1C2128</Color>
             <Color x:Key="HoverColor">#FF1D2530</Color>
-            <Color x:Key="BorderColor">#FF272E3A</Color>
+            <Color x:Key="BorderColor">#FF30363D</Color>
 
             <Color x:Key="AccentColor">#FF4C8DFF</Color>
             <Color x:Key="AccentDimColor">#FF1C3A66</Color>
@@ -33,8 +33,8 @@
             <Color x:Key="ErrorDimColor">#FF490202</Color>
 
             <Color x:Key="TextPrimaryColor">#FFE6EDF3</Color>
-            <Color x:Key="TextSecondaryColor">#FF9AA5B4</Color>
-            <Color x:Key="TextMutedColor">#FF5F6B7A</Color>
+            <Color x:Key="TextSecondaryColor">#FF8B949E</Color>
+            <Color x:Key="TextMutedColor">#FF484F58</Color>
 
             <!-- 半透明底色：徽标、提示条、选中态 -->
             <Color x:Key="AccentSoftColor">#264C8DFF</Color>
@@ -96,6 +96,46 @@
                 <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
+            </Style>
+
+            <!-- ═══ 渐变笔刷 ═══ -->
+            <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1"/>
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="SuccessGradientBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="{StaticResource SuccessColor}" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1"/>
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="WarningGradientBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="{StaticResource WarningColor}" Offset="0"/>
+                <GradientStop Color="Transparent" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- ═══ 主题色卡片样式 ═══ -->
+            <Style x:Key="AccentHeaderCard" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
+            <Style x:Key="SuccessHeaderCard" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource SuccessSoftBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource SuccessDimBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
+            <Style x:Key="WarningHeaderCard" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource WarningSoftBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource WarningDimBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
             </Style>
 
             <!-- ═══ 按钮 · Primary ═══ -->
