@@ -8,9 +8,9 @@ English | **[中文](README.zh-CN.md)**
 
 IntentRoute AI is an open-source Windows control plane that turns plain-language network intent into locally validated routing-rule drafts. It can use the OpenAI Responses API or an already-running local Ollama model, then hands accepted rules to the same deterministic sing-box TUN configuration pipeline used by the manual editor.
 
-> **Project status: v0.18.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
+> **Project status: v0.19.0 preview.** IntentRoute AI is useful for testing and early adoption, but it has not yet demonstrated broad production usage. AI output can be incomplete or wrong. Every generated rule is locally validated, added disabled, and must be explicitly enabled by the user.
 
-v0.18.0 completes the UI renewal: every page now carries a theme-colored header banner (blue for rules/AI/settings, green for policy, amber for simulator/process, neutral for log/about), the runtime-log and process pages follow the same header + toolbar + content card grammar as the rest of the app, and runtime logs render in a monospace terminal style. Earlier rounds unified everything on a single dark design system with a grouped sidebar (v0.16) and applied component-library polish to tables, KPI cards, and dialogs (v0.17); v0.15.0 added the rule-import preview with full-identity duplicate detection. Every release archive still embeds the unsigned `provenance.json` build inventory introduced in v0.9.0; code signing itself still requires a certificate.
+v0.19.0 adds batch mode buttons (proxy/direct/block) to the rules toolbar — exposing the previously UI-less `SetRulesMode` transaction — and severity coloring for runtime logs. v0.18.0 completed the UI renewal with theme-colored page banners and unified list-page grammar; v0.16–v0.17 established the shared dark design system and component-library polish; v0.15.0 added the rule-import preview with full-identity duplicate detection. Every release archive still embeds the unsigned `provenance.json` build inventory introduced in v0.9.0; code signing itself still requires a certificate.
 
 ## Why this project exists
 
@@ -135,7 +135,7 @@ IntentRoute AI does **not** provide a proxy node, VPN account, packet driver, bu
 
 ## Install a preview build
 
-1. Download `IntentRoute-AI-v0.18.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Vincent-Xi08/IntentRoute-AI/releases).
+1. Download `IntentRoute-AI-v0.19.0-win-x64.zip` and its `.sha256` file from [Releases](https://github.com/Vincent-Xi08/IntentRoute-AI/releases).
 2. Verify the checksum.
 3. Download the official Windows x64 sing-box v1.13+ archive separately.
 4. Install `sing-box.exe` separately, then explicitly approve its exact file from **Settings → Browse on every elevated app launch**. The saved path, imported profiles/configurations, `INTENTROUTE_SING_BOX`, the legacy `PROXYMANAGER_SING_BOX`, the application directory, and `PATH` are candidate-discovery hints only: they may be displayed, but neither `version`, `check`, nor `run` executes until that file is reselected in the current session.

@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows semantic versioning
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-03
+
+### Added
+
+- Batch mode buttons on the rules page: **Batch proxy / Batch direct / Batch block** next to the existing batch enable/disable/delete buttons. They apply the v0.12 `SetRulesMode` atomic transaction (previously reachable only through the per-rule context menu) to every selected rule in one Configuration Workspace commit, never touching priority or order, and start disabled until a row is selected like the other batch actions. The packaged smoke gate now asserts all six batch buttons exist and start disabled.
+- Runtime-log lines are now color-coded by severity: parsed once on arrival through the same `RuntimeLogFilter` level parser the filter uses, warning lines render amber, error lines red, and fatal lines red semi-bold — completing the v0.18 terminal-style log view.
+
+### Fixed
+
+- Fixed a v0.18 layout regression that hid the entire rules-page toolbar: the theme header was added as a new row without extending the page's row definitions, so the toolbar and the rule list shared the same grid row and the list card rendered on top of it. The page now has three rows (header / toolbar / list). The smoke gate could not catch this because overlapped elements remain in the UIA tree with correct enabled states; the toolbar's visibility is now covered by visual inspection.
+
 ## [0.18.0] - 2026-09-03
 
 ### Changed

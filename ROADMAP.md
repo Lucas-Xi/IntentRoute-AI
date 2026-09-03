@@ -119,6 +119,11 @@ The roadmap is evidence-driven. Items move forward when implementation, tests, a
 - [x] Runtime log rendering in Consolas with muted timestamps (terminal-style reading)
 - [x] Palette lightened one step for stronger layer separation; simulator banner restyled neutral
 
+## v0.19 — batch mode and log severity coloring (2026-09-03)
+
+- [x] Batch proxy/direct/block buttons on the rules toolbar, driving the existing tested `SetRulesMode` transaction that had no UI entry point; smoke gate extended to all six batch buttons
+- [x] Runtime-log severity coloring (warn amber / error red / fatal red bold) parsed on arrival via the shared level parser
+
 ## Candidate next work
 
 - [x] Guided sing-box discovery with version reporting

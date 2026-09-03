@@ -281,6 +281,12 @@ public static class Strings
     public static string RulesBatchEnableAutomation => GetString(nameof(RulesBatchEnableAutomation));
     public static string RulesBatchDisableAutomation => GetString(nameof(RulesBatchDisableAutomation));
     public static string RulesBatchDeleteAutomation => GetString(nameof(RulesBatchDeleteAutomation));
+    public static string RulesBatchProxy => GetString(nameof(RulesBatchProxy));
+    public static string RulesBatchDirect => GetString(nameof(RulesBatchDirect));
+    public static string RulesBatchBlock => GetString(nameof(RulesBatchBlock));
+    public static string RulesBatchProxyAutomation => GetString(nameof(RulesBatchProxyAutomation));
+    public static string RulesBatchDirectAutomation => GetString(nameof(RulesBatchDirectAutomation));
+    public static string RulesBatchBlockAutomation => GetString(nameof(RulesBatchBlockAutomation));
     public static string RulesBatchDeleteConfirmFormat => GetString(nameof(RulesBatchDeleteConfirmFormat));
     public static string RulesBatchHint => GetString(nameof(RulesBatchHint));
     public static string CommonCancel => GetString(nameof(CommonCancel));

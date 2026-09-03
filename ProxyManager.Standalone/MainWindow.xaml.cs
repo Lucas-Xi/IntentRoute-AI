@@ -64,7 +64,9 @@ public partial class MainWindow : Window
         _service.ConfigurationStateChanged += () => PostToUi(UpdateConfigurationUi);
         _service.RuntimeLogReceived += line => PostToUi(() =>
         {
-            _runtimeLogs.Add(new RuntimeLogLine(DateTime.Now.ToString("HH:mm:ss"), line));
+            // 等级在入列时解析一次，供日志行着色与过滤共用同一判定。
+            RuntimeLogFilter.TryParseLevel(line, out var logLevel);
+            _runtimeLogs.Add(new RuntimeLogLine(DateTime.Now.ToString("HH:mm:ss"), line, logLevel));
             while (_runtimeLogs.Count > 500)
                 _runtimeLogs.RemoveAt(0);
             if (LogAutoScrollToggle.IsChecked == true && LogsList.Items.Count > 0)
@@ -1263,6 +1265,9 @@ public partial class MainWindow : Window
         BatchEnableButton.IsEnabled = hasSelection;
         BatchDisableButton.IsEnabled = hasSelection;
         BatchDeleteButton.IsEnabled = hasSelection;
+        BatchProxyButton.IsEnabled = hasSelection;
+        BatchDirectButton.IsEnabled = hasSelection;
+        BatchBlockButton.IsEnabled = hasSelection;
     }
 
     private List<ProxyRule> GetSelectedRules() => RulesList.SelectedItems.OfType<ProxyRule>().ToList();
@@ -1296,6 +1301,18 @@ public partial class MainWindow : Window
             LoadRules();
             UpdateBatchRuleButtons();
         }
+    }
+
+    // 批量设置模式：Tag 承载目标模式（Proxy/Direct/Block），复用 v0.12 的 SetRulesMode 原子事务。
+    private void BatchMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string modeName } || !Enum.TryParse(modeName, out ProxyMode mode))
+            return;
+        var rules = GetSelectedRules();
+        if (rules.Count == 0) return;
+        _service.SetRulesMode(rules.Select(rule => rule.Id).ToList(), mode);
+        LoadRules();
+        UpdateBatchRuleButtons();
     }
 
     private void Import_Click(object sender, RoutedEventArgs e)
@@ -2057,7 +2074,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private sealed record RuntimeLogLine(string Time, string Message);
+    private sealed record RuntimeLogLine(string Time, string Message, RuntimeLogLevel Level = RuntimeLogLevel.Info);
 
     private sealed record ProcessRow(uint Pid, string Name, string Path, string Status);
 

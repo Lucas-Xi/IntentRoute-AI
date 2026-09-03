@@ -178,7 +178,7 @@ try {
         throw "Selecting $AutomationId did not make its page visible (verify control '$VerifyControlId' not found)."
     }
 
-    foreach ($batchButtonId in @('BatchEnableButton', 'BatchDisableButton', 'BatchDeleteButton')) {
+    foreach ($batchButtonId in @('BatchEnableButton', 'BatchDisableButton', 'BatchDeleteButton', 'BatchProxyButton', 'BatchDirectButton', 'BatchBlockButton')) {
         $batchButton = Find-ControlByAutomationId -Root $root -AutomationId $batchButtonId
         if ($null -eq $batchButton) {
             throw "Rules page does not expose the $batchButtonId automation element."

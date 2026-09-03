@@ -204,6 +204,7 @@
                           Drop="Window_Drop" DragOver="Window_DragOver" DragLeave="Window_DragLeave">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
@@ -289,6 +290,18 @@
                                             FontSize="11" Padding="12,5"
                                             Margin="0,0,6,0" IsEnabled="False" Foreground="{StaticResource ErrorBrush}"
                                             AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDeleteAutomation}" Click="BatchDelete_Click"/>
+                                    <Button x:Name="BatchProxyButton" Content="{x:Static loc:Strings.RulesBatchProxy}" Style="{StaticResource SecondaryBtn}"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False" Tag="Proxy"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchProxyAutomation}" Click="BatchMode_Click"/>
+                                    <Button x:Name="BatchDirectButton" Content="{x:Static loc:Strings.RulesBatchDirect}" Style="{StaticResource SecondaryBtn}"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False" Tag="Direct"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchDirectAutomation}" Click="BatchMode_Click"/>
+                                    <Button x:Name="BatchBlockButton" Content="{x:Static loc:Strings.RulesBatchBlock}" Style="{StaticResource SecondaryBtn}"
+                                            FontSize="11" Padding="12,5"
+                                            Margin="0,0,6,0" IsEnabled="False" Tag="Block"
+                                            AutomationProperties.Name="{x:Static loc:Strings.RulesBatchBlockAutomation}" Click="BatchMode_Click"/>
                                     <Border Width="1" Height="18" Background="{StaticResource BorderBrush}" VerticalAlignment="Center" Margin="4,0,10,0"/>
                                     <Button Content="{x:Static loc:Strings.RulesClear}" Style="{StaticResource SecondaryBtn}"
                                             FontSize="11" Padding="12,5" Foreground="{StaticResource ErrorBrush}"
@@ -300,7 +313,7 @@
                         </Border>
 
                         <!-- 规则列表 -->
-                        <Border Grid.Row="1" Background="{StaticResource CardBrush}" CornerRadius="8">
+                        <Border Grid.Row="2" Background="{StaticResource CardBrush}" CornerRadius="8">
                             <Grid>
                                 <!-- 表头 -->
                                 <Border VerticalAlignment="Top" BorderBrush="{StaticResource BorderBrush}"
@@ -1007,7 +1020,25 @@
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Message}" FontFamily="Consolas" FontSize="11"
-                                                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Level}" Value="Warn">
+                                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Level}" Value="Fatal">
+                                                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
